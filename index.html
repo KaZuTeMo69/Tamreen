@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>تمرين</title>
+<meta name="theme-color" content="#F2EEE7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="تمرين">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%232A211B'/%3E%3Cg fill='%23F2EEE7'%3E%3Crect x='30' y='78' width='120' height='24' rx='12'/%3E%3Crect x='18' y='62' width='24' height='56' rx='10'/%3E%3Crect x='138' y='62' width='24' height='56' rx='10'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2EEE7; --card:#FCFAF6; --ink:#2A211B; --muted:#8C8378;
+  --line:#E7E1D7; --sage:#D8E6C7; --sage-ink:#4A6138; --clay:#C4703F;
+  --r:22px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Tajawal','DM Sans',system-ui,sans-serif;
+  font-size:16px; line-height:1.5;
+  padding:max(14px,env(safe-area-inset-top)) 18px calc(120px + env(safe-area-inset-bottom));
+  max-width:560px; margin:0 auto; -webkit-font-smoothing:antialiased;
+}
+.num{font-family:'DM Sans',sans-serif;font-variant-numeric:tabular-nums}
+h1{font-size:38px;font-weight:800;letter-spacing:-.5px;margin:12px 0 0}
+.sub{color:var(--muted);font-size:15px;margin-top:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.avatar{width:52px;height:52px;border-radius:50%;background:var(--sage);color:var(--sage-ink);
+  display:grid;place-items:center;font-weight:800;font-size:20px;flex:none}
+.label{font-size:19px;font-weight:700;margin:28px 0 10px}
+.card{background:var(--card);border-radius:var(--r);padding:18px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0}
+.row+.row{border-top:1px solid var(--line)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.btn{display:block;width:100%;border:0;border-radius:999px;padding:18px;font-family:inherit;
+  font-size:17px;font-weight:700;background:var(--ink);color:#FCFAF6;cursor:pointer}
+.btn.light{background:var(--card);color:var(--ink)}
+.btn.sage{background:var(--sage);color:var(--sage-ink)}
+.btn:disabled{opacity:.35}
+.chip{display:inline-block;background:var(--ink);color:#FCFAF6;border-radius:999px;
+  padding:6px 14px;font-size:13px;font-weight:700}
+.chip.sage{background:var(--sage);color:var(--sage-ink)}
+.chip.clay{background:#F6E5D8;color:#8A4A20}
+
+/* month pills */
+.pills{display:flex;gap:5px;margin-top:12px}
+.pill{flex:1;height:10px;border-radius:999px;background:var(--line);transition:background .3s,height .3s}
+.pill.on{background:var(--ink);height:16px}
+
+/* exercise */
+.ex{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.ex h3{margin:0;font-size:17px;font-weight:700}
+.ex .meta{font-size:13px;color:var(--muted);margin-top:2px}
+.sets{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.set{display:flex;align-items:center;gap:8px}
+.set span.i{width:20px;font-size:12px;color:var(--muted)}
+input{font-family:'DM Sans',sans-serif;font-size:17px;text-align:center;width:100%;min-width:0;
+  padding:12px 6px;border:1px solid var(--line);background:#fff;border-radius:14px;color:var(--ink)}
+input:focus{outline:2px solid var(--sage);outline-offset:-2px}
+.prev{min-width:64px;text-align:left;font-size:13px;color:var(--muted);font-family:'DM Sans',sans-serif}
+.note{margin-top:12px;background:#F6E5D8;color:#8A4A20;border-radius:14px;padding:10px 14px;
+  font-size:14px;font-weight:500}
+.divider{display:flex;align-items:center;gap:12px;margin:22px 2px}
+.divider hr{flex:1;border:0;border-top:1px solid var(--line);margin:0}
+.divider b{font-size:13px;color:var(--sage-ink);background:var(--sage);padding:6px 12px;border-radius:999px}
+
+/* bars */
+.bars{display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:8px}
+.bars div{flex:1;background:var(--ink);border-radius:8px 8px 4px 4px;min-height:4px}
+
+/* nav */
+nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));
+  width:min(430px,calc(100% - 36px));background:var(--card);border-radius:999px;padding:8px;
+  display:flex;box-shadow:0 6px 28px rgba(42,33,27,.13);z-index:20}
+nav button{flex:1;border:0;background:none;font-family:inherit;font-size:12px;font-weight:700;
+  color:var(--muted);padding:10px 4px;border-radius:999px;cursor:pointer;display:flex;
+  flex-direction:column;align-items:center;gap:4px}
+nav button.on{background:var(--bg);color:var(--ink)}
+nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.hide{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<nav id="nav">
+  <button data-tab="plan" class="on"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>الخطة</button>
+  <button data-tab="prog"><svg viewBox="0 0 24 24"><path d="M5 19V11M12 19V5M19 19v-6"/></svg>التقدم</button>
+  <button data-tab="log"><svg viewBox="0 0 24 24"><path d="M6 4h12v16H6zM9 9h6M9 13h4"/></svg>السجل</button>
+</nav>
+
+<script>
+/* ─── program ─────────────────────────────────────── */
+const PROGRAM = {
+ A:{label:"تمرين A", tag:"ضغط رجل + دفع وسحب أفقي", ex:[
+   {id:"a1",n:"Leg Press / Hack Squat",sets:3,lo:8,hi:10},
+   {id:"a2",n:"Incline Dumbbell Press",sets:3,lo:8,hi:10},
+   {id:"a3",n:"Chest-Supported Row",sets:3,lo:10,hi:12},
+   {id:"a4",n:"Dumbbell RDL",sets:3,lo:8,hi:10},
+   {id:"a5",n:"Lateral Raises",sets:3,lo:12,hi:15},
+   {id:"a6",n:"Hanging Knee Raises",sets:3,lo:10,hi:20,bw:true}]},
+ B:{label:"تمرين B", tag:"Pull-up أولوية + رجل أحادية", ex:[
+   {id:"b1",n:"Pull-up (مساعدة / وزن إضافي)",sets:4,lo:5,hi:8},
+   {id:"b2",n:"Bulgarian Split Squat",sets:3,lo:8,hi:10},
+   {id:"b3",n:"Seated DB Shoulder Press",sets:3,lo:8,hi:10},
+   {id:"b4",n:"Lying Leg Curl",sets:3,lo:10,hi:12},
+   {id:"b5",n:"Incline Dumbbell Curl",sets:3,lo:10,hi:12},
+   {id:"b6",n:"Hollow Body Hold",sets:3,lo:20,hi:45,sec:true}]},
+ C:{label:"تمرين C", tag:"Dips أولوية + ضغط أفقي", ex:[
+   {id:"c1",n:"Dips (مساعدة / وزن إضافي)",sets:4,lo:6,hi:10},
+   {id:"c2",n:"Flat Barbell Bench Press",sets:3,lo:6,hi:8},
+   {id:"c3",n:"Single-Arm Dumbbell Row",sets:3,lo:8,hi:10},
+   {id:"c4",n:"Leg Extension + Seated Curl",sets:3,lo:10,hi:12},
+   {id:"c5",n:"Face Pulls",sets:3,lo:15,hi:20},
+   {id:"c6",n:"Standing Calf Raises",sets:4,lo:12,hi:15}]}
+};
+const ORDER=["A","B","C"], GOAL=10, KEY="tamreen-v1";
+
+/* ─── state ───────────────────────────────────────── */
+let D = {cursor:"A", sessions:[], waist:[]};
+let tab="plan", draft=null;
+try{ const raw=localStorage.getItem(KEY); if(raw) D={...D,...JSON.parse(raw)}; }catch(e){}
+const save=()=>{ try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){} };
+
+const today=()=>new Date().toISOString().slice(0,10);
+const ym=s=>s.slice(0,7);
+const fdate=s=>new Date(s).toLocaleDateString("ar-EG",{day:"numeric",month:"short"});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const monthCount=()=>D.sessions.filter(s=>ym(s.date)===ym(today())).length;
+const volume=s=>Object.values(s.entries||{}).flat()
+  .reduce((t,r)=>t+((+r.w>0)?(+r.w)*(+r.r||0):0),0);
+
+function lastFor(id){
+  for(let i=D.sessions.length-1;i>=0;i--){
+    const e=D.sessions[i].entries?.[id];
+    if(e && e.some(s=>s.r)) return e;
+  }
+  return null;
+}
+function bump(ex){
+  const l=lastFor(ex.id); if(!l) return false;
+  const done=l.filter(s=>s.r);
+  return done.length>=ex.sets && done.every(s=>+s.r>=ex.hi);
+}
+
+/* ─── views ───────────────────────────────────────── */
+function vPlan(){
+  const w=PROGRAM[D.cursor], c=monthCount();
+  return `
+  <div class="top">
+    <div><h1>اللي جاي</h1><div class="sub">${w.label} — ${esc(w.tag)}</div></div>
+    <div class="avatar">A</div>
+  </div>
+
+  <div class="label">حصص الشهر</div>
+  <div class="card">
+    <div class="row" style="padding-top:0">
+      <div><span class="num" style="font-size:30px;font-weight:700">${c}</span>
+        <span class="muted num"> / ${GOAL}</span></div>
+      ${c>=GOAL?'<span class="chip sage">هدف الشهر تم</span>':'<span class="muted small">الأسبوع مش مهم — الشهر هو المقياس</span>'}
+    </div>
+    <div class="pills">${Array.from({length:GOAL},(_,i)=>`<div class="pill ${i<c?'on':''}"></div>`).join("")}</div>
+  </div>
+
+  <div class="label">تمارين النهارده</div>
+  <div class="card">
+    ${w.ex.map((e,i)=>`<div class="row">
+        <div>
+          <div style="font-weight:${i<3?700:500};color:${i<3?'var(--ink)':'var(--muted)'}">${esc(e.n)}</div>
+          <div class="small muted num">${e.sets} × ${e.lo}–${e.hi}${e.sec?' sec':''}</div>
+        </div>
+        ${i===2?'<span class="chip sage">الحد الأدنى</span>':''}
+      </div>`).join("")}
+  </div>
+
+  <div style="margin-top:22px"><button class="btn" onclick="start()">ابدأ الحصة</button></div>
+  <div style="margin-top:10px"><button class="btn light" onclick="skip()">بدّل لتمرين تاني</button></div>`;
+}
+
+function vSession(){
+  const p=PROGRAM[draft.workout];
+  const card=(e,i)=>`
+    <div class="ex">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div><h3>${esc(e.n)}</h3>
+          <div class="meta num">${e.sets} × ${e.lo}–${e.hi} ${e.sec?"SEC":"REPS"}</div></div>
+        <div class="num" style="font-size:22px;color:var(--line);font-weight:700">${String(i+1).padStart(2,"0")}</div>
+      </div>
+      ${bump(e)?'<div class="note">كمّلت الـ range المرة اللي فاتت — زوّد ٢.٥ كجم</div>':''}
+      <div class="sets">
+        ${Array.from({length:e.sets},(_,s)=>{
+          const prev=(lastFor(e.id)||[])[s], cur=draft.entries[e.id][s];
+          return `<div class="set">
+            <span class="i num">S${s+1}</span>
+            <input inputmode="decimal" placeholder="${e.bw||e.sec?'—':'وزن'}" value="${esc(cur.w)}"
+              oninput="edit('${e.id}',${s},'w',this.value)">
+            <input inputmode="numeric" placeholder="${e.sec?'ثانية':'عدّة'}" value="${esc(cur.r)}"
+              oninput="edit('${e.id}',${s},'r',this.value)">
+            <span class="prev">${prev?`${prev.w||"—"} × ${prev.r||"—"}`:"أول مرة"}</span>
+          </div>`;}).join("")}
+      </div>
+    </div>`;
+  const logged=Object.values(draft.entries).filter(r=>r.some(x=>x.r)).length;
+  return `
+  <div class="top">
+    <div><h1>${p.label}</h1><div class="sub">${fdate(today())}</div></div>
+    <button class="btn light" style="width:auto;padding:12px 20px;font-size:15px" onclick="cancel()">إلغاء</button>
+  </div>
+  <div style="margin-top:22px">${p.ex.slice(0,3).map(card).join("")}</div>
+  <div class="divider"><hr><b>تقدر تنهي هنا — تتحسب حصة كاملة</b><hr></div>
+  ${p.ex.slice(3).map((e,i)=>card(e,i+3)).join("")}
+  <div style="margin-top:20px">
+    <button class="btn" ${logged?"":"disabled"} onclick="finish()">إنهاء الحصة</button>
+    <div class="small muted num" style="text-align:center;margin-top:10px">${logged} / ${p.ex.length} تمارين مسجّلة</div>
+  </div>`;
+}
+
+function vProg(){
+  const last8=D.sessions.slice(-8), max=Math.max(1,...last8.map(volume));
+  const w=D.waist.slice(-6), diff=w.length>1?(w[w.length-1].cm-w[0].cm):null;
+  return `
+  <div class="top"><div><h1>التقدم</h1><div class="sub">الأرقام مش المرايا</div></div><div class="avatar">A</div></div>
+
+  <div class="label">إجمالي الحمل لكل حصة</div>
+  <div class="card">
+    ${last8.length?`<div class="bars">${last8.map(s=>`<div style="height:${Math.max(6,volume(s)/max*100)}%" title="${Math.round(volume(s))}"></div>`).join("")}</div>
+      <div class="small muted" style="margin-top:10px">آخر ${last8.length} حصص — لازم يطلع مع الوقت</div>`
+      :'<div class="muted small">لسه مفيش داتا. سجّل حصتين وهتشوف الخط بيطلع.</div>'}
+  </div>
+
+  <div class="label">محيط الوسط</div>
+  <div class="card">
+    <div style="display:flex;gap:10px">
+      <input id="waist" inputmode="decimal" placeholder="بالسنتيمتر" style="text-align:right;font-family:inherit;font-size:15px">
+      <button class="btn sage" style="width:auto;padding:12px 22px;font-size:15px" onclick="addWaist()">سجّل</button>
+    </div>
+    ${w.length?`<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:16px">
+      ${w.map(x=>`<div><div class="num" style="font-size:22px;font-weight:700">${x.cm}<span class="small muted">cm</span></div>
+        <div class="small muted num">${fdate(x.date)}</div></div>`).join("")}</div>
+      ${diff!==null?`<div class="small" style="margin-top:14px;color:${diff<0?'var(--sage-ink)':'var(--muted)'}">
+        ${diff<0?`نزلت ${Math.abs(diff).toFixed(1)} سم من أول قياس`:`فرق ${diff.toFixed(1)} سم عن أول قياس`}</div>`:""}`
+      :'<div class="small muted" style="margin-top:12px">قيس كل ٤ أسابيع بس — مش كل يوم.</div>'}
+  </div>`;
+}
+
+function vLog(){
+  return `
+  <div class="top"><div><h1>السجل</h1><div class="sub">${D.sessions.length} حصة</div></div><div class="avatar">A</div></div>
+  <div class="label">كل الحصص</div>
+  ${D.sessions.length?`<div class="card">${[...D.sessions].reverse().map(s=>`
+    <div class="row">
+      <div><div style="font-weight:700">${PROGRAM[s.workout].label}</div>
+      <div class="small muted num">${Math.round(volume(s)).toLocaleString("en")} kg إجمالي</div></div>
+      <div class="small muted num">${fdate(s.date)}</div>
+    </div>`).join("")}</div>`
+   :'<div class="card muted small">مفيش حصص لسه.</div>'}
+  <div style="margin-top:22px"><button class="btn light" onclick="wipe()">مسح كل البيانات</button></div>`;
+}
+
+/* ─── actions ─────────────────────────────────────── */
+function render(){
+  document.getElementById("app").innerHTML =
+    draft ? vSession() : tab==="plan" ? vPlan() : tab==="prog" ? vProg() : vLog();
+  document.getElementById("nav").classList.toggle("hide", !!draft);
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  window.scrollTo(0,0);
+}
+function start(){
+  const entries={};
+  PROGRAM[D.cursor].ex.forEach(e=>entries[e.id]=Array.from({length:e.sets},()=>({w:"",r:""})));
+  draft={workout:D.cursor,entries}; render();
+}
+function skip(){ D.cursor=ORDER[(ORDER.indexOf(D.cursor)+1)%3]; save(); render(); }
+function cancel(){ draft=null; render(); }
+function edit(id,s,f,v){ draft.entries[id][s][f]=v; }
+function finish(){
+  D.sessions.push({date:today(),workout:draft.workout,entries:draft.entries});
+  D.cursor=ORDER[(ORDER.indexOf(draft.workout)+1)%3];
+  draft=null; save(); tab="plan"; render();
+}
+function addWaist(){
+  const v=parseFloat(document.getElementById("waist").value);
+  if(!v) return;
+  D.waist.push({date:today(),cm:v}); save(); render();
+}
+function wipe(){
+  if(confirm("هيتمسح كل السجل. متأكد؟")){ D={cursor:"A",sessions:[],waist:[]}; save(); render(); }
+}
+document.getElementById("nav").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return; tab=b.dataset.tab; render();
+});
+render();
+</script>
+</body>
+</html>
