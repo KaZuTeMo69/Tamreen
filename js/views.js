@@ -26,7 +26,7 @@ function vPlan(){
 }
 
 function setsHTML(e){
-  const u=unitOf(e.id),side=perSide(e.id),last=draft.edit==null?lastFor(e.id):null;
+  const u=draft.units[e.id],side=draft.sides[e.id],last=draft.edit==null?lastFor(e.id,draft.date):null;
   const hideW=(e.eq==="body"&&!e.addw), n=draft.counts[e.id];
   return `<div class="hints"><span class="i"></span><span class="chip w" style="visibility:hidden">W</span>
       ${hideW?"":`<span class="hint" style="flex:1">${e.assist?"مساعدة −":(e.addw?"إضافي":"وزن")} (${u})</span>`}
@@ -34,23 +34,23 @@ function setsHTML(e){
       ${side?'<span class="hint" style="flex:1">شمال</span>':""}
       <span class="prev"></span></div>
     ${Array.from({length:n},(_,s)=>{
-      const p=last?.rows[s],cur=draft.entries[e.id][s]||{w:"",r:"",r2:"",warm:false};
+      const p=last?.all[s],cur=draft.entries[e.id][s]||{w:"",r:"",r2:"",warm:false};
       return `<div class="set ${cur.warm?"warm":""}"><span class="i">S${s+1}</span>
         <button class="chip w ${cur.warm?"on":""}" onclick="toggleWarm('${e.id}',${s})" title="تسخين">W</button>
         ${hideW?"":`<input inputmode="decimal" placeholder="—" value="${esc(cur.w)}" oninput="edit('${e.id}',${s},'w',this.value)">`}
         <input inputmode="numeric" placeholder="—" value="${esc(cur.r)}" oninput="edit('${e.id}',${s},'r',this.value)">
         ${side?`<input inputmode="numeric" placeholder="—" value="${esc(cur.r2)}" oninput="edit('${e.id}',${s},'r2',this.value)">`:""}
-        <span class="prev">${p?`${p.w?p.w+"×":""}${p.r||"—"}`:(draft.edit==null?"—":"")}</span></div>`;
+        <span class="prev"${p?.warm?' style="opacity:.55"':""}>${p?.r?`${p.w?esc(p.w)+"×":""}${esc(p.r)}`:(draft.edit==null?"—":"")}</span></div>`;
     }).join("")}`;
 }
 
 function vSession(){
   const p=PROGRAM[draft.workout],editing=draft.edit!=null;
   const card=(e,i)=>{
-    const sg=editing?null:suggest(e), hl=histLine(e.id);
+    const sg=editing?null:suggest(e,draft.date), hl=histLine(e.id,draft.date);
     return `<div class="ex" id="ex-${e.id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-        <div><h3>${esc(nameOf(e))}</h3>
+        <div><h3>${esc(draft.names[e.id])}</h3>
           <div class="meta num">${e.lo}–${e.hi} ${e.sec?"SEC":"REPS"} · ${EQ[e.eq]}</div></div>
         <div class="num" style="font-size:22px;color:var(--line);font-weight:700">${String(i+1).padStart(2,"0")}</div>
       </div>
@@ -58,9 +58,9 @@ function vSession(){
       ${hl?`<div class="hist">${esc(hl)}</div>`:""}
       <div class="ctrls">
         ${(e.eq==="body"&&!e.addw)?"":`<select onchange="setUnit('${e.id}',this.value)">
-          <option value="kg" ${unitOf(e.id)==="kg"?"selected":""}>kg</option>
-          <option value="lb" ${unitOf(e.id)==="lb"?"selected":""}>lb</option></select>`}
-        <button class="chip ${perSide(e.id)?"on":""}" onclick="toggleSide('${e.id}')">يمين / شمال</button>
+          <option value="kg" ${draft.units[e.id]==="kg"?"selected":""}>kg</option>
+          <option value="lb" ${draft.units[e.id]==="lb"?"selected":""}>lb</option></select>`}
+        <button class="chip ${draft.sides[e.id]?"on":""}" onclick="toggleSide('${e.id}')">يمين / شمال</button>
         ${e.eq==="barbell"?`<button class="chip" onclick="plateCalc('${e.id}')">حاسبة الأوزان</button>`:""}
         <a class="chip ${D.videos[e.id]?"ink":""}" href="${esc(D.videos[e.id]||("https://www.youtube.com/results?search_query="+encodeURIComponent(e.n+" proper form technique")))}" target="_blank" rel="noopener">▶ شرح</a>
         <button class="chip" onclick="pinVideo('${e.id}')">${D.videos[e.id]?"غيّر اللينك":"ثبّت لينك"}</button>
@@ -152,6 +152,7 @@ function render(toTop=true){
   document.getElementById("nav").classList.toggle("hide",!!draft);
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
   if(draft) refresh();
+  saveDraft();
   window.scrollTo(0,toTop?0:y);
 }
 function refresh(){

@@ -30,10 +30,13 @@ function paintTimer(){
     String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0");
   if(left<=0&&tick){ stopTimer(); buzz(400); toast("الراحة خلصت"); }
 }
-function startTimer(sec){
-  stopTimer(); endAt=Date.now()+sec*1000;
+function startTimer(sec,until){          // until: resume a rest that was running before a reload
+  stopTimer(); endAt=until||Date.now()+sec*1000;
   document.getElementById("timer").classList.add("on");
-  paintTimer(); tick=setInterval(paintTimer,250);
+  paintTimer(); tick=setInterval(paintTimer,250); saveDraft();
 }
-function stopTimer(){ if(tick)clearInterval(tick); tick=null; document.getElementById("timer").classList.remove("on"); }
+function stopTimer(){
+  if(tick)clearInterval(tick); tick=null; endAt=0;
+  document.getElementById("timer").classList.remove("on"); saveDraft();
+}
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&tick) paintTimer(); });

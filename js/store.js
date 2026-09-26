@@ -2,7 +2,6 @@
 let D={cursor:"A",sessions:[],waist:[],units:{},sides:{},swaps:{},videos:{},bar:20,migrated:0};
 let tab="plan",draft=null,tick=null,progEx="a1";
 
-
 try{
   const raw=localStorage.getItem(KEY);
   if(raw) D={...D,...JSON.parse(raw)};
@@ -20,9 +19,21 @@ try{
   }
 }catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
+/* FIX: the open workout is stored on every change, so a reload or a killed tab doesn't lose it */
+const DRAFT_KEY=KEY+"-draft";
+const saveDraft=()=>{try{
+  if(draft) localStorage.setItem(DRAFT_KEY,JSON.stringify({...draft,restEnd:endAt>Date.now()?endAt:0}));
+  else localStorage.removeItem(DRAFT_KEY);
+}catch(e){}};
 const buzz=ms=>{try{navigator.vibrate?.(ms)}catch(e){}};
 
-const today=()=>new Date().toISOString().slice(0,10);
+/* FIX: dates follow the phone's own time zone, not UTC */
+const pad2=n=>String(n).padStart(2,"0");
+const today=()=>{ const d=new Date(); return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`; };
+/* FIX: Arabic-Indic digits (٠-٩ / ۰-۹) and comma decimals read as plain numbers */
+const normNum=v=>String(v??"").replace(/[٠-٩]/g,c=>c.charCodeAt(0)-0x660)
+  .replace(/[۰-۹]/g,c=>c.charCodeAt(0)-0x6F0).replace(/[٫,]/g,".").trim();
+const num=v=>+normNum(v)||0;
 const ym=s=>s.slice(0,7);
 const fdate=s=>new Date(s).toLocaleDateString("ar-EG",{day:"numeric",month:"short"});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -30,7 +41,9 @@ const unitOf=id=>D.units[id]||"kg";
 const perSide=id=>!!D.sides[id];
 const nameOf=e=>D.swaps[e.id]||e.n;
 const nameIn=(s,id)=>s.names?.[id]||(byId(id)?nameOf(byId(id)):id);
-const toKg=(v,u)=>(+v||0)*(u==="lb"?0.4536:1);
+/* was this exercise logged right / left in that session? (older records: any left-side reps) */
+const sidesIn=(s,id)=>s.sides?!!s.sides[id]:(s.entries?.[id]||[]).some(r=>r.r2!==""&&r.r2!=null);
+const toKg=(v,u)=>num(v)*(u==="lb"?0.4536:1);
 const clone=o=>JSON.parse(JSON.stringify(o));
 const step=ex=>ex.eq==="dumbbell"?2:(ex.eq==="cable"?2.5:5);
 /* FIX: same-day sessions count once toward the monthly goal */
