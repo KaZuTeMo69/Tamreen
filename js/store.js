@@ -1,10 +1,12 @@
 /* ══ state ════════════════════════════════════════════ */
 /* everything the app stores; settings live here too (name, units, goal, rest, bar & plates) */
-const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},
+const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},program:null,retired:{},theme:"auto",
   name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],
   lastBackup:0,changedAt:0,migrated:0});
 let D=defaults();
 let tab="plan",draft=null,tick=null,progEx="a1";
+let installPrompt=null;   // Chrome's "install app" prompt, kept for the button in Settings
+let calMonth=null;        // month shown in the log calendar, "YYYY-MM" (null = this month)
 
 try{
   const raw=localStorage.getItem(KEY);
@@ -22,6 +24,17 @@ try{
     D.migrated=2;
   }
 }catch(e){}
+loadProgram();
+/* FEATURE: dark mode. "auto" follows the phone; "light" / "dark" force it (the CSS reads data-theme).
+   The browser bar colour (theme-color) follows the page background. */
+function applyTheme(){
+  const el=document.documentElement;
+  if(D.theme==="light"||D.theme==="dark") el.dataset.theme=D.theme; else delete el.dataset.theme;
+  const bg=getComputedStyle(el).getPropertyValue("--bg").trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{ m.content=bg; });
+}
+applyTheme();
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",applyTheme);
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
 /* FIX: the open workout is stored on every change, so a reload or a killed tab doesn't lose it */
 const DRAFT_KEY=KEY+"-draft";
@@ -57,7 +70,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
 /* only http(s) links — a pinned or restored "javascript:" link is dropped */
 const safeUrl=v=>{ try{ const u=new URL(String(v)); return /^https?:$/.test(u.protocol)?u.href:""; }catch(e){ return ""; } };
-const daysSince=t=>Math.floor((Date.now()-t)/864e5);
+const daysSince=t=>Math.max(0,Math.floor((Date.now()-t)/864e5));   // never negative, even if the phone's clock moved back
 const step=(ex,u)=>u==="lb"?(ex.eq==="dumbbell"||ex.eq==="cable"?5:10)
   :(ex.eq==="dumbbell"?2:(ex.eq==="cable"?2.5:5));
 /* FIX: same-day sessions count once toward the monthly goal */

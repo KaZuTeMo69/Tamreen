@@ -77,6 +77,37 @@ function suggest(ex,upTo,unit){
   if(reps>=ex.hi) return `RIR ${rir} وكمّلت العدّات — جرّب ${tgt(w+st)}`;
   return `ثبّت على ${tgt(w)} واستهدف ${ex.hi} عدّات`;
 }
+/* FEATURE: personal records. One pass over the sessions in date order, keeping each exercise's best so
+   far; a session sets a record when it beats every earlier session: a heavier working weight (lifts and
+   added weight), else a better best set (e1RM score — covers assistance, and reps / seconds for
+   bodyweight moves). A first-ever session sets none. Returns Map(session index → [records]). */
+function recordMap(){
+  const best={},out=new Map();
+  D.sessions.map((s,i)=>({s,i})).sort((a,b)=>a.s.date<b.s.date?-1:a.s.date>b.s.date?1:a.i-b.i).forEach(({s,i})=>{
+    const found=[];
+    for(const [id,rows] of Object.entries(s.entries||{})){
+      const ex=byId(id),h={id,date:s.date,rows:working(rows),u:s.units?.[id]||"kg"};
+      if(!ex||!h.rows.length) continue;
+      const t=topSet(h), weighed=!ex.assist&&(ex.eq!=="body"||ex.addw);
+      const heavy=weighed?h.rows.reduce((m,r)=>toKg(r.w,h.u)>toKg(m.w,h.u)?r:m,h.rows[0]):null;
+      const heavyKg=heavy?toKg(heavy.w,h.u):0, b=best[id];
+      if(b){
+        if(heavyKg>0&&heavyKg>b.kg+1e-6) found.push({id,kind:"heavy",w:heavy.w,reps:Math.max(num(heavy.r),num(heavy.r2)),u:h.u});
+        else if(t.sc>b.sc+1e-6) found.push({id,kind:"best",w:t.w,reps:t.reps,u:h.u});
+      }
+      best[id]={sc:Math.max(b?.sc??0,t.sc),kg:Math.max(b?.kg??0,heavyKg)};
+    }
+    if(found.length) out.set(i,found);
+  });
+  return out;
+}
+/* "أتقل وزن: 110 كجم × 6" · "أحسن ست: +5 كجم × 8" · "أكتر عدّات: 22" · "أطول ثبات: 50 ثانية" */
+function recordText(pr){
+  const ex=exDef(pr.id),w=num(pr.w),U=UL[pr.u];
+  if(!w) return ex.sec?`أطول ثبات: ${pr.reps} ثانية`:`أكتر عدّات: ${pr.reps}`;
+  const load=ex.assist?`مساعدة ${w} ${U}`:`${ex.addw?"+":""}${w} ${U}`;
+  return `${pr.kind==="heavy"?"أتقل وزن":"أحسن ست"}: ${load} × ${pr.reps}`;
+}
 /* the weight typed on a best set, in unit u (same rounding as the pre-filled weights) */
 const wIn=(t,u)=>t.u===u?num(t.w):conv(t.w,t.u,u);
 /* one best set as short text: "100×8", "+5×8" (added), "−20×6" (assistance), "10" (reps only) */
