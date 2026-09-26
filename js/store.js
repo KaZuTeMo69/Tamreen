@@ -1,5 +1,8 @@
 /* ══ state ════════════════════════════════════════════ */
-let D={cursor:"A",sessions:[],waist:[],units:{},sides:{},swaps:{},videos:{},bar:20,migrated:0};
+/* everything the app stores; settings live here too (name, units, goal, rest, bar & plates) */
+const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},
+  name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],migrated:0});
+let D=defaults();
 let tab="plan",draft=null,tick=null,progEx="a1";
 
 try{
@@ -37,15 +40,20 @@ const num=v=>+normNum(v)||0;
 const ym=s=>s.slice(0,7);
 const fdate=s=>new Date(s).toLocaleDateString("ar-EG",{day:"numeric",month:"short"});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const unitOf=id=>D.units[id]||"kg";
+const unitOf=id=>D.units[id]||D.unit||"kg";
 const perSide=id=>!!D.sides[id];
 const nameOf=e=>D.swaps[e.id]||e.n;
 const nameIn=(s,id)=>s.names?.[id]||(byId(id)?nameOf(byId(id)):id);
 /* was this exercise logged right / left in that session? (older records: any left-side reps) */
 const sidesIn=(s,id)=>s.sides?!!s.sides[id]:(s.entries?.[id]||[]).some(r=>r.r2!==""&&r.r2!=null);
 const toKg=(v,u)=>num(v)*(u==="lb"?0.4536:1);
+const fromKg=(kg,u)=>u==="lb"?kg/0.4536:kg;
+/* a weight logged in one unit, shown in another (rounded to 0.5) */
+const conv=(v,from,to)=>from===to?num(v):Math.round(fromKg(toKg(v,from),to)*2)/2;
+const UL={kg:"كجم",lb:"باوند"};
 const clone=o=>JSON.parse(JSON.stringify(o));
-const step=ex=>ex.eq==="dumbbell"?2:(ex.eq==="cable"?2.5:5);
+const step=(ex,u)=>u==="lb"?(ex.eq==="dumbbell"||ex.eq==="cable"?5:10)
+  :(ex.eq==="dumbbell"?2:(ex.eq==="cable"?2.5:5));
 /* FIX: same-day sessions count once toward the monthly goal */
 const monthCount=()=>new Set(D.sessions.filter(s=>ym(s.date)===ym(today())).map(s=>s.date)).size;
 const setCount=(s,e)=>s.counts?.[e.id]||(s.entries?.[e.id]?.length)||e.sets;

@@ -82,6 +82,6 @@ function exportCSV(){
 }
 function wipe(){
   sheet({text:"هيتمسح كل السجل نهائيًا",body:"اعمل نسخة احتياطية الأول لو مش متأكد.",yes:"امسح الكل",danger:true,
-    onYes:()=>{ D={cursor:"A",sessions:[],waist:[],units:{},sides:{},swaps:{},videos:{},bar:20,migrated:2};
+    onYes:()=>{ D={...defaults(),migrated:2};
       save(); render(); toast("اتمسح"); buzz(40); }});
 }

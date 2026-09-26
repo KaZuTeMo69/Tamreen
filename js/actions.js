@@ -31,17 +31,18 @@ function pinVideo(id){
   sheet({text:"لينك يوتيوب للتمرين",body:"سيبه فاضي للرجوع للبحث التلقائي.",value:D.videos[id]||"",yes:"ثبّت",
     onYes:v=>{ v.trim()?D.videos[id]=v.trim():delete D.videos[id]; save(); render(false); toast("اتثبّت"); }});
 }
+/* FIX: works in the exercise's unit, with the bar and plates from settings */
 function plateCalc(id){
-  const u=unitOf(id);
-  sheet({text:"حاسبة أوزان البار",body:`وزن البار الحالي ${D.bar} كجم. اكتب الوزن الكلي المطلوب.`,value:"",type:"number",yes:"احسب",
+  const u=draft?.units[id]||unitOf(id),lb=u==="lb",bar=lb?D.barLb:D.bar,plates=lb?D.platesLb:D.plates,U=UL[u];
+  sheet({text:"حاسبة أوزان البار",body:`وزن البار ${bar} ${U}. اكتب الوزن الكلي المطلوب.`,value:"",type:"number",yes:"احسب",
     onYes:v=>{
       const total=num(v); if(!total) return;
-      let side=(total-D.bar)/2;
-      if(side<0) return sheet({text:"الوزن أقل من البار نفسه",body:`البار لوحده ${D.bar} كجم.`,yes:"تمام"});
+      let side=(total-bar)/2;
+      if(side<0) return sheet({text:"الوزن أقل من البار نفسه",body:`البار لوحده ${bar} ${U}.`,yes:"تمام"});
       const out=[];
-      PLATES.forEach(p=>{ const n=Math.floor(side/p+1e-9); if(n){ out.push(`${n} × ${p}`); side=+(side-n*p).toFixed(2); } });
-      sheet({text:`${total} كجم = بار ${D.bar} + على كل جنب:`,
-        body:(out.join("\n")||"لا شيء")+(side>0.01?`\n(باقي ${side} كجم مش مظبوط بالأوزان المتاحة)`:""),yes:"تمام"});
+      plates.forEach(p=>{ const n=Math.floor(side/p+1e-9); if(n){ out.push(`${n} × ${p}`); side=+(side-n*p).toFixed(2); } });
+      sheet({text:`${total} ${U} = بار ${bar} + على كل جنب:`,
+        body:(out.join("\n")||"لا شيء")+(side>0.01?`\n(باقي ${side} ${U} مش مظبوط بالأوزان المتاحة)`:""),yes:"تمام"});
     }});
 }
 function pickDate(){
@@ -53,11 +54,12 @@ function pickDate(){
 function blankDraft(workout,date,edit){
   const entries={},counts={},rir={},units={},names={},sides={};
   PROGRAM[workout].ex.forEach(e=>{
-    const all=edit==null?(lastFor(e.id,date)?.all||[]):[];
+    const l=edit==null?lastFor(e.id,date):null, all=l?.all||[], u=unitOf(e.id);
+    const w=v=>!v?"":l.u===u?v:String(conv(v,l.u,u));   // FIX: last weights in today's unit
     let done=all.length; while(done&&!all[done-1].r) done--;
     counts[e.id]=Math.max(e.sets,done);
-    entries[e.id]=Array.from({length:counts[e.id]},(_,i)=>({w:all[i]?.w||"",r:"",r2:"",warm:!!all[i]?.warm}));
-    units[e.id]=unitOf(e.id); names[e.id]=nameOf(e); sides[e.id]=perSide(e.id);
+    entries[e.id]=Array.from({length:counts[e.id]},(_,i)=>({w:w(all[i]?.w),r:"",r2:"",warm:!!all[i]?.warm}));
+    units[e.id]=u; names[e.id]=nameOf(e); sides[e.id]=perSide(e.id);
   });
   return {workout,entries,counts,rir,units,names,sides,date,edit};
 }
@@ -108,14 +110,35 @@ function delSession(){
   sheet({text:"تحذف الحصة دي نهائيًا؟",yes:"حذف",danger:true,
     onYes:()=>{ D.sessions.splice(i,1); draft=null; save(); tab="log"; render(); toast("اتحذفت"); buzz(30); }});
 }
-function addWaist(){
-  const v=num(document.getElementById("waist").value);
+/* waist and bodyweight logs (see LOGS in views.js) */
+function addLog(key){
+  const L=LOGS[key],v=num(document.getElementById("log-"+key).value);
   if(!v){ toast("اكتب رقم"); return; }
-  D.waist.push({date:today(),cm:v}); save(); render(false); toast("اتسجّل ✓");
+  D[key].push({date:today(),[L.f]:+L.store(v).toFixed(3)}); save(); render(false); toast("اتسجّل ✓");
 }
-function editWaist(i){
-  sheet({text:`قياس ${fdate(D.waist[i].date)}`,body:"سيبه فاضي عشان يتمسح.",value:String(D.waist[i].cm),yes:"حفظ",
+function editLog(key,i){
+  const L=LOGS[key],x=D[key][i];
+  sheet({text:`${L.title} — ${fdate(x.date)}`,body:"سيبه فاضي عشان يتمسح.",value:String(L.show(x[L.f])),yes:"حفظ",
     onYes:v=>{ const n=num(v);
-      if(!v.trim()||!n) D.waist.splice(i,1); else D.waist[i].cm=n;
+      if(!v.trim()||!n) D[key].splice(i,1); else x[L.f]=+L.store(n).toFixed(3);
       save(); render(false); toast(n?"اتعدّل":"اتحذف"); }});
+}
+/* ══ settings ═════════════════════════════════════════ */
+function go(t){ tab=t; buzz(10); render(); }
+function saved(){ save(); render(false); toast("اتحفظ"); }
+/* a number from a settings field, or null (and the field is reset) when it's out of range */
+function setting(v,lo,hi,msg){
+  const t=normNum(v),n=+t;
+  if(!t||isNaN(n)||n<lo||n>hi){ toast(msg); render(false); return null; }
+  return n;
+}
+function setName(v){ D.name=v.trim().slice(0,30); saved(); }
+function setDefUnit(u){ D.unit=u; saved(); }
+function setGoal(v){ const n=setting(v,1,31,"الهدف من ١ لـ ٣١"); if(n!==null){ D.goal=Math.round(n); saved(); } }
+function setRest(i,v){ const n=setting(v,5,900,"الراحة من ٥ لـ ٩٠٠ ثانية"); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
+function setBar(u,v){ const n=setting(v,0,200,"اكتب وزن البار"); if(n!==null){ D[u==="lb"?"barLb":"bar"]=n; saved(); } }
+function setPlates(u,v){
+  const L=[...new Set(v.split(/[\s,،;]+/).map(num).filter(x=>x>0))].sort((a,b)=>b-a);
+  if(!L.length){ toast("اكتب الأوزان مفصولة بفاصلة"); render(false); return; }
+  D[u==="lb"?"platesLb":"plates"]=L; saved();
 }
