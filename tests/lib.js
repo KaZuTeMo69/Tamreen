@@ -8,7 +8,7 @@ const state={browser:null,base:"",passed:0,failed:0,
 async function open(opts={}){
   const ctx=await state.browser.newContext({
     viewport:{width:390,height:844}, timezoneId:opts.tz||"Africa/Cairo", locale:"ar-EG",
-    permissions:opts.permissions||[], serviceWorkers:opts.serviceWorkers||"block"});
+    permissions:opts.permissions||[], serviceWorkers:opts.serviceWorkers||"block", colorScheme:opts.colorScheme||"light"});
   const p=await ctx.newPage(); p.errs=[];
   p.on("pageerror",e=>p.errs.push(String(e)));
   await p.route(/fonts\.(googleapis|gstatic)/,r=>r.abort());

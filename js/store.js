@@ -1,6 +1,6 @@
 /* ══ state ════════════════════════════════════════════ */
 /* everything the app stores; settings live here too (name, units, goal, rest, bar & plates) */
-const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},program:null,retired:{},
+const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},program:null,retired:{},theme:"auto",
   name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],
   lastBackup:0,changedAt:0,migrated:0});
 let D=defaults();
@@ -25,6 +25,16 @@ try{
   }
 }catch(e){}
 loadProgram();
+/* FEATURE: dark mode. "auto" follows the phone; "light" / "dark" force it (the CSS reads data-theme).
+   The browser bar colour (theme-color) follows the page background. */
+function applyTheme(){
+  const el=document.documentElement;
+  if(D.theme==="light"||D.theme==="dark") el.dataset.theme=D.theme; else delete el.dataset.theme;
+  const bg=getComputedStyle(el).getPropertyValue("--bg").trim();
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{ m.content=bg; });
+}
+applyTheme();
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",applyTheme);
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
 /* FIX: the open workout is stored on every change, so a reload or a killed tab doesn't lose it */
 const DRAFT_KEY=KEY+"-draft";

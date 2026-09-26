@@ -180,6 +180,7 @@ function setting(v,lo,hi,msg){
 }
 function setName(v){ D.name=v.trim().slice(0,30); saved(); }
 function setDefUnit(u){ D.unit=u; saved(); }
+function setTheme(t){ D.theme=t; applyTheme(); saved(); }
 function setGoal(v){ const n=setting(v,1,31,"الهدف من ١ لـ ٣١"); if(n!==null){ D.goal=Math.round(n); saved(); } }
 function setRest(i,v){ const n=setting(v,5,900,"الراحة من ٥ لـ ٩٠٠ ثانية"); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
 function setBar(u,v){ const n=setting(v,0,200,"اكتب وزن البار"); if(n!==null){ D[u==="lb"?"barLb":"bar"]=n; saved(); } }

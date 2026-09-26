@@ -1,6 +1,18 @@
-/* --muted is secondary text: #736A60 clears 4.5:1 on both --card and --bg (the old #8C8378 was 3.6:1) */
+/* Colour tokens. Every text pair clears 4.5:1 and every chart mark 3:1 against its surface, in both
+   themes (checked with the dataviz contrast tool). --muted is secondary text; --on-ink is text on an
+   --ink fill (buttons, toast, timer); --field is an input's background. */
 :root{--bg:#F2EEE7;--card:#FCFAF6;--ink:#2A211B;--muted:#736A60;--line:#E7E1D7;
-  --sage:#D8E6C7;--sage-ink:#4A6138;--clay:#F6E5D8;--clay-ink:#8A4A20;--r:22px}
+  --sage:#D8E6C7;--sage-ink:#4A6138;--clay:#F6E5D8;--clay-ink:#8A4A20;--r:22px;
+  --on-ink:#FCFAF6;--field:#FFFFFF;--wash:rgba(252,250,246,.18);--scrim:rgba(42,33,27,.42);--shadow:rgba(42,33,27,.15);
+  color-scheme:light}
+/* FEATURE: dark mode — follows the phone unless Settings forces light or dark (data-theme on <html>).
+   The two blocks are the same values: one for "follow the phone", one for "always dark". */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171411;--card:#221E1A;--ink:#F2EEE7;--muted:#A69C90;
+  --line:#3A332C;--sage:#2E3D25;--sage-ink:#C9E0AE;--clay:#43291B;--clay-ink:#F4B893;
+  --on-ink:#171411;--field:#1C1916;--wash:rgba(23,20,17,.14);--scrim:rgba(0,0,0,.6);--shadow:rgba(0,0,0,.45);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#171411;--card:#221E1A;--ink:#F2EEE7;--muted:#A69C90;
+  --line:#3A332C;--sage:#2E3D25;--sage-ink:#C9E0AE;--clay:#43291B;--clay-ink:#F4B893;
+  --on-ink:#171411;--field:#1C1916;--wash:rgba(23,20,17,.14);--scrim:rgba(0,0,0,.6);--shadow:rgba(0,0,0,.45);color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:'Tajawal','DM Sans',system-ui,sans-serif;
@@ -22,7 +34,7 @@ h1{font-size:36px;font-weight:800;letter-spacing:-.5px;margin:12px 0 0}
 button,a.chip,select,label.chip{transition:transform .08s ease,filter .12s ease,background .12s ease}
 button:active,a.chip:active,label.chip:active{transform:scale(.96);filter:brightness(.93)}
 .btn{display:block;width:100%;border:0;border-radius:999px;padding:18px;font-family:inherit;
-  font-size:17px;font-weight:700;background:var(--ink);color:#FCFAF6;cursor:pointer}
+  font-size:17px;font-weight:700;background:var(--ink);color:var(--on-ink);cursor:pointer}
 .btn.light{background:var(--card);color:var(--ink)}
 .btn.sage{background:var(--sage);color:var(--sage-ink)}
 .btn.danger{background:var(--clay);color:var(--clay-ink)}
@@ -30,7 +42,7 @@ button:active,a.chip:active,label.chip:active{transform:scale(.96);filter:bright
 .chip{display:inline-block;border-radius:999px;padding:6px 13px;font-size:12px;font-weight:700;
   background:var(--bg);color:var(--muted);border:0;font-family:inherit;cursor:pointer;text-decoration:none}
 .chip.on{background:var(--sage);color:var(--sage-ink)}
-.chip.ink{background:var(--ink);color:#FCFAF6}
+.chip.ink{background:var(--ink);color:var(--on-ink)}
 .chip.tag{background:transparent;color:var(--muted);border:1px solid var(--line);cursor:default}
 .chip.tag:active{transform:none;filter:none}
 .chip.w{padding:6px 9px;font-size:11px}
@@ -43,15 +55,15 @@ button:active,a.chip:active,label.chip:active{transform:scale(.96);filter:bright
 .ctrls{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:12px}
 /* text fields and selects stay at 16px+ so iPhone doesn't zoom in when one is tapped */
 select{font-family:inherit;font-size:16px;font-weight:700;border:1px solid var(--line);
-  background:#fff;border-radius:999px;padding:3px 8px;color:var(--ink)}
+  background:var(--field);border-radius:999px;padding:3px 8px;color:var(--ink)}
 select.big{font-size:16px;padding:12px 16px;width:100%;border-radius:16px}
 .sets{margin-top:12px;display:flex;flex-direction:column;gap:8px}
 .set{display:flex;align-items:center;gap:6px}
 .set .i{width:18px;font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;flex:none}
 .set.warm input{background:var(--bg);opacity:.75}
 input{font-family:'DM Sans',sans-serif;font-size:17px;text-align:center;width:100%;min-width:0;
-  padding:12px 4px;border:1px solid var(--line);background:#fff;border-radius:14px;color:var(--ink)}
-input:focus{outline:2px solid var(--sage);outline-offset:-2px}
+  padding:12px 4px;border:1px solid var(--line);background:var(--field);border-radius:14px;color:var(--ink)}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--sage-ink);outline-offset:-2px}
 .hint{font-size:11px;color:var(--muted);text-align:center;font-family:'DM Sans',sans-serif}
 .hints{display:flex;gap:6px;margin-bottom:-2px}
 .hints .i{width:18px;flex:none}
@@ -80,7 +92,7 @@ input:focus{outline:2px solid var(--sage);outline-offset:-2px}
 .chart .hit:focus-visible{stroke:var(--sage-ink);stroke-width:2}
 .ctip{position:absolute;top:0;transform:translate(-50%,-100%);background:var(--ink);color:var(--card);border-radius:10px;
   padding:6px 10px;font-size:12px;line-height:1.35;white-space:nowrap;pointer-events:none;z-index:3;text-align:center;
-  box-shadow:0 4px 14px rgba(42,33,27,.18)}
+  box-shadow:0 4px 14px var(--shadow)}
 .ctip b{display:block;font-size:14px}
 .tbl{margin-top:10px}
 .tbl summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);padding:6px 0}
@@ -100,19 +112,19 @@ input:focus{outline:2px solid var(--sage);outline-offset:-2px}
 .day.future{color:var(--muted);opacity:.55}
 nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));
   width:min(430px,calc(100% - 36px));background:var(--card);border-radius:999px;padding:8px;display:flex;
-  box-shadow:0 6px 28px rgba(42,33,27,.13);z-index:20}
+  box-shadow:0 6px 28px var(--shadow);z-index:20}
 nav button{flex:1;border:0;background:none;font-family:inherit;font-size:12px;font-weight:700;color:var(--muted);
   padding:10px 4px;border-radius:999px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
 nav button.on{background:var(--bg);color:var(--ink)}
 nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 #timer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));
-  width:min(430px,calc(100% - 36px));background:var(--ink);color:#FCFAF6;border-radius:999px;padding:12px 20px;
-  display:none;align-items:center;justify-content:space-between;z-index:21;box-shadow:0 6px 28px rgba(42,33,27,.2)}
+  width:min(430px,calc(100% - 36px));background:var(--ink);color:var(--on-ink);border-radius:999px;padding:12px 20px;
+  display:none;align-items:center;justify-content:space-between;z-index:21;box-shadow:0 6px 28px var(--shadow)}
 #timer.on{display:flex}
 #timer b{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700}
-#timer button{background:rgba(252,250,246,.18);color:#FCFAF6;border:0;border-radius:999px;
+#timer button{background:var(--wash);color:var(--on-ink);border:0;border-radius:999px;
   padding:8px 16px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}
-#modal{position:fixed;inset:0;background:rgba(42,33,27,.42);display:none;align-items:flex-end;
+#modal{position:fixed;inset:0;background:var(--scrim);display:none;align-items:flex-end;
   justify-content:center;z-index:40;padding:18px}
 #modal.on{display:flex}
 #modal .sheet{background:var(--card);border-radius:26px;padding:22px;width:100%;max-width:430px;animation:up .18s ease-out;
@@ -121,7 +133,7 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;st
 #modal p{margin:0 0 4px;font-size:17px;font-weight:700}
 #mbody{font-size:14px;color:var(--muted);white-space:pre-line;margin-top:8px}
 #marea{display:block;width:100%;height:40vh;margin-top:10px;padding:10px;resize:none;direction:ltr;text-align:left;
-  font-family:'DM Sans',sans-serif;font-size:16px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink)}
+  font-family:'DM Sans',sans-serif;font-size:16px;border:1px solid var(--line);border-radius:14px;background:var(--field);color:var(--ink)}
 #marea.hide{display:none}
 #mform{display:flex;flex-direction:column;gap:12px;margin-top:14px}
 #mform.hide{display:none}
@@ -132,13 +144,13 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;st
 .check input{width:20px;height:20px;padding:0;flex:none;accent-color:var(--sage-ink)}
 .chip:disabled{opacity:.35;cursor:default}
 .note-in{display:block;width:100%;min-height:84px;padding:10px 12px;resize:vertical;font-family:inherit;font-size:16px;
-  line-height:1.5;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink)}
+  line-height:1.5;border:1px solid var(--line);border-radius:14px;background:var(--field);color:var(--ink)}
 .prow{padding:14px 0}
 .prow+.prow{border-top:1px solid var(--line)}
 #modal .mbtns{display:flex;gap:10px;margin-top:16px}
 #modal .mbtns .btn{padding:15px;font-size:16px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom));
-  background:var(--ink);color:#FCFAF6;padding:11px 20px;border-radius:999px;font-size:14px;font-weight:700;
+  background:var(--ink);color:var(--on-ink);padding:11px 20px;border-radius:999px;font-size:14px;font-weight:700;
   z-index:45;opacity:0;pointer-events:none;transition:opacity .2s;max-width:88%;text-align:center}
 #toast.on{opacity:1}
 body.timing #toast{bottom:calc(160px + env(safe-area-inset-bottom))}

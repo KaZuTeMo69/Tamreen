@@ -74,6 +74,13 @@ GitHub Pages publishes the `main` branch automatically.
 - The icons are PNG exports of `icons/icon.svg` (the maskable one has the dumbbell at 70%).
 - Take a backup from the app before a big update.
 
+## Colours and dark mode
+
+All colours are CSS tokens at the top of `css/app.css`: a light set, and a dark set used when the phone
+is in dark mode (or when Settings → المظهر forces it). Use the tokens for anything new — the theme
+test fails on a hard-coded colour. Every text pair is at least 4.5:1 and every chart mark 3:1 in both
+themes.
+
 ## Offline and install
 
 After the first visit with a connection, the app opens with no signal: the page is fetched fresh when

@@ -199,6 +199,8 @@ function vSet(){
     ${row("الوحدة الأساسية",`<span>${["kg","lb"].map(u=>
       `<button class="chip ${D.unit===u?"on":""}" onclick="setDefUnit('${u}')">${u}</button>`).join(" ")}</span>`)}
     ${row("هدف الحصص في الشهر",field(D.goal,"setGoal(this.value)","numeric"))}
+    ${row("المظهر",`<span>${[["auto","زي الموبايل"],["light","فاتح"],["dark","غامق"]].map(([t,label])=>
+      `<button class="chip ${(D.theme||"auto")===t?"on":""}" onclick="setTheme('${t}')">${label}</button>`).join(" ")}</span>`)}
   </div>
   <div class="small muted" style="margin-top:8px">الوحدة الأساسية للتمارين اللي ماختارتلهاش وحدة، ولوزن الجسم.</div>
 

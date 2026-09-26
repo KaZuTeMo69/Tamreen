@@ -143,6 +143,7 @@ function cleanBackup(obj){
   if(has("videos")) d.videos=map(obj.videos,safeUrl);
   if(PROGRAM[obj.cursor]) d.cursor=obj.cursor;
   if(obj.unit==="kg"||obj.unit==="lb") d.unit=obj.unit;
+  if(["auto","light","dark"].includes(obj.theme)) d.theme=obj.theme;
   if(has("name")) d.name=String(obj.name).slice(0,30);
   d.goal=Math.round(numIn(obj.goal,1,31,d.goal));
   if(Array.isArray(obj.rest)) d.rest=[0,1].map(i=>Math.round(numIn(obj.rest[i],5,900,d.rest[i])));
@@ -153,7 +154,7 @@ function cleanBackup(obj){
   return d;
 }
 function restore(){ document.getElementById("restoreFile").click(); }
-function restored(){ loadProgram(); migrate(); D.lastBackup=D.changedAt=Date.now(); save(); draft=null; tab="log"; render(); toast("اترجّعت ✓"); }
+function restored(){ loadProgram(); applyTheme(); migrate(); D.lastBackup=D.changedAt=Date.now(); save(); draft=null; tab="log"; render(); toast("اترجّعت ✓"); }
 document.getElementById("restoreFile").addEventListener("change",e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const rd=new FileReader();
@@ -196,6 +197,6 @@ async function exportCSV(){
 }
 function wipe(){
   sheet({text:"هيتمسح كل السجل نهائيًا",body:"اعمل نسخة احتياطية الأول لو مش متأكد.",yes:"امسح الكل",danger:true,
-    onYes:()=>{ D={...defaults(),migrated:2}; loadProgram();
+    onYes:()=>{ D={...defaults(),migrated:2}; loadProgram(); applyTheme();
       save(); render(); toast("اتمسح"); buzz(40); }});
 }
