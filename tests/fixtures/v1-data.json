@@ -1,0 +1,643 @@
+{
+ "cursor": "B",
+ "sessions": [
+  {
+   "date": "2026-08-23",
+   "workout": "A",
+   "entries": {
+    "a1": [
+     {
+      "w": "60",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "80",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "100",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a2": [
+     {
+      "w": "10",
+      "r": "12",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "12",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "14",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a3": [
+     {
+      "w": "25",
+      "r": "12",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "35",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "45",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a4": [
+     {
+      "w": "12",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "14",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "16",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a5": [
+     {
+      "w": "5",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     },
+     {
+      "w": "7.5",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     },
+     {
+      "w": "10",
+      "r": "6",
+      "r2": "5",
+      "warm": false
+     }
+    ],
+    "a6": [
+     {
+      "w": "",
+      "r": "20",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     }
+    ]
+   },
+   "units": {
+    "a1": "kg",
+    "a2": "kg",
+    "a3": "kg",
+    "a4": "kg",
+    "a5": "kg",
+    "a6": "kg"
+   },
+   "names": {
+    "a3": "Chest Cable Row",
+    "a1": "Leg Press / Hack Squat",
+    "a2": "Incline Dumbbell Press",
+    "a4": "Dumbbell RDL",
+    "a5": "Lateral Raises",
+    "a6": "Hanging Knee Raises"
+   },
+   "counts": {
+    "a1": 3,
+    "a2": 3,
+    "a3": 3,
+    "a4": 3,
+    "a5": 3,
+    "a6": 3
+   },
+   "rir": {}
+  },
+  {
+   "date": "2026-08-24",
+   "workout": "B",
+   "entries": {
+    "b1": [
+     {
+      "w": "",
+      "r": "2",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "2",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "0",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "0",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "b2": [
+     {
+      "w": "2.5",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     },
+     {
+      "w": "5",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     },
+     {
+      "w": "10",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     }
+    ],
+    "b3": [
+     {
+      "w": "8",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     },
+     {
+      "w": "12",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     },
+     {
+      "w": "14",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     }
+    ],
+    "b4": [
+     {
+      "w": "25",
+      "r": "12",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "35",
+      "r": "11",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "50",
+      "r": "8",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "b5": [
+     {
+      "w": "7",
+      "r": "12",
+      "r2": "12",
+      "warm": false
+     },
+     {
+      "w": "9",
+      "r": "11",
+      "r2": "11",
+      "warm": false
+     },
+     {
+      "w": "12",
+      "r": "7",
+      "r2": "7",
+      "warm": false
+     }
+    ],
+    "b6": [
+     {
+      "w": "",
+      "r": "38",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "32",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "30",
+      "r2": "",
+      "warm": false
+     }
+    ]
+   },
+   "units": {
+    "b1": "kg",
+    "b2": "kg",
+    "b3": "kg",
+    "b4": "kg",
+    "b5": "kg",
+    "b6": "kg"
+   },
+   "names": {
+    "b1": "Pull-up (assisted)",
+    "b2": "Bulgarian Split Squat",
+    "b3": "Seated DB Shoulder Press",
+    "b4": "Lying Leg Curl",
+    "b5": "Incline Dumbbell Curl",
+    "b6": "Hollow Body Hold"
+   },
+   "counts": {
+    "b1": 4,
+    "b2": 3,
+    "b3": 3,
+    "b4": 3,
+    "b5": 3,
+    "b6": 3
+   },
+   "rir": {}
+  },
+  {
+   "date": "2026-08-27",
+   "workout": "C",
+   "entries": {
+    "c1": [
+     {
+      "w": "",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "9",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "7",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "6",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "c2": [
+     {
+      "w": "20",
+      "r": "8",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "30",
+      "r": "7",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "40",
+      "r": "5",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "c3": [
+     {
+      "w": "12",
+      "r": "12",
+      "r2": "12",
+      "warm": false
+     },
+     {
+      "w": "14",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     },
+     {
+      "w": "18",
+      "r": "10",
+      "r2": "10",
+      "warm": false
+     }
+    ],
+    "c4b": [
+     {
+      "w": "40",
+      "r": "12",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "45",
+      "r": "11",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "50",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "c5": [
+     {
+      "w": "12.5",
+      "r": "12",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "15",
+      "r": "15",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "20",
+      "r": "12",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "c6": [
+     {
+      "w": "10",
+      "r": "15",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "20",
+      "r": "13",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "20",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "30",
+      "r": "10",
+      "r2": "",
+      "warm": false
+     }
+    ]
+   },
+   "units": {
+    "c1": "kg",
+    "c2": "kg",
+    "c3": "kg",
+    "c4b": "kg",
+    "c5": "kg",
+    "c6": "kg"
+   },
+   "names": {
+    "c4b": "Seated Leg Curl",
+    "c6": "Seated Calf Raise",
+    "c1": "Dips",
+    "c2": "Flat Barbell Bench Press",
+    "c3": "Single-Arm Dumbbell Row",
+    "c5": "Face Pulls"
+   },
+   "counts": {
+    "c1": 4,
+    "c2": 3,
+    "c3": 3,
+    "c4b": 3,
+    "c5": 3,
+    "c6": 4
+   },
+   "rir": {}
+  },
+  {
+   "date": "2026-09-26",
+   "workout": "A",
+   "entries": {
+    "a1": [
+     {
+      "w": "110",
+      "r": "9",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "80",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "100",
+      "r": "",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a2": [
+     {
+      "w": "10",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "12",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "14",
+      "r": "",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a3": [
+     {
+      "w": "25",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "35",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "45",
+      "r": "",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a4": [
+     {
+      "w": "12",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "14",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "16",
+      "r": "",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a5": [
+     {
+      "w": "5",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "7.5",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "10",
+      "r": "",
+      "r2": "",
+      "warm": false
+     }
+    ],
+    "a6": [
+     {
+      "w": "",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "",
+      "r2": "",
+      "warm": false
+     },
+     {
+      "w": "",
+      "r": "",
+      "r2": "",
+      "warm": false
+     }
+    ]
+   },
+   "units": {
+    "a1": "kg",
+    "a2": "kg",
+    "a3": "kg",
+    "a4": "kg",
+    "a5": "kg",
+    "a6": "kg"
+   },
+   "names": {
+    "a1": "Leg Press / Hack Squat",
+    "a2": "Incline Dumbbell Press",
+    "a3": "Chest Cable Row",
+    "a4": "Dumbbell RDL",
+    "a5": "Lateral Raises",
+    "a6": "Hanging Knee Raises"
+   },
+   "counts": {
+    "a1": 3,
+    "a2": 3,
+    "a3": 3,
+    "a4": 3,
+    "a5": 3,
+    "a6": 3
+   },
+   "rir": {}
+  }
+ ],
+ "waist": [],
+ "units": {},
+ "sides": {
+  "a5": true,
+  "b2": true,
+  "b3": true,
+  "b5": true,
+  "c3": true
+ },
+ "swaps": {
+  "a3": "Chest Cable Row",
+  "c6": "Seated Calf Raise"
+ },
+ "videos": {},
+ "bar": 20,
+ "migrated": 2
+}

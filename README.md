@@ -26,6 +26,8 @@ js/backup.js      JSON backup / restore, CSV import / export, share / copy helpe
 js/coach.js       builds the "Ask Claude" message for a session
 js/main.js        wires the tab bar and draws the first screen
 .nojekyll         tells GitHub Pages to serve files as-is (no Jekyll)
+tests/            browser tests (not used by the app itself)
+package.json      only for the tests
 ```
 
 The scripts are classic `<script>` tags (not modules) and share one global scope,
@@ -40,6 +42,21 @@ python3 -m http.server 8000
 ```
 
 then open http://localhost:8000.
+
+## Tests
+
+The tests drive the real app in a headless Chrome (Playwright), on a phone-sized screen in Cairo time,
+with fresh storage for every scenario. Needs Node.js 20+.
+
+```
+npm install
+npx playwright install chromium   # first time only
+npm test                          # all suites
+npm test -- backup                # only suites whose file name contains "backup"
+```
+
+Each `tests/*.test.js` file covers one batch of changes. `tests/fixtures/v1-data.json` is data saved by
+the original single-file app, used to check that old data still loads.
 
 ## Deploying changes
 
