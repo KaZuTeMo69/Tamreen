@@ -6,6 +6,10 @@ Plain HTML, CSS and JavaScript — no build step, no libraries. Hosted on GitHub
 All data lives in the phone's browser storage (`localStorage`, key `tamreen-v2`).
 Use the backup buttons in the السجل tab — there is no other copy.
 
+**Ask Claude:** the "🤖 اسأل Claude عن الحصة" button on a workout (new or opened from the log)
+turns it into a ready-to-paste message — today's sets, the date and recent history per exercise — and
+opens the share sheet (phone) or copies it (computer). Paste it into the Claude chat; no API key or cost.
+
 ## Files
 
 ```
@@ -16,9 +20,10 @@ js/seed.js        the first three sessions, loaded on a fresh install
 js/store.js       app state, load / save, small helpers, data migration
 js/maths.js       volume, best set, next-weight suggestion
 js/ui.js          bottom sheet, toast, rest timer
-js/views.js       the screens (plan, session, progress, log) and render()
+js/views.js       the screens (plan, session, progress, log, settings) and render()
 js/actions.js     what the buttons do
-js/backup.js      JSON backup / restore, CSV import / export, wipe
+js/backup.js      JSON backup / restore, CSV import / export, share / copy helpers, wipe
+js/coach.js       builds the "Ask Claude" message for a session
 js/main.js        wires the tab bar and draws the first screen
 .nojekyll         tells GitHub Pages to serve files as-is (no Jekyll)
 ```

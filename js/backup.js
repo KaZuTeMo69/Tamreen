@@ -14,6 +14,16 @@ async function giveFile(name,text,type){
   }
   dl(name,text,type); return true;
 }
+/* same idea for plain text: share sheet on phones (Copy, Claude, WhatsApp…), clipboard elsewhere,
+   and a copyable box when neither is allowed */
+async function giveText(text){
+  if(matchMedia("(pointer:coarse)").matches&&navigator.share){
+    try{ await navigator.share({text}); return; }
+    catch(e){ if(e.name==="AbortError") return; }
+  }
+  try{ await navigator.clipboard.writeText(text); toast("اتنسخ — افتح Claude والصقه"); return; }catch(e){}
+  sheet({text:"انسخ الرسالة دي والصقها في Claude",area:text,yes:"تمام"});
+}
 async function backup(){
   if(!await giveFile(`tamreen-backup-${today()}.json`,JSON.stringify(D),"application/json")) return;
   D.lastBackup=Date.now(); save(); render(false); toast("النسخة اتحفظت");

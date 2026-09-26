@@ -96,6 +96,7 @@ function vSession(){
   <div style="margin-top:20px">
     <button class="btn" id="fin" onclick="finish()">${editing?"حفظ التعديلات":"إنهاء الحصة"}</button>
     <div class="small muted num" id="cnt" style="text-align:center;margin-top:10px"></div>
+    <div style="margin-top:12px"><button class="btn light" onclick="askClaude()">🤖 اسأل Claude عن الحصة</button></div>
     ${editing?`<div style="margin-top:12px"><button class="btn danger" onclick="delSession()">حذف الحصة</button></div>`:""}</div>`;
 }
 
