@@ -139,8 +139,8 @@ function vProg(){
   const groups=[...ORDER.map(k=>[PROGRAM[k].label,PROGRAM[k].ex]),...(old.length?[["تمارين مش في البرنامج",old]]:[])];
   if(!groups.some(([,list])=>list.some(e=>e.id===progEx))) progEx=PROGRAM[ORDER[0]].ex[0].id;
   const ex=exDef(progEx),u=unitOf(progEx),h=historyOf(progEx).map(x=>({date:x.date,t:topSet(x)}));
-  const max=Math.max(1,...h.map(x=>x.t.sc)),peak=Math.max(0,...h.map(x=>x.t.sc));
-  const noBw=ex.addw&&!D.bw.length;
+  const noBw=ex.addw&&!D.bw.length,weighted=!(ex.eq==="body"&&!ex.addw);
+  const weeks=weekSeries(),U=D.unit;
   /* FIX: shown in the exercise's unit, as a left-to-right block so "kg" doesn't reorder the numbers;
      dips / pull-ups say what the number is */
   const setText=t=>t.kg?`${ex.assist?"مساعدة ":""}<span dir="ltr">${ex.addw&&!ex.assist?"+":""}${wIn(t,u)} ${esc(u)} × ${t.reps}</span>`
@@ -154,14 +154,30 @@ function vProg(){
       `<option value="${e.id}" ${e.id===progEx?"selected":""}>${esc(nameOf(e))}</option>`).join("")}</optgroup>`).join("")}
   </select>
   <div class="card" style="margin-top:12px">
-    ${h.length?`<div class="bars">${h.slice(-10).map(x=>
-      `<div class="${x.t.sc===peak?"best":""}" style="height:${Math.max(8,x.t.sc/max*100)}%"></div>`).join("")}</div>
-      <div style="margin-top:14px">${h.slice(-4).reverse().map(x=>`<div class="row">
+    ${h.length?`<div class="small muted">أحسن ست في كل حصة — ${noBw?"سجّل وزنك عشان تظهر الأرقام"
+        :weighted?`1RM تقديري بالـ${UL[u]}`:ex.sec?"بالثواني":"بالعدّات"}</div>
+      <div class="chart-host" id="ch-ex"></div>
+      <div style="margin-top:6px">${h.slice(-4).reverse().map(x=>`<div class="row">
         <div class="num" style="font-weight:700">${setText(x.t)}</div>
         <div class="small muted num">${fdate(x.date)}${rm(x.t)}</div></div>`).join("")}</div>
+      <details class="tbl"><summary>كل الحصص (${ar(h.length)})</summary><table>
+        <tr><th>التاريخ</th><th>أحسن ست</th>${noBw?"":`<th>${weighted?"1RM":ex.sec?"ثواني":"عدّات"}</th>`}</tr>
+        ${h.slice().reverse().map(x=>`<tr><td>${fdate(x.date)}</td><td class="num">${esc(setPlain(ex,x.t,u))}</td>${noBw?"":
+          `<td class="num">${Math.round(weighted?fromKg(x.t.sc,u):x.t.sc)}</td>`}</tr>`).join("")}</table></details>
       <div class="small muted" style="margin-top:12px">أعلى ست شغل في كل حصة (التسخين مستبعد).${
         ex.addw?(noBw?" سجّل وزن جسمك تحت عشان الحساب يبقى دقيق.":" محسوب بوزن جسمك."):""}</div>`
     :'<div class="muted small">التمرين ده لسه ماتسجلش.</div>'}
+  </div>
+
+  <div class="label">الحجم الأسبوعي</div>
+  <div class="card">
+    ${weeks.some(w=>w.n)?`<div class="small muted">مجموع الوزن × العدّات لكل أسبوع (من السبت) بالـ${UL[U]} — آخر ١٢ أسبوع</div>
+      <div class="chart-host" id="ch-week"></div>
+      <details class="tbl"><summary>الأرقام</summary><table>
+        <tr><th>الأسبوع</th><th>حصص</th><th>الحجم</th></tr>
+        ${weeks.slice().reverse().map((w,i)=>`<tr><td>${i?fdate(w.start):"الأسبوع ده"}</td><td class="num">${ar(w.n)}</td>
+          <td class="num">${Math.round(fromKg(w.kg,U)).toLocaleString("en")}</td></tr>`).join("")}</table></details>`
+    :'<div class="muted small">مفيش حصص في آخر ١٢ أسبوع.</div>'}
   </div>
 
   ${logCard("bw")}
@@ -246,9 +262,35 @@ function vProgram(){
   ${D.program?'<div style="margin-top:22px"><button class="btn danger" onclick="resetProgram()">رجّع البرنامج الأصلي</button></div>':""}`;
 }
 
+/* FEATURE: month calendar of training days (Saturday first, like the week in Egypt); tap a day to open it */
+function calendarCard(){
+  const m=calMonth||ym(today()),[Y,M]=m.split("-").map(Number),now=today();
+  const days=new Date(Y,M,0).getDate(),lead=(new Date(Y,M-1,1).getDay()+1)%7;
+  const byDate={}; D.sessions.forEach((s,i)=>{ if(ym(s.date)===m) (byDate[s.date]=byDate[s.date]||[]).push(i); });
+  const count=Object.keys(byDate).length,isNow=m===ym(now);
+  const cell=d=>{
+    const iso=`${m}-${pad2(d)}`,on=byDate[iso],letters=on?[...new Set(on.map(i=>D.sessions[i].workout))].join(" "):"";
+    const cls=["day",on?"on":"",iso===now?"today":"",iso>now?"future":""].join(" ");
+    const name=`${fdate(iso)}${on?` — ${on.map(i=>PROGRAM[D.sessions[i].workout].label).join("، ")}`:""}`;
+    return on?`<button class="${cls}" onclick="openSession(${on[on.length-1]})" aria-label="${esc(name)}">${ar(d)}<small>${letters}</small></button>`
+      :`<div class="${cls}" aria-label="${esc(name)}">${ar(d)}</div>`;
+  };
+  return `<div class="card cal">
+    <div class="cal-head">
+      <button class="chip" onclick="calShift(-1)" aria-label="الشهر اللي فات">›</button>
+      <div><b>${new Date(Y,M-1,1).toLocaleDateString("ar-EG",{month:"long",year:"numeric"})}</b>
+        <div class="small muted">${ar(count)} ${isNow?`من ${ar(D.goal)} `:""}أيام تمرين</div></div>
+      <button class="chip" onclick="calShift(1)" aria-label="الشهر الجاي" ${isNow?"disabled":""}>‹</button></div>
+    <div class="cal-grid">${["س","ح","ن","ث","ر","خ","ج"].map(d=>`<span class="dow">${d}</span>`).join("")}
+      ${"<span></span>".repeat(lead)}${Array.from({length:days},(_,i)=>cell(i+1)).join("")}</div>
+  </div>`;
+}
+
 function vLog(){
   const prs=recordMap();
   return `<div class="top"><div><h1>السجل</h1><div class="sub">${D.sessions.length} حصة</div></div>${avatar()}</div>
+  <div class="label">أيام التمرين</div>
+  ${calendarCard()}
   <div class="label">اضغط على أي حصة للتعديل أو الحذف</div>
   ${D.sessions.length?`<div class="card">${D.sessions.map((s,i)=>({s,i}))
     .sort((a,b)=>a.s.date<b.s.date?1:-1).map(({s,i})=>`
@@ -277,6 +319,7 @@ function render(toTop=true){
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===navTab));
   if(draft) refresh();
   saveDraft();
+  drawCharts();
   window.scrollTo(0,toTop?0:y);
 }
 function refresh(){

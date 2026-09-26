@@ -12,7 +12,8 @@ module.exports=async()=>{
   const base=await ev(()=>location.origin+"/");
   const html=await ev(()=>fetch("index.html").then(r=>r.text()));
   const files=linked(html).map(f=>base+f);
-  check("index links css, 10 scripts, manifest, 2 icons", files.length===14 && files.some(f=>f.endsWith("manifest.webmanifest")), files);
+  const scripts=await ev(()=>document.scripts.length);
+  check("index links css, every script, manifest, 2 icons", files.length===scripts+4 && files.some(f=>f.endsWith("manifest.webmanifest")), files);
 
   await ev(()=>navigator.serviceWorker.ready);
   const all=await until(async()=>{ const c=await cached(p); return files.every(f=>c.includes(f))&&c.includes(base+"index.html")&&c; });

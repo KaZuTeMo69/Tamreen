@@ -6,6 +6,7 @@ const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swa
 let D=defaults();
 let tab="plan",draft=null,tick=null,progEx="a1";
 let installPrompt=null;   // Chrome's "install app" prompt, kept for the button in Settings
+let calMonth=null;        // month shown in the log calendar, "YYYY-MM" (null = this month)
 
 try{
   const raw=localStorage.getItem(KEY);

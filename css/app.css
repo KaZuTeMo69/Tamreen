@@ -1,4 +1,5 @@
-:root{--bg:#F2EEE7;--card:#FCFAF6;--ink:#2A211B;--muted:#8C8378;--line:#E7E1D7;
+/* --muted is secondary text: #736A60 clears 4.5:1 on both --card and --bg (the old #8C8378 was 3.6:1) */
+:root{--bg:#F2EEE7;--card:#FCFAF6;--ink:#2A211B;--muted:#736A60;--line:#E7E1D7;
   --sage:#D8E6C7;--sage-ink:#4A6138;--clay:#F6E5D8;--clay-ink:#8A4A20;--r:22px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -62,9 +63,41 @@ input:focus{outline:2px solid var(--sage);outline-offset:-2px}
 .divider{display:flex;align-items:center;gap:10px;margin:22px 2px}
 .divider hr{flex:1;border:0;border-top:1px solid var(--line);margin:0}
 .divider b{font-size:13px;color:var(--sage-ink);background:var(--sage);padding:6px 12px;border-radius:999px}
-.bars{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:8px}
-.bars div{flex:1;background:var(--ink);border-radius:8px 8px 4px 4px;min-height:4px}
-.bars div.best{background:var(--sage-ink)}
+/* charts (js/charts.js): thin marks, hairline grid, best = sage, this week so far = muted */
+.chart-host{position:relative;margin-top:8px;min-height:164px}
+.chart{display:block;overflow:visible;direction:ltr;font-family:'DM Sans','Tajawal',sans-serif;touch-action:pan-y}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .tick{fill:var(--muted);font-size:11px}
+.chart .lbl{fill:var(--ink);font-size:12px;font-weight:700}
+.chart .ln{fill:none;stroke:var(--ink);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.chart .dot{fill:var(--ink);stroke:var(--card);stroke-width:2}
+.chart .bar{fill:var(--ink)}
+.chart .bar.partial{fill:var(--muted)}
+.chart .dot.best,.chart .bar.best{fill:var(--sage-ink)}
+.chart .bar.lift{opacity:.75}
+.chart .cross{stroke:var(--muted);stroke-width:1}
+.chart .hit{fill:transparent;cursor:pointer;outline:none}
+.chart .hit:focus-visible{stroke:var(--sage-ink);stroke-width:2}
+.ctip{position:absolute;top:0;transform:translate(-50%,-100%);background:var(--ink);color:var(--card);border-radius:10px;
+  padding:6px 10px;font-size:12px;line-height:1.35;white-space:nowrap;pointer-events:none;z-index:3;text-align:center;
+  box-shadow:0 4px 14px rgba(42,33,27,.18)}
+.ctip b{display:block;font-size:14px}
+.tbl{margin-top:10px}
+.tbl summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);padding:6px 0}
+.tbl table{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{color:var(--muted);font-weight:700;text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
+.tbl td{padding:6px 4px;border-bottom:1px solid var(--line)}
+/* log calendar */
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:center}
+.cal-head b{font-size:16px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px;text-align:center}
+.cal-grid .dow{font-size:11px;font-weight:700;color:var(--muted);padding-bottom:2px}
+.day{height:40px;border:0;border-radius:12px;padding:0;background:none;color:var(--ink);font-family:inherit;font-size:13px;
+  line-height:1.1;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.day small{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700}
+.day.on{background:var(--sage);color:var(--sage-ink);font-weight:700;cursor:pointer}
+.day.today{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.day.future{color:var(--muted);opacity:.55}
 nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom));
   width:min(430px,calc(100% - 36px));background:var(--card);border-radius:999px;padding:8px;display:flex;
   box-shadow:0 6px 28px rgba(42,33,27,.13);z-index:20}

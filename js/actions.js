@@ -21,6 +21,13 @@ function toggleSide(id){
   render(false);
 }
 function setProg(id){ progEx=id; render(false); }
+/* log calendar: move a month back / forward (not past this month) */
+function calShift(d){
+  const [Y,M]=(calMonth||ym(today())).split("-").map(Number),t=new Date(Y,M-1+d,1);
+  const m=`${t.getFullYear()}-${pad2(t.getMonth()+1)}`;
+  if(m>ym(today())) return;
+  calMonth=m===ym(today())?null:m; render(false);
+}
 function swap(id){
   const old=draft.edit!=null;
   sheet({text:"بدّل التمرين",

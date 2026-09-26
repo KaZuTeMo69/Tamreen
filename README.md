@@ -21,6 +21,7 @@ js/store.js       app state, load / save, small helpers, data migration
 js/maths.js       volume, best set, next-weight suggestion
 js/ui.js          bottom sheet, toast, rest timer
 js/views.js       the screens (plan, session, progress, log, settings) and render()
+js/charts.js      the SVG charts on the progress tab (drawn after render at the card's width)
 js/actions.js     what the buttons do
 js/backup.js      JSON backup / restore, CSV import / export, share / copy helpers, wipe
 js/coach.js       builds the "Ask Claude" message for a session
