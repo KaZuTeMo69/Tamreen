@@ -82,13 +82,24 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;st
 #modal{position:fixed;inset:0;background:rgba(42,33,27,.42);display:none;align-items:flex-end;
   justify-content:center;z-index:40;padding:18px}
 #modal.on{display:flex}
-#modal .sheet{background:var(--card);border-radius:26px;padding:22px;width:100%;max-width:430px;animation:up .18s ease-out}
+#modal .sheet{background:var(--card);border-radius:26px;padding:22px;width:100%;max-width:430px;animation:up .18s ease-out;
+  max-height:calc(100vh - 36px);overflow-y:auto}
 @keyframes up{from{transform:translateY(14px);opacity:.4}to{transform:none;opacity:1}}
 #modal p{margin:0 0 4px;font-size:17px;font-weight:700}
 #mbody{font-size:14px;color:var(--muted);white-space:pre-line;margin-top:8px}
 #marea{display:block;width:100%;height:40vh;margin-top:10px;padding:10px;resize:none;direction:ltr;text-align:left;
   font-family:'DM Sans',sans-serif;font-size:16px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink)}
 #marea.hide{display:none}
+#mform{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+#mform.hide{display:none}
+.flabel{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--muted)}
+.frow{display:flex;gap:8px}
+.ftext{text-align:right;font-family:inherit;font-size:16px}
+.check{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink)}
+.check input{width:20px;height:20px;padding:0;flex:none;accent-color:var(--sage-ink)}
+.chip:disabled{opacity:.35;cursor:default}
+.prow{padding:14px 0}
+.prow+.prow{border-top:1px solid var(--line)}
 #modal .mbtns{display:flex;gap:10px;margin-top:16px}
 #modal .mbtns .btn{padding:15px;font-size:16px}
 #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(100px + env(safe-area-inset-bottom));

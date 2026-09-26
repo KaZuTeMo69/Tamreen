@@ -102,8 +102,29 @@ function cleanSession(s){
   return out;
 }
 function cleanBackup(obj){
-  const d={...D},has=k=>obj[k]!==undefined&&obj[k]!==null,ids=new Set(ALL.map(e=>e.id));
+  const d={...D},has=k=>obj[k]!==undefined&&obj[k]!==null;
   const numIn=(v,lo,hi,def)=>{ const t=normNum(v),x=+t; return t&&!isNaN(x)&&x>=lo&&x<=hi?x:def; };
+  /* the program (all three days, each with at least one valid exercise) and taken-out exercises */
+  const cleanEx=e=>{
+    if(!e||typeof e!=="object"||!/^[a-z0-9]{1,24}$/i.test(String(e.id))||!EQ[e.eq]) return null;
+    const int=(v,lo,hi,def)=>Math.round(numIn(v,lo,hi,def));
+    const x={id:String(e.id),n:String(e.n??e.id).slice(0,80),eq:e.eq,sets:int(e.sets,1,10,3),lo:int(e.lo,1,100,8),hi:int(e.hi,1,100,12)};
+    if(x.hi<x.lo) x.hi=x.lo;
+    FLAGS.forEach(f=>{ if(e[f]) x[f]=true; });
+    return x;
+  };
+  if(obj.program===null) d.program=null;
+  else if(obj.program&&typeof obj.program==="object"){
+    const P={},seen=new Set();
+    const ok=ORDER.every(k=>{
+      const ex=(Array.isArray(obj.program[k]?.ex)?obj.program[k].ex:[]).map(cleanEx).filter(e=>e&&!seen.has(e.id)&&seen.add(e.id));
+      P[k]={label:DEFAULT_PROGRAM[k].label,tag:String(obj.program[k]?.tag??DEFAULT_PROGRAM[k].tag).slice(0,80),ex};
+      return ex.length>0;
+    });
+    if(ok) d.program=P;
+  }
+  if(has("retired")){ d.retired={}; Object.values(obj.retired).map(cleanEx).forEach(e=>{ if(e) d.retired[e.id]=e; }); }
+  const ids=new Set([...ALL.map(e=>e.id),...Object.values(d.program||{}).flatMap(p=>p.ex.map(e=>e.id)),...Object.keys(d.retired||{})]);
   const map=(src,ok)=>{ const m={}; for(const [id,v] of Object.entries(src||{})){ const x=ids.has(id)&&ok(v); if(x) m[id]=x; } return m; };
   const log=(L,f)=>(Array.isArray(L)?L:[]).filter(x=>isDate(x?.date)&&num(x[f])>0).map(x=>({date:x.date,[f]:num(x[f])}));
   const plates=(L,def)=>{ const x=Array.isArray(L)?[...new Set(L.map(num).filter(v=>v>0))].sort((a,b)=>b-a):[]; return x.length?x:def; };
@@ -126,12 +147,12 @@ function cleanBackup(obj){
   return d;
 }
 function restore(){ document.getElementById("restoreFile").click(); }
-function restored(){ migrate(); D.lastBackup=D.changedAt=Date.now(); save(); draft=null; tab="log"; render(); toast("اترجّعت ✓"); }
+function restored(){ loadProgram(); migrate(); D.lastBackup=D.changedAt=Date.now(); save(); draft=null; tab="log"; render(); toast("اترجّعت ✓"); }
 document.getElementById("restoreFile").addEventListener("change",e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const rd=new FileReader();
   rd.onload=()=>{
-    const txt=String(rd.result||"").replace(/^﻿/,"");
+    const txt=String(rd.result||"").replace(/^\uFEFF/,"");
     const isCSV=/\.csv$/i.test(f.name)||/^date,workout,exercise/i.test(txt.trim());
     try{
       if(isCSV){
@@ -164,10 +185,10 @@ async function exportCSV(){
       if(r.r||r.w) rows.push([s.date,s.workout,nameIn(s,id),id,i+1,r.warm?"warmup":"",r.w||"",
         s.units?.[id]||"kg",r.r||"",r.r2||"",s.rir?.[id]??""]);
     })));
-  if(await giveFile("tamreen.csv","﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv")) toast("اتصدّر");
+  if(await giveFile("tamreen.csv","\uFEFF"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv")) toast("اتصدّر");
 }
 function wipe(){
   sheet({text:"هيتمسح كل السجل نهائيًا",body:"اعمل نسخة احتياطية الأول لو مش متأكد.",yes:"امسح الكل",danger:true,
-    onYes:()=>{ D={...defaults(),migrated:2};
+    onYes:()=>{ D={...defaults(),migrated:2}; loadProgram();
       save(); render(); toast("اتمسح"); buzz(40); }});
 }

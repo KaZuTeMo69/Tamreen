@@ -1,8 +1,11 @@
 /* ══ modal / toast ════════════════════════════════════ */
-function sheet({text,body="",value,type="text",area,yes="تأكيد",danger,onYes}){
+/* html: a small form built by the caller (values already escaped); onYes reads it back from the page */
+function sheet({text,body="",value,type="text",area,html,yes="تأكيد",danger,onYes}){
   const m=document.getElementById("modal"),inp=document.getElementById("minput"),ta=document.getElementById("marea");
   document.getElementById("mtext").textContent=text;
   document.getElementById("mbody").textContent=body;
+  const form=document.getElementById("mform");
+  form.innerHTML=html||""; form.classList.toggle("hide",!html);
   ta.classList.toggle("hide",area===undefined);   // area: read-only text to copy by hand
   if(area!==undefined){ ta.value=area; setTimeout(()=>{ ta.focus(); ta.select(); },80); }
   inp.classList.toggle("hide",value===undefined);

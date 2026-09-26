@@ -53,7 +53,7 @@ function setsHTML(e){
 }
 
 function vSession(){
-  const p=PROGRAM[draft.workout],editing=draft.edit!=null;
+  const p=PROGRAM[draft.workout],editing=draft.edit!=null,exs=draft.ids.map(exDef);
   const card=(e,i)=>{
     const sg=editing?null:suggest(e,draft.date,draft.units[e.id]), hl=histLine(e.id,draft.date,draft.units[e.id]);
     return `<div class="ex" id="ex-${e.id}">
@@ -90,9 +90,9 @@ function vSession(){
     <div><h1>${p.label}</h1>
       <div class="sub tap" onclick="pickDate()">${fdate(draft.date)} · تغيير التاريخ</div></div>
     <button class="btn light" style="width:auto;padding:12px 20px;font-size:15px" onclick="cancel()">${editing?"رجوع":"إلغاء"}</button></div>
-  <div style="margin-top:22px">${p.ex.slice(0,3).map(card).join("")}</div>
-  ${editing?"":'<div class="divider"><hr><b>تقدر تنهي هنا — تتحسب حصة كاملة</b><hr></div>'}
-  ${p.ex.slice(3).map((e,i)=>card(e,i+3)).join("")}
+  <div style="margin-top:22px">${exs.slice(0,3).map(card).join("")}</div>
+  ${editing||exs.length<=3?"":'<div class="divider"><hr><b>تقدر تنهي هنا — تتحسب حصة كاملة</b><hr></div>'}
+  ${exs.slice(3).map((e,i)=>card(e,i+3)).join("")}
   <div style="margin-top:20px">
     <button class="btn" id="fin" onclick="finish()">${editing?"حفظ التعديلات":"إنهاء الحصة"}</button>
     <div class="small muted num" id="cnt" style="text-align:center;margin-top:10px"></div>
@@ -129,7 +129,11 @@ function logCard(key){
 }
 
 function vProg(){
-  const ex=byId(progEx),u=unitOf(progEx),h=historyOf(progEx).map(x=>({date:x.date,t:topSet(x)}));
+  /* exercises taken out of the program stay pickable while they have history */
+  const old=ALL.filter(e=>!inProgram(e.id)&&historyOf(e.id).length);
+  const groups=[...ORDER.map(k=>[PROGRAM[k].label,PROGRAM[k].ex]),...(old.length?[["تمارين مش في البرنامج",old]]:[])];
+  if(!groups.some(([,list])=>list.some(e=>e.id===progEx))) progEx=PROGRAM[ORDER[0]].ex[0].id;
+  const ex=exDef(progEx),u=unitOf(progEx),h=historyOf(progEx).map(x=>({date:x.date,t:topSet(x)}));
   const max=Math.max(1,...h.map(x=>x.t.sc)),peak=Math.max(0,...h.map(x=>x.t.sc));
   const noBw=ex.addw&&!D.bw.length;
   /* FIX: shown in the exercise's unit, as a left-to-right block so "kg" doesn't reorder the numbers;
@@ -141,7 +145,7 @@ function vProg(){
 
   <div class="label">تمرين واحد عبر الوقت</div>
   <select class="big" onchange="setProg(this.value)">
-    ${ORDER.map(k=>`<optgroup label="${PROGRAM[k].label}">${PROGRAM[k].ex.map(e=>
+    ${groups.map(([label,list])=>`<optgroup label="${esc(label)}">${list.map(e=>
       `<option value="${e.id}" ${e.id===progEx?"selected":""}>${esc(nameOf(e))}</option>`).join("")}</optgroup>`).join("")}
   </select>
   <div class="card" style="margin-top:12px">
@@ -177,6 +181,12 @@ function vSet(){
   </div>
   <div class="small muted" style="margin-top:8px">الوحدة الأساسية للتمارين اللي ماختارتلهاش وحدة، ولوزن الجسم.</div>
 
+  <div class="label">البرنامج</div>
+  <div class="card"><div class="row tap" style="padding:0" onclick="go('program')">
+    <div><div style="font-weight:700">التمارين والستات والعدّات</div>
+      <div class="small muted">${D.program?"متعدّل":"البرنامج الأصلي"}</div></div>
+    <span class="muted">›</span></div></div>
+
   <div class="label">أزرار الراحة (ثواني)</div>
   <div class="card">
     ${row("الزرار الأول",field(D.rest[0],"setRest(0,this.value)","numeric"))}
@@ -204,6 +214,33 @@ function vSet(){
 }
 const isInstalled=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 
+/* FEATURE: program editor (opened from Settings); the actions are in actions.js */
+const flagText=e=>[e.uni&&"كل جنب لوحده",e.assist?"بالمساعدة":e.addw&&"+ وزن إضافي"].filter(Boolean).map(t=>" · "+t).join("");
+function vProgram(){
+  const day=k=>{ const P=PROGRAM[k];
+    return `<div class="label">${P.label}</div>
+    <div class="card">
+      <div class="row tap" style="padding-top:0" onclick="editTag('${k}')">
+        <div class="small muted">${esc(P.tag)}</div><span class="chip">تعديل الوصف</span></div>
+      ${P.ex.map((e,i)=>`<div class="prow">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+          <div><div style="font-weight:700">${esc(nameOf(e))}</div>
+            <div class="small muted num">${EQ[e.eq]} · ${e.sets} × ${e.lo}–${e.hi}${e.sec?" ث":""}${flagText(e)}</div></div>
+          ${i<3?'<span class="chip on">أساسي</span>':""}</div>
+        <div class="ctrls">
+          <button class="chip" onclick="editEx('${k}',${i})">تعديل</button>
+          <button class="chip" onclick="replaceEx('${k}',${i})">استبدال</button>
+          <button class="chip" onclick="moveEx('${k}',${i},-1)" aria-label="لفوق" ${i?"":"disabled"}>↑</button>
+          <button class="chip" onclick="moveEx('${k}',${i},1)" aria-label="لتحت" ${i<P.ex.length-1?"":"disabled"}>↓</button>
+          <button class="chip" onclick="removeEx('${k}',${i})">شيل</button></div></div>`).join("")}
+      <div style="margin-top:14px"><button class="btn sage" onclick="addEx('${k}')">+ تمرين</button></div>
+    </div>`; };
+  return `<div class="top"><div><h1>البرنامج</h1><div class="sub">أول ٣ تمارين في كل يوم هما الحد الأدنى</div></div>
+    <button class="btn light" style="width:auto;padding:12px 20px;font-size:15px" onclick="go('set')">رجوع</button></div>
+  ${ORDER.map(day).join("")}
+  ${D.program?'<div style="margin-top:22px"><button class="btn danger" onclick="resetProgram()">رجّع البرنامج الأصلي</button></div>':""}`;
+}
+
 function vLog(){
   return `<div class="top"><div><h1>السجل</h1><div class="sub">${D.sessions.length} حصة</div></div>${avatar()}</div>
   <div class="label">اضغط على أي حصة للتعديل أو الحذف</div>
@@ -228,21 +265,21 @@ function vLog(){
 function render(toTop=true){
   const y=window.scrollY;
   document.getElementById("app").innerHTML =
-    draft?vSession():tab==="prog"?vProg():tab==="log"?vLog():tab==="set"?vSet():vPlan();
+    draft?vSession():tab==="prog"?vProg():tab==="log"?vLog():tab==="set"?vSet():tab==="program"?vProgram():vPlan();
   document.getElementById("nav").classList.toggle("hide",!!draft);
-  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  const navTab=tab==="program"?"set":tab;   // the editor lives under Settings
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===navTab));
   if(draft) refresh();
   saveDraft();
   window.scrollTo(0,toTop?0:y);
 }
 function refresh(){
-  const p=PROGRAM[draft.workout];
   const n=Object.values(draft.entries).filter(r=>r.some(x=>x.r)).length;
   const cnt=document.getElementById("cnt"),fin=document.getElementById("fin");
-  if(cnt) cnt.textContent=`${n} / ${p.ex.length} تمارين مسجّلة`;
+  if(cnt) cnt.textContent=`${n} / ${draft.ids.length} تمارين مسجّلة`;
   if(fin&&draft.edit==null) fin.textContent=n?`إنهاء الحصة (${n})`:"إنهاء الحصة";
 }
-function redrawSets(id){ const el=document.getElementById("sets-"+id); if(el) el.innerHTML=setsHTML(byId(id)); }
+function redrawSets(id){ const el=document.getElementById("sets-"+id); if(el) el.innerHTML=setsHTML(exDef(id)); }
 function redrawRir(id){
   const el=document.getElementById("rir-"+id); if(!el) return;
   el.innerHTML=`<span class="small muted">كام عدّة فضلت؟</span>`+

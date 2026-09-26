@@ -59,7 +59,7 @@ function pickDate(){
 /* FIX: a new workout copies the last one's layout — weights and warm-up flags by set number —
    so warm-ups don't shift the pre-filled weights */
 function blankDraft(workout,date,edit){
-  const entries={},counts={},rir={},units={},names={},sides={};
+  const entries={},counts={},rir={},units={},names={},sides={},ids=PROGRAM[workout].ex.map(e=>e.id);
   PROGRAM[workout].ex.forEach(e=>{
     const l=edit==null?lastFor(e.id,date):null, all=l?.all||[], u=unitOf(e.id);
     const w=v=>!v?"":l.u===u?v:String(conv(v,l.u,u));   // FIX: last weights in today's unit
@@ -68,16 +68,19 @@ function blankDraft(workout,date,edit){
     entries[e.id]=Array.from({length:counts[e.id]},(_,i)=>({w:w(all[i]?.w),r:"",r2:"",warm:!!all[i]?.warm}));
     units[e.id]=u; names[e.id]=nameOf(e); sides[e.id]=perSide(e.id);
   });
-  return {workout,entries,counts,rir,units,names,sides,date,edit};
+  return {workout,ids,entries,counts,rir,units,names,sides,date,edit};
 }
 function start(){ draft=blankDraft(D.cursor,today(),null); render(); }
 function startPast(){
   sheet({text:"تاريخ الحصة اللي فاتت",value:today(),type:"date",yes:"ابدأ",
     onYes:v=>{ draft=blankDraft(D.cursor,v||today(),null); render(); }});
 }
+/* FIX: an old session shows the exercises it actually has (even ones since taken out of the program,
+   which used to be dropped on save), then any the program has added since */
 function openSession(i){
   const s=D.sessions[i],entries={},counts={},units={},names={},sides={};
-  PROGRAM[s.workout].ex.forEach(e=>{
+  const own=Object.keys(s.entries||{}),ids=[...own,...PROGRAM[s.workout].ex.map(e=>e.id).filter(id=>!own.includes(id))];
+  ids.map(exDef).forEach(e=>{
     const rows=s.entries?.[e.id]||[], n=Math.max(e.sets,rows.length);
     counts[e.id]=n;
     entries[e.id]=Array.from({length:n},(_,k)=>({w:rows[k]?.w||"",r:rows[k]?.r||"",r2:rows[k]?.r2||"",warm:!!rows[k]?.warm}));
@@ -85,7 +88,7 @@ function openSession(i){
     names[e.id]=nameIn(s,e.id);
     sides[e.id]=(s.sides||rows.length)?sidesIn(s,e.id):perSide(e.id);
   });
-  draft={workout:s.workout,entries,counts,rir:clone(s.rir||{}),units,names,sides,date:s.date,edit:i};
+  draft={workout:s.workout,ids,entries,counts,rir:clone(s.rir||{}),units,names,sides,date:s.date,edit:i};
   draft.snap=snapOf(draft); render();
 }
 /* what an edit changes — used to ask before leaving an old session with unsaved changes */
@@ -104,10 +107,10 @@ function finish(){
   const n=Object.values(draft.entries).filter(r=>r.some(x=>x.r)).length;
   if(!n){ toast("سجّل تمرين واحد على الأقل"); return; }
   const units={},names={},counts={},sides={},entries=clone(draft.entries);
-  PROGRAM[draft.workout].ex.forEach(e=>{
-    units[e.id]=draft.units[e.id]; names[e.id]=draft.names[e.id]; counts[e.id]=draft.counts[e.id];
-    if(draft.sides[e.id]) sides[e.id]=true;
-    else entries[e.id].forEach(r=>{ r.r2=""; });   // left column was hidden — don't keep stray values
+  draft.ids.forEach(id=>{
+    units[id]=draft.units[id]; names[id]=draft.names[id]; counts[id]=draft.counts[id];
+    if(draft.sides[id]) sides[id]=true;
+    else entries[id].forEach(r=>{ r.r2=""; });   // left column was hidden — don't keep stray values
   });
   const rir={}; Object.entries(draft.rir).forEach(([k,v])=>{ if(v!==undefined) rir[k]=v; });
   const rec={date:draft.date,workout:draft.workout,entries,units,names,counts,sides,rir};
@@ -163,4 +166,87 @@ function setPlates(u,v){
   const L=[...new Set(v.split(/[\s,،;]+/).map(num).filter(x=>x>0))].sort((a,b)=>b-a);
   if(!L.length){ toast("اكتب الأوزان مفصولة بفاصلة"); render(false); return; }
   D[u==="lb"?"platesLb":"plates"]=L; saved();
+}
+
+/* ══ program editor (FEATURE) ═════════════════════════ */
+/* The first change copies the built-in program into D.program. An exercise taken out of the program is
+   kept in D.retired so its old sessions still know what it was. Renaming keeps one history (D.swaps);
+   "replace" starts a new exercise with its own history. */
+const FLAGS=["uni","addw","assist","sec"];
+const newExId=()=>"x"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+function myProgram(){ if(!D.program) D.program=clone(DEFAULT_PROGRAM); return D.program; }
+function programChanged(msg){ loadProgram(); save(); render(false); if(msg) toast(msg); }
+const retire=e=>{ D.retired={...D.retired,[e.id]:clone(e)}; };
+function exFormHTML(e){
+  const box=(f,label)=>`<label class="check"><input type="checkbox" id="f-${f}" ${e[f]?"checked":""}> ${label}</label>`;
+  return `<label class="flabel">الاسم<input id="f-n" class="ftext" value="${esc(e.n)}" placeholder="مثلًا Cable Fly"></label>
+    <label class="flabel">الأداة<select id="f-eq" class="big">${Object.entries(EQ).map(([k,v])=>
+      `<option value="${k}" ${e.eq===k?"selected":""}>${v}</option>`).join("")}</select></label>
+    <div class="frow">
+      <label class="flabel">عدد الستات<input id="f-sets" inputmode="numeric" value="${e.sets}"></label>
+      <label class="flabel">عدّات من<input id="f-lo" inputmode="numeric" value="${e.lo}"></label>
+      <label class="flabel">إلى<input id="f-hi" inputmode="numeric" value="${e.hi}"></label></div>
+    ${box("uni","كل جنب لوحده (زي البلغاري)")}
+    ${box("addw","وزن الجسم + وزن إضافي (زي المتوازي)")}
+    ${box("assist","بالمساعدة (زي العقلة على الجهاز)")}
+    ${box("sec","بالثواني مش بالعدّات")}`;
+}
+function readExForm(){
+  const val=id=>document.getElementById(id).value, int=id=>Math.round(num(val(id)));
+  const e={n:val("f-n").trim().slice(0,80),eq:val("f-eq"),sets:int("f-sets"),lo:int("f-lo"),hi:int("f-hi")};
+  FLAGS.forEach(f=>{ e[f]=document.getElementById("f-"+f).checked; });
+  if(e.assist) e.addw=true;   // assistance is typed in the weight box, like added weight
+  const err=!e.n?"اكتب اسم التمرين":!(e.sets>=1&&e.sets<=10)?"الستات من ١ لـ ١٠"
+    :!(e.lo>=1&&e.hi<=100&&e.lo<=e.hi)?"العدّات: من ١ لـ ١٠٠، والأولى أصغر":"";
+  return {e,err};
+}
+/* the form sheet; on a mistake it says what's wrong and opens again with what was typed */
+function exForm(title,body,e,done){
+  sheet({text:title,body,html:exFormHTML(e),yes:"حفظ",onYes:()=>{
+    const r=readExForm(); if(r.err){ toast(r.err); return exForm(title,body,r.e,done); } done(r.e); }});
+}
+const withFlags=(target,e)=>{ FLAGS.forEach(f=>{ if(e[f]) target[f]=true; else delete target[f]; }); return target; };
+const makeEx=e=>withFlags({id:newExId(),n:e.n,eq:e.eq,sets:e.sets,lo:e.lo,hi:e.hi},e);
+function editEx(k,i){
+  const e=PROGRAM[k].ex[i];
+  exForm("تعديل التمرين","نفس التمرين ونفس السجل — لو هتغيّره لتمرين تاني استخدم «استبدال».",{...e,n:nameOf(e)},v=>{
+    const cur=myProgram()[k].ex[i];
+    Object.assign(cur,{eq:v.eq,sets:v.sets,lo:v.lo,hi:v.hi}); withFlags(cur,v);
+    if(v.n!==cur.n) D.swaps[cur.id]=v.n; else delete D.swaps[cur.id];
+    programChanged("اتحفظ");
+  });
+}
+function replaceEx(k,i){
+  const old=PROGRAM[k].ex[i];
+  exForm(`بدل ${nameOf(old)}`,"التمرين الجديد ليه سجل لوحده، والقديم بيفضل في السجل.",
+    {n:"",eq:old.eq,sets:old.sets,lo:old.lo,hi:old.hi},v=>{
+    const P=myProgram(); retire(P[k].ex[i]); P[k].ex[i]=makeEx(v); programChanged("اتبدّل");
+  });
+}
+function addEx(k){
+  exForm(`تمرين جديد في ${PROGRAM[k].label}`,"",{n:"",eq:"machine",sets:3,lo:8,hi:12},v=>{
+    myProgram()[k].ex.push(makeEx(v)); programChanged("اتضاف");
+  });
+}
+function removeEx(k,i){
+  if(PROGRAM[k].ex.length<=1){ toast("لازم يفضل تمرين واحد على الأقل"); return; }
+  const e=PROGRAM[k].ex[i];
+  sheet({text:`تشيل ${nameOf(e)} من ${PROGRAM[k].label}؟`,body:"السجل القديم بتاعه بيفضل زي ما هو.",yes:"شيل",danger:true,
+    onYes:()=>{ const P=myProgram(); retire(P[k].ex[i]); P[k].ex.splice(i,1); programChanged("اتشال"); }});
+}
+function moveEx(k,i,d){
+  const L=myProgram()[k].ex,j=i+d; if(j<0||j>=L.length) return;
+  [L[i],L[j]]=[L[j],L[i]]; programChanged();
+}
+function editTag(k){
+  sheet({text:`وصف ${PROGRAM[k].label}`,value:PROGRAM[k].tag,yes:"حفظ",
+    onYes:v=>{ v=v.trim().slice(0,80); if(!v) return; myProgram()[k].tag=v; programChanged("اتحفظ"); }});
+}
+function resetProgram(){
+  sheet({text:"ترجّع البرنامج الأصلي؟",body:"التمارين اللي ضفتها هتتشال من البرنامج، بس سجلها بيفضل.",yes:"رجّع",danger:true,
+    onYes:()=>{
+      const builtIn=new Set(Object.values(DEFAULT_PROGRAM).flatMap(p=>p.ex.map(e=>e.id)));
+      Object.values(PROGRAM).flatMap(p=>p.ex).forEach(e=>{ if(!builtIn.has(e.id)) retire(e); });
+      D.program=null; programChanged("رجع الأصلي");
+    }});
 }

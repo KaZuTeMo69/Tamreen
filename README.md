@@ -15,7 +15,7 @@ opens the share sheet (phone) or copies it (computer). Paste it into the Claude 
 ```
 index.html        page markup; loads the CSS and scripts below in order
 css/app.css       all styles
-js/program.js     the workout program (exercises, sets, rep ranges)
+js/program.js     the built-in workout program; edits made in the app are saved in the data (Settings → البرنامج)
 js/seed.js        the first three sessions, loaded on a fresh install
 js/store.js       app state, load / save, small helpers, data migration
 js/maths.js       volume, best set, next-weight suggestion

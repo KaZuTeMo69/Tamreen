@@ -7,7 +7,9 @@ document.getElementById("nav").addEventListener("click",e=>{
   let d=null; try{ d=JSON.parse(localStorage.getItem(DRAFT_KEY)||"null"); }catch(e){}
   if(!d||!PROGRAM[d.workout]||!d.entries||!d.date||(d.edit!=null&&!D.sessions[d.edit])) return;
   d.counts=d.counts||{}; d.rir=d.rir||{}; d.units=d.units||{}; d.names=d.names||{}; d.sides=d.sides||{};
-  PROGRAM[d.workout].ex.forEach(e=>{          // fill anything missing, e.g. after a program change
+  if(!Array.isArray(d.ids)||!d.ids.length)    // saved before exercise lists were kept with the workout
+    d.ids=Object.keys(d.entries).length?Object.keys(d.entries):PROGRAM[d.workout].ex.map(e=>e.id);
+  d.ids.map(exDef).forEach(e=>{               // fill anything missing
     if(!Array.isArray(d.entries[e.id])||!d.entries[e.id].length)
       d.entries[e.id]=Array.from({length:e.sets},()=>({w:"",r:"",r2:"",warm:false}));
     d.counts[e.id]=d.entries[e.id].length;

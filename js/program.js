@@ -1,6 +1,7 @@
 /* ══ program ══════════════════════════════════════════ */
 const EQ={machine:"جهاز",dumbbell:"دمبل",barbell:"بار",cable:"كابل",body:"وزن الجسم"};
-const PROGRAM={
+/* the built-in program; an edited copy lives in D.program (see the editor in actions.js) */
+const DEFAULT_PROGRAM={
  A:{label:"تمرين A",tag:"ضغط رجل + دفع وسحب أفقي",ex:[
   {id:"a1",n:"Leg Press / Hack Squat",eq:"machine",sets:3,lo:8,hi:10},
   {id:"a2",n:"Incline Dumbbell Press",eq:"dumbbell",sets:3,lo:8,hi:10},
@@ -25,6 +26,19 @@ const PROGRAM={
   {id:"c5",n:"Face Pulls",eq:"cable",sets:3,lo:15,hi:20},
   {id:"c6",n:"Standing Calf Raises",eq:"machine",sets:4,lo:12,hi:15}]}};
 const ORDER=["A","B","C"],GOAL=10,KEY="tamreen-v2";
-const ALL=Object.values(PROGRAM).flatMap(p=>p.ex);
-const byId=id=>ALL.find(x=>x.id===id);
 const PLATES=[20,15,10,5,2.5,1.25];
+/* PROGRAM = the program in use. ALL = every exercise the app knows, including ones taken out of the
+   program, so old sessions keep their definitions (volume, records, charts). */
+let PROGRAM=DEFAULT_PROGRAM;
+let ALL=Object.values(DEFAULT_PROGRAM).flatMap(p=>p.ex);
+function loadProgram(){
+  PROGRAM=D.program||DEFAULT_PROGRAM;
+  const seen=new Map();
+  [...Object.values(PROGRAM).flatMap(p=>p.ex),...Object.values(D.retired||{}),...Object.values(DEFAULT_PROGRAM).flatMap(p=>p.ex)]
+    .forEach(e=>{ if(!seen.has(e.id)) seen.set(e.id,e); });
+  ALL=[...seen.values()];
+}
+const byId=id=>ALL.find(x=>x.id===id);
+/* never undefined — an id from an imported file that no definition knows still shows up and saves */
+const exDef=id=>byId(id)||{id,n:id,eq:"machine",sets:1,lo:1,hi:99};
+const inProgram=id=>Object.values(PROGRAM).some(p=>p.ex.some(e=>e.id===id));

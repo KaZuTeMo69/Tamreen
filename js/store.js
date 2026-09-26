@@ -1,6 +1,6 @@
 /* ══ state ════════════════════════════════════════════ */
 /* everything the app stores; settings live here too (name, units, goal, rest, bar & plates) */
-const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},
+const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},program:null,retired:{},
   name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],
   lastBackup:0,changedAt:0,migrated:0});
 let D=defaults();
@@ -23,6 +23,7 @@ try{
     D.migrated=2;
   }
 }catch(e){}
+loadProgram();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
 /* FIX: the open workout is stored on every change, so a reload or a killed tab doesn't lose it */
 const DRAFT_KEY=KEY+"-draft";

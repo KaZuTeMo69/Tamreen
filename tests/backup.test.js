@@ -13,7 +13,7 @@ module.exports=async()=>{
   await ev(()=>{ D.sessions[0].names.a3='Row, "chest" supported'; D.sessions[0].names.a4='Old name nobody knows'; save(); });
   const before=await ev(()=>JSON.stringify(D.sessions.map(s=>[s.date,s.workout,Object.keys(s.entries).sort(),s.entries])));
   const csv=await grab(()=>exportCSV());
-  check('B11 header has exercise_id', csv.replace(/^﻿/,'').startsWith('date,workout,exercise,exercise_id,set,'));
+  check('B11 header has exercise_id', csv.replace(/^\uFEFF/,'').startsWith('date,workout,exercise,exercise_id,set,'));
   check('B11 comma/quote name is quoted', csv.includes('"Row, ""chest"" supported"'));
   await restoreFile('t.csv',csv); await p.click('#myes');
   const after=await ev(()=>JSON.stringify(D.sessions.map(s=>[s.date,s.workout,Object.keys(s.entries).sort(),s.entries])));

@@ -24,16 +24,16 @@ function setsLine(ex,rows,u,side){
 const rirText=v=>v===undefined||v===null?"":` · RIR ${v===3?"3+":v}`;
 
 function sessionText(d){
-  const p=PROGRAM[d.workout],bw=D.bw.length?bwAt(d.date):0;
+  const exs=d.ids.map(exDef),bw=D.bw.length?bwAt(d.date):0;
   const lines=[
     "I'm tracking my gym training (3-day A/B/C full-body rotation). Below is one session and my recent history for each exercise.",
     "For each exercise, tell me in one line: add weight, keep it, lower it, or swap the exercise — and why.",
     "Then one line on the session overall. Keep it short. (RIR = reps I had left in the tank.)",
     "",
     `Session: Workout ${d.workout} — ${WEEKDAY[new Date(d.date+"T00:00:00").getDay()]} ${d.date}.`+
-      (bw&&p.ex.some(e=>e.addw)?` Bodyweight: ${+fromKg(bw,D.unit).toFixed(1)} ${D.unit}.`:"")];
+      (bw&&exs.some(e=>e.addw)?` Bodyweight: ${+fromKg(bw,D.unit).toFixed(1)} ${D.unit}.`:"")];
   const skipped=[]; let n=0;
-  p.ex.forEach(e=>{
+  exs.forEach(e=>{
     const rows=d.entries[e.id]||[], name=d.names?.[e.id]||nameOf(e);
     if(!rows.some(r=>r.r||r.r2)){ skipped.push(name); return; }
     /* earlier sessions only — editing an old session must not list itself */
