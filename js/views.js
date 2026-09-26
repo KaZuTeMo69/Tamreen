@@ -1,6 +1,8 @@
 /* ══ views ════════════════════════════════════════════ */
 const avatar=()=>`<button class="avatar" onclick="go('set')" aria-label="الإعدادات">${esc((D.name.trim()[0]||"A").toUpperCase())}</button>`;
 const ar=n=>Number(n).toLocaleString("ar-EG");
+/* FEATURE: nudge for a backup when something changed and the last one is over a week old */
+const needBackup=()=>D.sessions.length&&D.changedAt>D.lastBackup&&daysSince(D.lastBackup)>=7;
 function vPlan(){
   const w=PROGRAM[D.cursor],c=monthCount();
   return `<div class="top">
@@ -15,6 +17,9 @@ function vPlan(){
     </div>
     <div class="pills">${Array.from({length:D.goal},(_,i)=>`<div class="pill ${i<c?'on':''}"></div>`).join("")}</div>
   </div>
+
+  ${needBackup()?`<div class="note tap" onclick="backup()">${D.lastBackup?`بقالك ${ar(daysSince(D.lastBackup))} يوم من غير نسخة احتياطية`
+    :"لسه ماعملتش نسخة احتياطية"} — اضغط هنا واعملها</div>`:""}
 
   <div class="label">تمارين النهارده</div>
   <div class="card">${w.ex.map((e,i)=>`<div class="row">
@@ -31,7 +36,7 @@ function setsHTML(e){
   const u=draft.units[e.id],side=draft.sides[e.id],last=draft.edit==null?lastFor(e.id,draft.date):null;
   const hideW=(e.eq==="body"&&!e.addw), n=draft.counts[e.id];
   return `<div class="hints"><span class="i"></span><span class="chip w" style="visibility:hidden">W</span>
-      ${hideW?"":`<span class="hint" style="flex:1">${e.assist?"مساعدة −":(e.addw?"إضافي":"وزن")} (${u})</span>`}
+      ${hideW?"":`<span class="hint" style="flex:1">${e.assist?"مساعدة −":(e.addw?"إضافي":"وزن")} (${esc(u)})</span>`}
       <span class="hint" style="flex:1">${e.sec?"ثواني":(side?"يمين":"عدّات")}</span>
       ${side?'<span class="hint" style="flex:1">شمال</span>':""}
       <span class="prev"></span></div>
@@ -65,7 +70,7 @@ function vSession(){
           <option value="lb" ${draft.units[e.id]==="lb"?"selected":""}>lb</option></select>`}
         <button class="chip ${draft.sides[e.id]?"on":""}" onclick="toggleSide('${e.id}')">يمين / شمال</button>
         ${e.eq==="barbell"?`<button class="chip" onclick="plateCalc('${e.id}')">حاسبة الأوزان</button>`:""}
-        <a class="chip ${D.videos[e.id]?"ink":""}" href="${esc(D.videos[e.id]||("https://www.youtube.com/results?search_query="+encodeURIComponent(e.n+" proper form technique")))}" target="_blank" rel="noopener">▶ شرح</a>
+        <a class="chip ${D.videos[e.id]?"ink":""}" href="${esc(safeUrl(D.videos[e.id])||("https://www.youtube.com/results?search_query="+encodeURIComponent(e.n+" proper form technique")))}" target="_blank" rel="noopener">▶ شرح</a>
         <button class="chip" onclick="pinVideo('${e.id}')">${D.videos[e.id]?"غيّر اللينك":"ثبّت لينك"}</button>
         <button class="chip" onclick="swap('${e.id}')">بدّل</button>
       </div>
@@ -112,7 +117,7 @@ function logCard(key){
   return `<div class="label">${L.title}</div>
   <div class="card">
     <div style="display:flex;gap:10px">
-      <input id="log-${key}" inputmode="decimal" placeholder="${L.ph()}" style="text-align:right;font-family:inherit;font-size:15px">
+      <input id="log-${key}" inputmode="decimal" placeholder="${L.ph()}" style="text-align:right;font-family:inherit;font-size:16px">
       <button class="btn sage" style="width:auto;padding:12px 22px;font-size:15px" onclick="addLog('${key}')">سجّل</button></div>
     ${list.length?`<div style="margin-top:8px">${list.map((x,i)=>`<div class="row tap" onclick="editLog('${key}',${i})">
       <div class="num" style="font-weight:700;font-size:19px">${esc(val(x))}<span class="small muted"> ${L.unit()}</span></div>
@@ -126,8 +131,9 @@ function vProg(){
   const ex=byId(progEx),u=unitOf(progEx),h=historyOf(progEx).map(x=>({date:x.date,t:topSet(x)}));
   const max=Math.max(1,...h.map(x=>x.t.sc)),peak=Math.max(0,...h.map(x=>x.t.sc));
   const noBw=ex.addw&&!D.bw.length;
-  /* FIX: shown in the exercise's unit; dips / pull-ups say what the number is */
-  const setText=t=>t.kg?`\u200E${ex.assist?"مساعدة ":ex.addw?"+":""}${wIn(t,u)} ${u} × ${t.reps}`
+  /* FIX: shown in the exercise's unit, as a left-to-right block so "kg" doesn't reorder the numbers;
+     dips / pull-ups say what the number is */
+  const setText=t=>t.kg?`${ex.assist?"مساعدة ":""}<span dir="ltr">${ex.addw&&!ex.assist?"+":""}${wIn(t,u)} ${esc(u)} × ${t.reps}</span>`
     :`${t.reps} ${ex.sec?"ثانية":"عدّة"}`;
   const rm=t=>(t.kg||ex.addw)&&!noBw&&!ex.sec?` · ≈${Math.round(fromKg(t.sc,u))} 1RM`:"";
   return `<div class="top"><div><h1>التقدم</h1><div class="sub">الأرقام مش المرايا</div></div>${avatar()}</div>
@@ -196,7 +202,9 @@ function vLog(){
       <div class="small muted num">${fdate(s.date)} ›</div></div>`).join("")}</div>`
    :'<div class="card muted small">مفيش حصص لسه.</div>'}
   <div class="label">النسخ الاحتياطي</div>
-  <div class="card small muted">الداتا محفوظة على الموبايل بس. اعمل نسخة كل شوية — لو مسحت التطبيق أو الجهاز اتصفّر، مفيش استرجاع من غيرها.</div>
+  <div class="card small muted">الداتا محفوظة على الموبايل بس. اعمل نسخة كل شوية — لو مسحت التطبيق أو الجهاز اتصفّر، مفيش استرجاع من غيرها.
+    <div style="margin-top:8px;font-weight:700;color:var(--ink)">${!D.lastBackup?"لسه ماعملتش نسخة احتياطية."
+      :daysSince(D.lastBackup)?`آخر نسخة: من ${ar(daysSince(D.lastBackup))} يوم.`:"آخر نسخة: النهارده."}</div></div>
   <div style="margin-top:12px"><button class="btn light" onclick="backup()">نسخة احتياطية (JSON)</button></div>
   <div style="margin-top:10px"><button class="btn light" onclick="restore()">استرجاع من ملف</button></div>
   <div style="margin-top:10px"><button class="btn light" onclick="exportCSV()">تصدير CSV</button></div>

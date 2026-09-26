@@ -5,7 +5,10 @@ function setRir(id,v){ draft.rir[id]=draft.rir[id]===v?undefined:v; redrawRir(id
 function addSet(id){ draft.counts[id]++; draft.entries[id].push({w:"",r:"",r2:"",warm:false}); redrawSets(id); saveDraft(); }
 function delSet(id){
   if(draft.counts[id]<=1) return;
-  draft.counts[id]--; draft.entries[id].pop(); redrawSets(id); refresh(); saveDraft();
+  const drop=()=>{ draft.counts[id]--; draft.entries[id].pop(); redrawSets(id); refresh(); saveDraft(); };
+  const r=draft.entries[id][draft.counts[id]-1];   // FIX: ask before dropping a set that has reps
+  if(r.r||r.r2) return sheet({text:`تمسح ست ${draft.counts[id]}؟`,body:"فيه عدّات متسجّلة فيه.",yes:"امسح",danger:true,onYes:drop});
+  drop();
 }
 /* FIX: unit / right-left / name changes on an old session stay on that session;
    on a new session they also become the default for next time */
@@ -29,7 +32,11 @@ function swap(id){
 }
 function pinVideo(id){
   sheet({text:"لينك يوتيوب للتمرين",body:"سيبه فاضي للرجوع للبحث التلقائي.",value:D.videos[id]||"",yes:"ثبّت",
-    onYes:v=>{ v.trim()?D.videos[id]=v.trim():delete D.videos[id]; save(); render(false); toast("اتثبّت"); }});
+    onYes:v=>{ v=v.trim();
+      if(v){ const u=safeUrl(/^[a-z][a-z0-9+.-]*:/i.test(v)?v:"https://"+v);   // FIX: http(s) links only
+        if(!u){ toast("اللينك مش صالح"); return; } D.videos[id]=u; }
+      else delete D.videos[id];
+      save(); render(false); toast("اتثبّت"); }});
 }
 /* FIX: works in the exercise's unit, with the bar and plates from settings */
 function plateCalc(id){
@@ -78,11 +85,18 @@ function openSession(i){
     names[e.id]=nameIn(s,e.id);
     sides[e.id]=(s.sides||rows.length)?sidesIn(s,e.id):perSide(e.id);
   });
-  draft={workout:s.workout,entries,counts,rir:clone(s.rir||{}),units,names,sides,date:s.date,edit:i}; render();
+  draft={workout:s.workout,entries,counts,rir:clone(s.rir||{}),units,names,sides,date:s.date,edit:i};
+  draft.snap=snapOf(draft); render();
 }
+/* what an edit changes — used to ask before leaving an old session with unsaved changes */
+const snapOf=d=>JSON.stringify([d.entries,d.rir,d.units,d.names,d.sides,d.date]);
 function skip(){ D.cursor=ORDER[(ORDER.indexOf(D.cursor)+1)%3]; save(); render(); toast("اتبدّل"); }
 function cancel(){
-  if(draft.edit!=null){ draft=null; tab="log"; render(); return; }
+  if(draft.edit!=null){
+    const leave=()=>{ draft=null; tab="log"; render(); };
+    if(snapOf(draft)===draft.snap) return leave();
+    return sheet({text:"تخرج من غير ما تحفظ التعديلات؟",yes:"خروج",danger:true,onYes:leave});   // FIX
+  }
   sheet({text:"تلغي الحصة من غير حفظ؟",yes:"إلغاء الحصة",danger:true,
     onYes:()=>{ draft=null; stopTimer(); render(); }});
 }
@@ -97,6 +111,9 @@ function finish(){
   });
   const rir={}; Object.entries(draft.rir).forEach(([k,v])=>{ if(v!==undefined) rir[k]=v; });
   const rec={date:draft.date,workout:draft.workout,entries,units,names,counts,sides,rir};
+  D.changedAt=Date.now();
+  /* ask the browser to keep this site's data (Safari can clear it after weeks without a visit) */
+  try{ navigator.storage?.persisted?.().then(p=>p||navigator.storage.persist()).catch(()=>{}); }catch(e){}
   if(draft.edit!=null){ D.sessions[draft.edit]=rec; draft=null; save(); tab="log"; render(); toast("اتحفظ ✓"); }
   else{
     D.sessions.push(rec);
@@ -108,20 +125,20 @@ function finish(){
 function delSession(){
   const i=draft.edit;
   sheet({text:"تحذف الحصة دي نهائيًا؟",yes:"حذف",danger:true,
-    onYes:()=>{ D.sessions.splice(i,1); draft=null; save(); tab="log"; render(); toast("اتحذفت"); buzz(30); }});
+    onYes:()=>{ D.sessions.splice(i,1); D.changedAt=Date.now(); draft=null; save(); tab="log"; render(); toast("اتحذفت"); buzz(30); }});
 }
 /* waist and bodyweight logs (see LOGS in views.js) */
 function addLog(key){
   const L=LOGS[key],v=num(document.getElementById("log-"+key).value);
   if(!v){ toast("اكتب رقم"); return; }
-  D[key].push({date:today(),[L.f]:+L.store(v).toFixed(3)}); save(); render(false); toast("اتسجّل ✓");
+  D[key].push({date:today(),[L.f]:+L.store(v).toFixed(3)}); D.changedAt=Date.now(); save(); render(false); toast("اتسجّل ✓");
 }
 function editLog(key,i){
   const L=LOGS[key],x=D[key][i];
   sheet({text:`${L.title} — ${fdate(x.date)}`,body:"سيبه فاضي عشان يتمسح.",value:String(L.show(x[L.f])),yes:"حفظ",
     onYes:v=>{ const n=num(v);
       if(!v.trim()||!n) D[key].splice(i,1); else x[L.f]=+L.store(n).toFixed(3);
-      save(); render(false); toast(n?"اتعدّل":"اتحذف"); }});
+      D.changedAt=Date.now(); save(); render(false); toast(n?"اتعدّل":"اتحذف"); }});
 }
 /* ══ settings ═════════════════════════════════════════ */
 function go(t){ tab=t; buzz(10); render(); }

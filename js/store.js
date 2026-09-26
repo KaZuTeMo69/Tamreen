@@ -1,7 +1,8 @@
 /* ══ state ════════════════════════════════════════════ */
 /* everything the app stores; settings live here too (name, units, goal, rest, bar & plates) */
 const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},
-  name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],migrated:0});
+  name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],
+  lastBackup:0,changedAt:0,migrated:0});
 let D=defaults();
 let tab="plan",draft=null,tick=null,progEx="a1";
 
@@ -38,7 +39,8 @@ const normNum=v=>String(v??"").replace(/[٠-٩]/g,c=>c.charCodeAt(0)-0x660)
   .replace(/[۰-۹]/g,c=>c.charCodeAt(0)-0x6F0).replace(/[٫,]/g,".").trim();
 const num=v=>+normNum(v)||0;
 const ym=s=>s.slice(0,7);
-const fdate=s=>new Date(s).toLocaleDateString("ar-EG",{day:"numeric",month:"short"});
+/* FIX: "YYYY-MM-DD" read as a local date — new Date(s) alone is UTC midnight, a day early west of UTC */
+const fdate=s=>new Date(s+"T00:00:00").toLocaleDateString("ar-EG",{day:"numeric",month:"short"});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const unitOf=id=>D.units[id]||D.unit||"kg";
 const perSide=id=>!!D.sides[id];
@@ -52,14 +54,18 @@ const fromKg=(kg,u)=>u==="lb"?kg/0.4536:kg;
 const conv=(v,from,to)=>from===to?num(v):Math.round(fromKg(toKg(v,from),to)*2)/2;
 const UL={kg:"كجم",lb:"باوند"};
 const clone=o=>JSON.parse(JSON.stringify(o));
+const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
+/* only http(s) links — a pinned or restored "javascript:" link is dropped */
+const safeUrl=v=>{ try{ const u=new URL(String(v)); return /^https?:$/.test(u.protocol)?u.href:""; }catch(e){ return ""; } };
+const daysSince=t=>Math.floor((Date.now()-t)/864e5);
 const step=(ex,u)=>u==="lb"?(ex.eq==="dumbbell"||ex.eq==="cable"?5:10)
   :(ex.eq==="dumbbell"?2:(ex.eq==="cable"?2.5:5));
 /* FIX: same-day sessions count once toward the monthly goal */
 const monthCount=()=>new Set(D.sessions.filter(s=>ym(s.date)===ym(today())).map(s=>s.date)).size;
 const setCount=(s,e)=>s.counts?.[e.id]||(s.entries?.[e.id]?.length)||e.sets;
 
-/* one-time migration: split the old merged leg card + freeze historical names */
-(function migrate(){
+/* one-time migration: split the old merged leg card + freeze historical names (also run after a restore) */
+function migrate(){
   if(D.migrated>=2) return;
   D.sessions.forEach(s=>{
     if(s.workout==="C"&&s.entries?.c4&&!s.entries.c4b){
@@ -73,4 +79,5 @@ const setCount=(s,e)=>s.counts?.[e.id]||(s.entries?.[e.id]?.length)||e.sets;
     }
   });
   D.migrated=2; save();
-})();
+}
+migrate();

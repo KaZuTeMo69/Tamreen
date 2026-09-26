@@ -43,14 +43,15 @@ function topSet(h){
     return (!b||sc>b.sc)?{sc,kg,reps,w:r.w,u:h.u}:b;
   },null);
 }
-/* FEATURE: next-session weight suggestion, driven by RIR — in the unit the exercise is logged in */
+/* FEATURE: next-session weight suggestion, driven by RIR — in the unit the exercise is logged in.
+   The unit is written in Arabic (كجم / باوند) so the sentence keeps reading right-to-left. */
 function suggest(ex,upTo,unit){
   const h=lastFor(ex.id,upTo); if(!h) return null;
   const scored=h.rows.filter(r=>Math.max(num(r.r),num(r.r2))>0);
   if(!scored.length) return null;
   const last=scored[scored.length-1];
   const u=unit||h.u, reps=Math.max(num(last.r),num(last.r2)), w=conv(last.w,h.u,u), rir=h.rir;
-  const st=step(ex,u), fmt=v=>`${+v.toFixed(2)} ${u}`;
+  const st=step(ex,u), fmt=v=>+v.toFixed(2), tgt=v=>`${fmt(v)} ${UL[u]}`;
   const one=ex.sec?"ثانية":"عدّة", many=ex.sec?"ثواني":"عدّات";
   if(!w){ // bodyweight
     if(rir===undefined) return `آخر مرة ${reps} ${one} — استهدف ${reps+1}`;
@@ -59,33 +60,33 @@ function suggest(ex,upTo,unit){
     return `آخر مرة ${reps} ${one} — استهدف ${reps+2}`;
   }
   if(ex.assist){ // FIX: less assistance is progress
-    const less=n=>Math.max(0,w-st*n), aid=v=>v?`مساعدة ${fmt(v)}`:"من غير مساعدة";
+    const less=n=>Math.max(0,w-st*n), aid=v=>v?`مساعدة ${tgt(v)}`:"من غير مساعدة";
     if(rir===undefined) return reps>=ex.hi?`آخر مرة ${aid(w)} × ${reps} — جرّب ${aid(less(1))}`
       :`آخر مرة ${aid(w)} × ${reps} — ثبّت المساعدة واستهدف ${ex.hi}`;
     if(rir>=3) return `RIR ${rir} — سهلة، جرّب ${aid(less(2))}`;
     if(rir==2)  return `RIR 2 — جرّب ${aid(less(1))}`;
-    if(reps<ex.lo&&rir===0) return `صعبة — زوّد المساعدة لـ ${fmt(w+st)}`;
+    if(reps<ex.lo&&rir===0) return `صعبة — زوّد المساعدة لـ ${tgt(w+st)}`;
     if(reps>=ex.hi) return `RIR ${rir} وكمّلت العدّات — جرّب ${aid(less(1))}`;
     return `ثبّت على ${aid(w)} واستهدف ${ex.hi} عدّات`;
   }
-  if(rir===undefined) return reps>=ex.hi?`آخر مرة ${fmt(w)} × ${reps} — جرّب ${fmt(w+st)}`
+  if(rir===undefined) return reps>=ex.hi?`آخر مرة ${fmt(w)} × ${reps} — جرّب ${tgt(w+st)}`
     :`آخر مرة ${fmt(w)} × ${reps} — ثبّت الوزن واستهدف ${ex.hi}`;
-  if(rir>=3) return `RIR ${rir} — الوزن خفيف، جرّب ${fmt(w+st*2)}`;
-  if(rir==2)  return `RIR 2 — جرّب ${fmt(w+st)}`;
-  if(reps<ex.lo&&rir===0) return `الوزن تقيل — انزل لـ ${fmt(Math.max(st,w-st))}`;
-  if(reps>=ex.hi) return `RIR ${rir} وكمّلت العدّات — جرّب ${fmt(w+st)}`;
-  return `ثبّت على ${fmt(w)} واستهدف ${ex.hi} عدّات`;
+  if(rir>=3) return `RIR ${rir} — الوزن خفيف، جرّب ${tgt(w+st*2)}`;
+  if(rir==2)  return `RIR 2 — جرّب ${tgt(w+st)}`;
+  if(reps<ex.lo&&rir===0) return `الوزن تقيل — انزل لـ ${tgt(Math.max(st,w-st))}`;
+  if(reps>=ex.hi) return `RIR ${rir} وكمّلت العدّات — جرّب ${tgt(w+st)}`;
+  return `ثبّت على ${tgt(w)} واستهدف ${ex.hi} عدّات`;
 }
 /* the weight typed on a best set, in unit u (same rounding as the pre-filled weights) */
 const wIn=(t,u)=>t.u===u?num(t.w):conv(t.w,t.u,u);
 /* one best set as short text: "100×8", "+5×8" (added), "−20×6" (assistance), "10" (reps only) */
 function setShort(ex,t,u){
   if(!t.kg) return `${t.reps}`;
-  return `\u200E${ex.assist?"−":ex.addw?"+":""}${wIn(t,u)}×${t.reps}`;
+  return `${ex.assist?"−":ex.addw?"+":""}${wIn(t,u)}×${t.reps}`;
 }
 function histLine(id,upTo,unit){
   const ex=byId(id),u=unit||unitOf(id),h=historyOf(id,upTo).slice(-3).reverse();
   if(!h.length) return "";
   const t=h.map(topSet);
-  return `آخر ٣${t.some(x=>x.kg)?` (${u})`:""}: `+t.map(x=>setShort(ex,x,u)).join(" · ");
+  return `آخر ٣${t.some(x=>x.kg)?` (${UL[u]})`:""}: `+t.map(x=>setShort(ex,x,u)).join(" · ");
 }

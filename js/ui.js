@@ -6,11 +6,12 @@ function sheet({text,body="",value,type="text",yes="تأكيد",danger,onYes}){
   inp.classList.toggle("hide",value===undefined);
   if(value!==undefined){ inp.type=type; inp.value=value;
     inp.style.textAlign=type==="text"?"right":"center"; inp.style.fontFamily=type==="text"?"inherit":"'DM Sans'";
-    inp.style.fontSize="15px"; }
+    inp.style.fontSize="16px"; }
   const y=document.getElementById("myes"),n=document.getElementById("mno");
   y.textContent=yes; y.className="btn"+(danger?" danger":"");
-  const close=()=>{m.classList.remove("on");y.onclick=null;n.onclick=null;m.onclick=null;};
+  const close=()=>{m.classList.remove("on");y.onclick=null;n.onclick=null;m.onclick=null;inp.onkeydown=null;};
   y.onclick=()=>{ buzz(18); const v=inp.value; close(); onYes&&onYes(v); };
+  inp.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); y.onclick(); } };   // FIX: Enter confirms
   n.onclick=close; m.onclick=e=>{ if(e.target===m) close(); };
   m.classList.add("on");
   if(value!==undefined) setTimeout(()=>inp.focus(),80);
@@ -32,11 +33,11 @@ function paintTimer(){
 }
 function startTimer(sec,until){          // until: resume a rest that was running before a reload
   stopTimer(); endAt=until||Date.now()+sec*1000;
-  document.getElementById("timer").classList.add("on");
+  document.getElementById("timer").classList.add("on"); document.body.classList.add("timing");
   paintTimer(); tick=setInterval(paintTimer,250); saveDraft();
 }
 function stopTimer(){
   if(tick)clearInterval(tick); tick=null; endAt=0;
-  document.getElementById("timer").classList.remove("on"); saveDraft();
+  document.getElementById("timer").classList.remove("on"); document.body.classList.remove("timing"); saveDraft();
 }
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&tick) paintTimer(); });
