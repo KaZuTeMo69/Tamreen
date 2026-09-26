@@ -28,6 +28,7 @@ js/coach.js       builds the "Ask Claude" message for a session
 js/main.js        wires the tab bar and draws the first screen
 sw.js             service worker: keeps a copy of the app so it opens offline
 manifest.webmanifest, icons/   make it installable (home-screen icon, full screen)
+fonts/            Tafkir Arabic (trial) — see below
 .nojekyll         tells GitHub Pages to serve files as-is (no Jekyll)
 tests/            browser tests (not used by the app itself)
 package.json      only for the tests
@@ -74,12 +75,19 @@ GitHub Pages publishes the `main` branch automatically.
 - The icons are PNG exports of `icons/icon.svg` (the maskable one has the dumbbell at 70%).
 - Take a backup from the app before a big update.
 
-## Colours and dark mode
+## Colours, font and dark mode
 
-All colours are CSS tokens at the top of `css/app.css`: a light set, and a dark set used when the phone
-is in dark mode (or when Settings → المظهر forces it). Use the tokens for anything new — the theme
-test fails on a hard-coded colour. Every text pair is at least 4.5:1 and every chart mark 3:1 in both
-themes.
+Brand colours: black & white for the base (dark / light mode), with violet `#7D39EB` and lime `#C6FF33`
+as the secondary colours. They are CSS tokens at the top of `css/app.css`: lime and violet are fills
+(black text on lime, white on violet); `--hi` is the highlight for thin marks and highlighted text —
+lime in dark mode, violet in light mode (lime on white is nearly invisible). Dark mode follows the phone
+unless Settings → المظهر forces it. Use the tokens for anything new — the theme test fails on a
+hard-coded colour. Every text pair is at least 4.5:1 and every chart mark 3:1 in both themes.
+
+Font: Tafkir Arabic (`fonts/tafkir-arabic.woff2`, converted from the supplied OTF) for text, DM Sans for
+numbers. The supplied file is the **trial** version (`fonts/Tafkir-LICENSE.txt`: "Demo / Trial"); it has
+one weight, and this repo is public, so the file can be downloaded by anyone — get a proper licence
+from the foundry (Kutype) before relying on it.
 
 ## Offline and install
 

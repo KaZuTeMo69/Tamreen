@@ -115,7 +115,7 @@ const LOGS={
   waist:{f:"cm",title:"محيط الوسط",unit:()=>"cm",ph:()=>"بالسنتيمتر",
     hint:"قيس كل ٤ أسابيع بس.",
     show:v=>v,store:v=>v,
-    diff:d=>`<div class="small" style="margin-top:12px;color:${d<0?'var(--sage-ink)':'var(--muted)'}">
+    diff:d=>`<div class="small" style="margin-top:12px;color:${d<0?'var(--hi)':'var(--muted)'}">
       ${d<0?`نزلت ${Math.abs(d).toFixed(1)} سم من أول قياس`:`فرق ${d.toFixed(1)} سم عن أول قياس`}</div>`}};
 function logCard(key){
   const L=LOGS[key],list=D[key],val=x=>L.show(x[L.f]);
@@ -124,7 +124,7 @@ function logCard(key){
   <div class="card">
     <div style="display:flex;gap:10px">
       <input id="log-${key}" inputmode="decimal" placeholder="${L.ph()}" style="text-align:right;font-family:inherit;font-size:16px">
-      <button class="btn sage" style="width:auto;padding:12px 22px;font-size:15px" onclick="addLog('${key}')">سجّل</button></div>
+      <button class="btn lime" style="width:auto;padding:12px 22px;font-size:15px" onclick="addLog('${key}')">سجّل</button></div>
     ${list.length?`<div style="margin-top:8px">${list.map((x,i)=>`<div class="row tap" onclick="editLog('${key}',${i})">
       <div class="num" style="font-weight:700;font-size:19px">${esc(val(x))}<span class="small muted"> ${L.unit()}</span></div>
       <div class="small muted num">${fdate(x.date)} · تعديل</div></div>`).join("")}</div>
@@ -227,7 +227,7 @@ function vSet(){
   <div class="label">التطبيق</div>
   <div class="card small">
     ${isInstalled()?'<div style="font-weight:700">متثبّت على الموبايل ✓</div>'
-      :installPrompt?'<button class="btn sage" onclick="installApp()">ثبّت التطبيق على الموبايل</button>'
+      :installPrompt?'<button class="btn lime" onclick="installApp()">ثبّت التطبيق على الموبايل</button>'
       :`<div class="muted">عشان تثبّته على الموبايل:</div>
         <div class="muted">على الـ iPhone: من Safari ← مشاركة ← <span dir="ltr" style="white-space:nowrap">Add to Home Screen</span></div>
         <div class="muted">على الـ Android: قايمة Chrome ← <span dir="ltr" style="white-space:nowrap">Install app</span></div>`}
@@ -256,7 +256,7 @@ function vProgram(){
           <button class="chip" onclick="moveEx('${k}',${i},-1)" aria-label="لفوق" ${i?"":"disabled"}>↑</button>
           <button class="chip" onclick="moveEx('${k}',${i},1)" aria-label="لتحت" ${i<P.ex.length-1?"":"disabled"}>↓</button>
           <button class="chip" onclick="removeEx('${k}',${i})">شيل</button></div></div>`).join("")}
-      <div style="margin-top:14px"><button class="btn sage" onclick="addEx('${k}')">+ تمرين</button></div>
+      <div style="margin-top:14px"><button class="btn lime" onclick="addEx('${k}')">+ تمرين</button></div>
     </div>`; };
   return `<div class="top"><div><h1>البرنامج</h1><div class="sub">أول ٣ تمارين في كل يوم هما الحد الأدنى</div></div>
     <button class="btn light" style="width:auto;padding:12px 20px;font-size:15px" onclick="go('set')">رجوع</button></div>

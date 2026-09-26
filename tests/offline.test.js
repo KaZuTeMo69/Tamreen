@@ -13,7 +13,7 @@ module.exports=async()=>{
   const html=await ev(()=>fetch("index.html").then(r=>r.text()));
   const files=linked(html).map(f=>base+f);
   const scripts=await ev(()=>document.scripts.length);
-  check("index links css, every script, manifest, 2 icons", files.length===scripts+4 && files.some(f=>f.endsWith("manifest.webmanifest")), files);
+  check("index links css, every script, manifest, 2 icons, the font", files.length===scripts+5 && files.some(f=>f.endsWith("manifest.webmanifest")) && files.some(f=>f.endsWith(".woff2")), files);
 
   await ev(()=>navigator.serviceWorker.ready);
   const all=await until(async()=>{ const c=await cached(p); return files.every(f=>c.includes(f))&&c.includes(base+"index.html")&&c; });
@@ -69,7 +69,7 @@ module.exports=async()=>{
   check("settings: install button once the browser offers it", !!(await q.$("button:has-text('ثبّت التطبيق')")));
   await q.click("button:has-text('ثبّت التطبيق')");
   check("install button opens the browser prompt", await q.evaluate(()=>window.__asked)===1);
-  await q.waitForFunction(()=>!document.querySelector("#app button.sage"));
+  await q.waitForFunction(()=>!document.querySelector("#app button.lime"));
   check("button gone after installing", !(await q.$("button:has-text('ثبّت التطبيق')")));
   check("no page errors", q.errs.length===0, q.errs);
   await q.done();
