@@ -142,6 +142,11 @@ function editLog(key,i){
 }
 /* ══ settings ═════════════════════════════════════════ */
 function go(t){ tab=t; buzz(10); render(); }
+async function installApp(){
+  const p=installPrompt; if(!p) return;
+  p.prompt(); const {outcome}=await p.userChoice;
+  installPrompt=null; render(false); if(outcome==="accepted") toast("اتثبّت ✓");
+}
 function saved(){ save(); render(false); toast("اتحفظ"); }
 /* a number from a settings field, or null (and the field is reset) when it's out of range */
 function setting(v,lo,hi,msg){

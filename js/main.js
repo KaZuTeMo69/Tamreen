@@ -22,4 +22,9 @@ document.getElementById("nav").addEventListener("click",e=>{
 })();
 /* belt and braces: store the open workout when the app goes to the background */
 document.addEventListener("visibilitychange",()=>{ if(document.hidden) saveDraft(); });
+/* FEATURE: works offline — the service worker keeps a copy of the app on the phone (see sw.js) */
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+/* FEATURE: install button in Settings where the browser offers one (Android / desktop Chrome) */
+addEventListener("beforeinstallprompt",e=>{ e.preventDefault(); installPrompt=e; if(tab==="set"&&!draft) render(false); });
+addEventListener("appinstalled",()=>{ installPrompt=null; if(tab==="set"&&!draft) render(false); });
 render();

@@ -17,8 +17,12 @@ function serve(){
     if(fs.existsSync(file)&&fs.statSync(file).isDirectory()) file=path.join(file,"index.html");
     fs.readFile(file,(err,data)=>{
       if(err){ res.writeHead(404); return res.end("not found"); }
-      res.writeHead(200,{"Content-Type":TYPES[path.extname(file)]||"application/octet-stream","Cache-Control":"no-cache"});
-      res.end(data);
+      const rel=path.relative(ROOT,file).split(path.sep).join("/");
+      if(state.rewrite) data=state.rewrite(rel,data);   // tests can fake a new release…
+      setTimeout(()=>{                                  // …or a slow connection
+        res.writeHead(200,{"Content-Type":TYPES[path.extname(file)]||"application/octet-stream","Cache-Control":"no-cache"});
+        res.end(data);
+      },state.delay?.(rel)||0);
     });
   });
   return new Promise(ok=>server.listen(0,"127.0.0.1",()=>ok(server)));

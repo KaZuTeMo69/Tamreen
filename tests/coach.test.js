@@ -25,7 +25,6 @@ module.exports=async()=>{
     E.b6=[{w:"",r:"30",r2:"",warm:false},{w:"",r:"25",r2:"",warm:false}];
     draft.rir.b7=1; draft.rir.b1=3; saveDraft(); });
   const t=await ev(()=>sessionText(draft));
-  console.log('\n----- message -----\n'+t+'\n-------------------\n');
   check('header question', t.includes('add weight, keep it, lower it, or swap the exercise'));
   check('date + weekday', t.includes('Session: Workout B — Sat 2026-09-26.'));
   check('bodyweight line (B has pull-ups)', t.includes('Bodyweight: 80 kg.'));

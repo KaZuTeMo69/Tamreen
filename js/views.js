@@ -189,8 +189,20 @@ function vSet(){
     ${plates("kg")}
     ${lbUsed?row(`وزن البار (${UL.lb})`,field(D.barLb,"setBar('lb',this.value)"))+plates("lb"):""}
   </div>
-  <div class="small muted" style="margin-top:12px">وزن الجسم بيتسجّل في صفحة التقدم.</div>`;
+  <div class="small muted" style="margin-top:12px">وزن الجسم بيتسجّل في صفحة التقدم.</div>
+
+  <div class="label">التطبيق</div>
+  <div class="card small">
+    ${isInstalled()?'<div style="font-weight:700">متثبّت على الموبايل ✓</div>'
+      :installPrompt?'<button class="btn sage" onclick="installApp()">ثبّت التطبيق على الموبايل</button>'
+      :`<div class="muted">عشان تثبّته على الموبايل:</div>
+        <div class="muted">على الـ iPhone: من Safari ← مشاركة ← <span dir="ltr" style="white-space:nowrap">Add to Home Screen</span></div>
+        <div class="muted">على الـ Android: قايمة Chrome ← <span dir="ltr" style="white-space:nowrap">Install app</span></div>`}
+    <div class="muted" style="margin-top:10px">${navigator.serviceWorker?.controller
+      ?"بيشتغل من غير نت ✓":"هيشتغل من غير نت بعد ما تفتحه مرة وإنت متصل."}</div>
+  </div>`;
 }
+const isInstalled=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
 
 function vLog(){
   return `<div class="top"><div><h1>السجل</h1><div class="sub">${D.sessions.length} حصة</div></div>${avatar()}</div>

@@ -25,6 +25,8 @@ js/actions.js     what the buttons do
 js/backup.js      JSON backup / restore, CSV import / export, share / copy helpers, wipe
 js/coach.js       builds the "Ask Claude" message for a session
 js/main.js        wires the tab bar and draws the first screen
+sw.js             service worker: keeps a copy of the app so it opens offline
+manifest.webmanifest, icons/   make it installable (home-screen icon, full screen)
 .nojekyll         tells GitHub Pages to serve files as-is (no Jekyll)
 tests/            browser tests (not used by the app itself)
 package.json      only for the tests
@@ -64,7 +66,16 @@ GitHub Pages publishes the `main` branch automatically.
 
 - Keep paths relative (`js/app.js`, not `/js/app.js`) — the site lives under `/Tamreen/`.
 - File names are case-sensitive on Pages.
-- Pages caches files for about 10 minutes. After changing any CSS or JS file,
-  bump the `?v=` number on **every** `<link>` / `<script>` in `index.html`
-  so phones don't mix old and new files.
+- After changing any CSS or JS file, bump the `?v=` number on **every** `<link>` / `<script>`
+  in `index.html`. This matters twice over: Pages caches files for about 10 minutes, and the
+  offline copy on the phone only re-downloads files whose `?v=` changed.
+- `sw.js` reads its file list from `index.html`, so it needs no edits when versions change.
+- The icons are PNG exports of `icons/icon.svg` (the maskable one has the dumbbell at 70%).
 - Take a backup from the app before a big update.
+
+## Offline and install
+
+After the first visit with a connection, the app opens with no signal: the page is fetched fresh when
+online (it waits up to 3 s), otherwise the saved copy is used. To install it: on iPhone open it in Safari →
+Share → Add to Home Screen; on Android use Chrome's menu → Install app (Settings shows a button when
+Chrome offers it).

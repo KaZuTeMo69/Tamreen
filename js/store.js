@@ -5,6 +5,7 @@ const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swa
   lastBackup:0,changedAt:0,migrated:0});
 let D=defaults();
 let tab="plan",draft=null,tick=null,progEx="a1";
+let installPrompt=null;   // Chrome's "install app" prompt, kept for the button in Settings
 
 try{
   const raw=localStorage.getItem(KEY);

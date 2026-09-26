@@ -1,5 +1,7 @@
 /* Shared helpers for the browser tests. run.js sets BASE (the local server) and the browser. */
-const state={browser:null,base:"",passed:0,failed:0};
+const state={browser:null,base:"",passed:0,failed:0,
+  rewrite:null,    // optional (file, Buffer) => Buffer, applied by the test server to what it serves
+  delay:null};     // optional file => milliseconds to wait before answering
 
 /* A fresh phone-sized page with empty storage, Cairo time and Google Fonts blocked.
    opts: time (fake clock start), tz, permissions, serviceWorkers ("block" by default), path */
