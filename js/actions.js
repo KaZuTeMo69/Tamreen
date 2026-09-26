@@ -68,8 +68,12 @@ function blankDraft(workout,date,edit){
     entries[e.id]=Array.from({length:counts[e.id]},(_,i)=>({w:w(all[i]?.w),r:"",r2:"",warm:!!all[i]?.warm}));
     units[e.id]=u; names[e.id]=nameOf(e); sides[e.id]=perSide(e.id);
   });
-  return {workout,ids,entries,counts,rir,units,names,sides,date,edit};
+  /* FEATURE: duration — a workout started today is timed from now; a back-dated one isn't */
+  return {workout,ids,entries,counts,rir,units,names,sides,date,edit,note:"",startedAt:date===today()?Date.now():0};
 }
+/* FEATURE: a note per session, and (old sessions) the duration in minutes — typed, so no redraw */
+function setNote(v){ draft.note=v.slice(0,1000); saveDraft(); }
+function setMins(v){ draft.mins=Math.round(num(v))||0; saveDraft(); }
 function start(){ draft=blankDraft(D.cursor,today(),null); render(); }
 function startPast(){
   sheet({text:"تاريخ الحصة اللي فاتت",value:today(),type:"date",yes:"ابدأ",
@@ -88,11 +92,12 @@ function openSession(i){
     names[e.id]=nameIn(s,e.id);
     sides[e.id]=(s.sides||rows.length)?sidesIn(s,e.id):perSide(e.id);
   });
-  draft={workout:s.workout,ids,entries,counts,rir:clone(s.rir||{}),units,names,sides,date:s.date,edit:i};
+  draft={workout:s.workout,ids,entries,counts,rir:clone(s.rir||{}),units,names,sides,date:s.date,edit:i,
+    note:s.note||"",mins:s.mins||0};
   draft.snap=snapOf(draft); render();
 }
 /* what an edit changes — used to ask before leaving an old session with unsaved changes */
-const snapOf=d=>JSON.stringify([d.entries,d.rir,d.units,d.names,d.sides,d.date]);
+const snapOf=d=>JSON.stringify([d.entries,d.rir,d.units,d.names,d.sides,d.date,d.note,d.mins]);
 function skip(){ D.cursor=ORDER[(ORDER.indexOf(D.cursor)+1)%3]; save(); render(); toast("اتبدّل"); }
 function cancel(){
   if(draft.edit!=null){
@@ -114,16 +119,25 @@ function finish(){
   });
   const rir={}; Object.entries(draft.rir).forEach(([k,v])=>{ if(v!==undefined) rir[k]=v; });
   const rec={date:draft.date,workout:draft.workout,entries,units,names,counts,sides,rir};
+  const note=(draft.note||"").trim(); if(note) rec.note=note;
+  /* duration: timed for a new workout (kept only if 1–300 minutes), typed when editing an old one */
+  const mins=draft.edit!=null?draft.mins:draft.startedAt?Math.round((Date.now()-draft.startedAt)/6e4):0;
+  if(mins>=1&&mins<=300) rec.mins=mins;
   D.changedAt=Date.now();
   /* ask the browser to keep this site's data (Safari can clear it after weeks without a visit) */
   try{ navigator.storage?.persisted?.().then(p=>p||navigator.storage.persist()).catch(()=>{}); }catch(e){}
-  if(draft.edit!=null){ D.sessions[draft.edit]=rec; draft=null; save(); tab="log"; render(); toast("اتحفظ ✓"); }
-  else{
-    D.sessions.push(rec);
-    D.cursor=ORDER[(ORDER.indexOf(rec.workout)+1)%3];
-    draft=null; stopTimer(); save(); tab="plan"; render(); toast("حصة اتسجّلت ✓");
-  }
-  buzz(30);
+  if(draft.edit!=null){ D.sessions[draft.edit]=rec; draft=null; save(); tab="log"; render(); toast("اتحفظ ✓"); buzz(30); return; }
+  D.sessions.push(rec);
+  D.cursor=ORDER[(ORDER.indexOf(rec.workout)+1)%3];
+  draft=null; stopTimer(); save(); tab="plan"; render();
+  toast(rec.mins?`حصة اتسجّلت ✓ · ${ar(rec.mins)} دقيقة`:"حصة اتسجّلت ✓");
+  /* FEATURE: records set today */
+  const prs=recordMap().get(D.sessions.length-1)||[];
+  if(prs.length){
+    buzz([60,40,60]);
+    sheet({text:`🏆 ${prs.length>1?`${ar(prs.length)} أرقام قياسية جديدة`:"رقم قياسي جديد"}`,
+      body:prs.map(pr=>`${nameIn(rec,pr.id)}\n${recordText(pr)}`).join("\n\n"),yes:"تمام"});
+  }else buzz(30);
 }
 function delSession(){
   const i=draft.edit;

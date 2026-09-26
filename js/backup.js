@@ -61,7 +61,8 @@ function parseCSV(txt){
   const head=lines.shift().map(h=>h.trim().toLowerCase());
   const col=n=>head.indexOf(n);
   const iD=col("date"),iW=col("workout"),iE=col("exercise"),iId=col("exercise_id"),iWarm=col("warmup"),
-        iWt=col("weight"),iU=col("unit"),iR=col("reps"),iL=col("reps_left"),iRir=col("rir");
+        iWt=col("weight"),iU=col("unit"),iR=col("reps"),iL=col("reps_left"),iRir=col("rir"),
+        iMin=col("session_minutes"),iNote=col("session_note");
   const map=new Map(),skipped=[];
   lines.forEach(c=>{
     const date=c[iD]?.trim(), wk=c[iW]?.trim(), nm=c[iE]?.trim();
@@ -80,6 +81,9 @@ function parseCSV(txt){
     s.counts[id]=s.entries[id].length;
     const rir=iRir>=0?normNum(c[iRir]):"";
     if(rir!==""&&[0,1,2,3].includes(+rir)) s.rir[id]=+rir;
+    /* session-level columns repeat on every row; the first value wins */
+    const mins=Math.round(num(c[iMin])); if(!s.mins&&mins>=1&&mins<=600) s.mins=mins;
+    const note=(c[iNote]||"").trim(); if(!s.note&&note) s.note=note.slice(0,1000);
   });
   return {sessions:[...map.values()].sort((a,b)=>a.date<b.date?-1:1),skipped};
 }
@@ -99,6 +103,8 @@ function cleanSession(s){
     if([0,1,2,3].includes(s.rir?.[id])) out.rir[id]=s.rir[id];
   }
   if(s.sides&&typeof s.sides==="object"){ out.sides={}; for(const id in s.sides) if(s.sides[id]) out.sides[id]=true; }
+  const mins=Math.round(num(s.mins)); if(mins>=1&&mins<=600) out.mins=mins;
+  if(typeof s.note==="string"&&s.note.trim()) out.note=s.note.trim().slice(0,1000);
   return out;
 }
 function cleanBackup(obj){
@@ -179,11 +185,12 @@ document.getElementById("restoreFile").addEventListener("change",e=>{
   rd.readAsText(f);
 });
 async function exportCSV(){
-  const rows=[["date","workout","exercise","exercise_id","set","warmup","weight","unit","reps","reps_left","rir"]];
+  const rows=[["date","workout","exercise","exercise_id","set","warmup","weight","unit","reps","reps_left","rir",
+    "session_minutes","session_note"]];
   [...D.sessions].sort((a,b)=>a.date<b.date?-1:1).forEach(s=>
     Object.keys(s.entries||{}).forEach(id=>(s.entries[id]||[]).forEach((r,i)=>{
       if(r.r||r.w) rows.push([s.date,s.workout,nameIn(s,id),id,i+1,r.warm?"warmup":"",r.w||"",
-        s.units?.[id]||"kg",r.r||"",r.r2||"",s.rir?.[id]??""]);
+        s.units?.[id]||"kg",r.r||"",r.r2||"",s.rir?.[id]??"",s.mins||"",s.note||""]);
     })));
   if(await giveFile("tamreen.csv","\uFEFF"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv")) toast("اتصدّر");
 }

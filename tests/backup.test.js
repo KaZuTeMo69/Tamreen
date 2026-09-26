@@ -60,7 +60,7 @@ module.exports=async()=>{
   await grab(()=>backup());
   check('F2 backup sets lastBackup', await ev(()=>D.lastBackup>0));
   check('F2 reminder gone after backup', !(await p.textContent('#app')).includes('اضغط هنا واعملها'));
-  await ev(()=>go('log')); check('F2 log shows last backup today', (await p.textContent('#app')).includes('آخر نسخة: النهارده.'));
+  await ev(()=>go('log')); check('F2 log shows last backup today', (await p.textContent('#app')).includes('آخر نسخة: النهارده.'), (await p.textContent('#app')).slice(0,400));
   await ev(()=>{ D.lastBackup=Date.now()-10*864e5; D.changedAt=Date.now(); go('plan'); });
   check('F2 reminder after 10 days with changes', (await p.textContent('#app')).includes('بقالك ١٠ يوم'));
   await ev(()=>{ D.changedAt=D.lastBackup-1; render(); });

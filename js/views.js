@@ -86,13 +86,18 @@ function vSession(){
         ${[0,1,2,3].map(v=>`<button class="chip ${draft.rir[e.id]===v?"on":""}" onclick="setRir('${e.id}',${v})">${v===3?"3+":v}</button>`).join("")}
       </div>
     </div>`;};
+  const began=draft.startedAt?` · بدأت ${new Date(draft.startedAt).toLocaleTimeString("ar-EG",{hour:"numeric",minute:"2-digit"})}`:"";
   return `<div class="top">
     <div><h1>${p.label}</h1>
-      <div class="sub tap" onclick="pickDate()">${fdate(draft.date)} · تغيير التاريخ</div></div>
+      <div class="sub tap" onclick="pickDate()">${fdate(draft.date)}${began} · تغيير التاريخ</div></div>
     <button class="btn light" style="width:auto;padding:12px 20px;font-size:15px" onclick="cancel()">${editing?"رجوع":"إلغاء"}</button></div>
   <div style="margin-top:22px">${exs.slice(0,3).map(card).join("")}</div>
   ${editing||exs.length<=3?"":'<div class="divider"><hr><b>تقدر تنهي هنا — تتحسب حصة كاملة</b><hr></div>'}
   ${exs.slice(3).map((e,i)=>card(e,i+3)).join("")}
+  <div class="label">ملاحظات</div>
+  <textarea class="note-in" placeholder="إحساسك، نوم، ألم، أي حاجة تفتكرها المرة الجاية…" oninput="setNote(this.value)">${esc(draft.note||"")}</textarea>
+  ${editing?`<div class="card" style="margin-top:12px;padding:6px 18px"><div class="row"><span>مدة الحصة (دقايق)</span>
+    <input class="field" inputmode="numeric" placeholder="—" value="${draft.mins||""}" oninput="setMins(this.value)"></div></div>`:""}
   <div style="margin-top:20px">
     <button class="btn" id="fin" onclick="finish()">${editing?"حفظ التعديلات":"إنهاء الحصة"}</button>
     <div class="small muted num" id="cnt" style="text-align:center;margin-top:10px"></div>
@@ -242,14 +247,15 @@ function vProgram(){
 }
 
 function vLog(){
+  const prs=recordMap();
   return `<div class="top"><div><h1>السجل</h1><div class="sub">${D.sessions.length} حصة</div></div>${avatar()}</div>
   <div class="label">اضغط على أي حصة للتعديل أو الحذف</div>
   ${D.sessions.length?`<div class="card">${D.sessions.map((s,i)=>({s,i}))
     .sort((a,b)=>a.s.date<b.s.date?1:-1).map(({s,i})=>`
     <div class="row tap" onclick="openSession(${i})">
-      <div><div style="font-weight:700">${PROGRAM[s.workout].label}</div>
-      <div class="small muted num">${Math.round(volume(s)).toLocaleString("en")} kg إجمالي</div></div>
-      <div class="small muted num">${fdate(s.date)} ›</div></div>`).join("")}</div>`
+      <div><div style="font-weight:700">${PROGRAM[s.workout].label}${prs.has(i)?` <span class="chip on" title="أرقام قياسية">🏆 ${ar(prs.get(i).length)}</span>`:""}</div>
+      <div class="small muted num">${Math.round(volume(s)).toLocaleString("en")} kg إجمالي${s.mins?` · ${ar(s.mins)} دقيقة`:""}</div></div>
+      <div class="small muted num">${s.note?'<span title="فيها ملاحظة">📝</span> ':""}${fdate(s.date)} ›</div></div>`).join("")}</div>`
    :'<div class="card muted small">مفيش حصص لسه.</div>'}
   <div class="label">النسخ الاحتياطي</div>
   <div class="card small muted">الداتا محفوظة على الموبايل بس. اعمل نسخة كل شوية — لو مسحت التطبيق أو الجهاز اتصفّر، مفيش استرجاع من غيرها.

@@ -59,7 +59,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
 /* only http(s) links — a pinned or restored "javascript:" link is dropped */
 const safeUrl=v=>{ try{ const u=new URL(String(v)); return /^https?:$/.test(u.protocol)?u.href:""; }catch(e){ return ""; } };
-const daysSince=t=>Math.floor((Date.now()-t)/864e5);
+const daysSince=t=>Math.max(0,Math.floor((Date.now()-t)/864e5));   // never negative, even if the phone's clock moved back
 const step=(ex,u)=>u==="lb"?(ex.eq==="dumbbell"||ex.eq==="cable"?5:10)
   :(ex.eq==="dumbbell"?2:(ex.eq==="cable"?2.5:5));
 /* FIX: same-day sessions count once toward the monthly goal */

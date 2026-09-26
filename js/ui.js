@@ -14,11 +14,12 @@ function sheet({text,body="",value,type="text",area,html,yes="تأكيد",danger
     inp.style.fontSize="16px"; }
   const y=document.getElementById("myes"),n=document.getElementById("mno");
   y.textContent=yes; y.className="btn"+(danger?" danger":"");
-  const close=()=>{m.classList.remove("on");y.onclick=null;n.onclick=null;m.onclick=null;inp.onkeydown=null;};
+  const close=()=>{m.classList.remove("on");document.body.classList.remove("sheet-on");
+    y.onclick=null;n.onclick=null;m.onclick=null;inp.onkeydown=null;};
   y.onclick=()=>{ buzz(18); const v=inp.value; close(); onYes&&onYes(v); };
   inp.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); y.onclick(); } };   // FIX: Enter confirms
   n.onclick=close; m.onclick=e=>{ if(e.target===m) close(); };
-  m.classList.add("on");
+  m.classList.add("on"); document.body.classList.add("sheet-on");   // toasts move to the top meanwhile
   if(value!==undefined) setTimeout(()=>inp.focus(),80);
 }
 let toastT=null;
