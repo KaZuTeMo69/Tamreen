@@ -13,12 +13,12 @@ function contrast(a,b){
 const pairsOf=p=>p.evaluate(()=>{
   const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const probe=c=>{ const d=document.createElement("div"); d.style.color=c; document.body.appendChild(d); const v=getComputedStyle(d).color; d.remove(); return v; };
-  const t=["--bg","--card","--ink","--muted","--sage","--sage-ink","--clay","--clay-ink","--on-ink","--field"].reduce((o,n)=>(o[n]=probe(css(n)),o),{});
+  const t=["--bg","--card","--ink","--muted","--lime","--on-lime","--violet","--on-violet","--hi","--on-ink","--field"].reduce((o,n)=>(o[n]=probe(css(n)),o),{});
   return {t,body:getComputedStyle(document.body).backgroundColor,meta:[...document.querySelectorAll('meta[name="theme-color"]')].map(m=>m.content)};
 });
 const TEXT=[["--ink","--card"],["--ink","--bg"],["--muted","--card"],["--muted","--bg"],["--muted","--field"],
-  ["--sage-ink","--sage"],["--clay-ink","--clay"],["--on-ink","--ink"]];
-const MARKS=[["--ink","--card"],["--sage-ink","--card"],["--muted","--card"]];
+  ["--on-lime","--lime"],["--on-violet","--violet"],["--hi","--card"],["--on-ink","--ink"]];
+const MARKS=[["--ink","--card"],["--hi","--card"],["--muted","--card"]];
 
 module.exports=async()=>{
   // every colour below the token blocks is a token

@@ -73,7 +73,7 @@ function lineChart(host,pts,{fmt,numbers=true,label}){
   });
 }
 
-/* columns: bars oldest → newest {v, tip:[...], label}; best = sage, partial (this week so far) = muted */
+/* columns: bars oldest → newest {v, tip:[...], label}; best = highlight (--hi), partial (this week so far) = muted */
 function columnChart(host,bars,{fmt,label,partial}){
   const H=164,T=24,B=24,R=40,L=6,n=bars.length;
   const {svg,W,tip}=chartFrame(host,H,label);
