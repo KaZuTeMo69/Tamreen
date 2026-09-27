@@ -13,11 +13,12 @@ function contrast(a,b){
 const pairsOf=p=>p.evaluate(()=>{
   const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
   const probe=c=>{ const d=document.createElement("div"); d.style.color=c; document.body.appendChild(d); const v=getComputedStyle(d).color; d.remove(); return v; };
-  const t=["--bg","--card","--ink","--muted","--lime","--on-lime","--violet","--on-violet","--hi","--on-ink","--field"].reduce((o,n)=>(o[n]=probe(css(n)),o),{});
-  return {t,body:getComputedStyle(document.body).backgroundColor,meta:[...document.querySelectorAll('meta[name="theme-color"]')].map(m=>m.content)};
+  const t=["--bg","--card","--ink","--muted","--lime","--on-lime","--violet","--on-violet","--hi","--name","--on-ink","--field"].reduce((o,n)=>(o[n]=probe(css(n)),o),{});
+  return {t,body:getComputedStyle(document.body).backgroundColor,meta:[...document.querySelectorAll('meta[name="theme-color"]')].map(m=>m.content),
+    nav:getComputedStyle(document.querySelector("nav button.on")).backgroundColor,me:getComputedStyle(document.querySelector("button.me")).color};
 });
 const TEXT=[["--ink","--card"],["--ink","--bg"],["--muted","--card"],["--muted","--bg"],["--muted","--field"],
-  ["--on-lime","--lime"],["--on-violet","--violet"],["--hi","--card"],["--on-ink","--ink"]];
+  ["--on-lime","--lime"],["--on-violet","--violet"],["--hi","--card"],["--hi","--bg"],["--name","--bg"],["--on-ink","--ink"]];
 const MARKS=[["--ink","--card"],["--hi","--card"],["--muted","--card"]];
 
 module.exports=async()=>{
@@ -28,11 +29,18 @@ module.exports=async()=>{
 
   for(const scheme of ["light","dark"]){
     const p=await open({colorScheme:scheme});
-    const {t,body:bg,meta}=await pairsOf(p);
+    await p.evaluate(()=>{ D.name="Abdo"; render(); });
+    const {t,body:bg,meta,nav,me}=await pairsOf(p);
     const low=TEXT.filter(([a,b])=>contrast(t[a],t[b])<4.5).map(([a,b])=>`${a} on ${b}: ${contrast(t[a],t[b]).toFixed(2)}`);
     check(`${scheme} (following the phone): text pairs ≥ 4.5:1`, low.length===0, low);
     const lowM=MARKS.filter(([a,b])=>contrast(t[a],t[b])<3).map(([a,b])=>`${a} on ${b}`);
     check(`${scheme}: chart marks ≥ 3:1 on the card`, lowM.length===0, lowM);
+    /* both secondary colours in both themes: violet highlights (a lighter violet in dark, to read on black),
+       the active tab a violet pill; the name violet in light and lime in dark */
+    const [r,g,b]=t["--hi"].match(/\d+/g).map(Number);
+    check(`${scheme}: highlights are violet`, b>r&&r>g&&b>200, t["--hi"]);
+    check(`${scheme}: active tab is a violet pill`, nav===t["--violet"], nav);
+    check(`${scheme}: the name is ${scheme==="dark"?"lime":"violet"}`, me===t[scheme==="dark"?"--lime":"--violet"], me);
     check(`${scheme}: page background and browser bar match the theme`,
       bg===t["--bg"] && (scheme==="dark"?contrast(bg,"rgb(0, 0, 0)")<1.5:contrast(bg,"rgb(255, 255, 255)")<1.3) && meta.every(m=>m===meta[0]), {bg,meta});
     await p.done();

@@ -128,12 +128,15 @@ GitHub Pages publishes the `main` branch automatically.
 
 ## Colours, font and dark mode
 
-Brand colours: black & white for the base (dark / light mode), with violet `#7D39EB` and lime `#C6FF33`
-as the secondary colours. They are CSS tokens at the top of `css/app.css`: lime and violet are fills
-(black text on lime, white on violet); `--hi` is the highlight for thin marks and highlighted text —
-lime in dark mode, violet in light mode (lime on white is nearly invisible). Dark mode follows the phone
-unless Settings → Theme forces it. Use the tokens for anything new — the theme test fails on a
-hard-coded colour. Every text pair is at least 4.5:1 and every chart mark 3:1 in both themes.
+Brand colours: black & white for the base (light / dark mode), with violet `#7D39EB` and lime `#C6FF33`
+as the secondary colours, used the same way in both modes: lime for the big fills (next workout, "on" chips,
+done sets, tips, Finish) and violet for the highlights (progress, the goal ring, chart best, the RIR box,
+the active tab) and violet cards (bodyweight, notes). They are CSS tokens at the top of `css/app.css`:
+black text on lime, white on violet; `--hi` (thin violet marks and text) is the brand violet in light mode
+and a lighter violet `#A57AF1` in dark mode, because the brand violet is only 3.6:1 on black. `--name`
+(your name, on the title's line) is violet in light mode and lime in dark. Dark mode follows the phone
+unless Settings → Theme forces it. Use the tokens for anything new — the theme test fails on a hard-coded
+colour. Every text pair is at least 4.5:1 and every chart mark 3:1 in both themes.
 
 Fonts:
 - English: DM Sans (Google Fonts) for text; Orbitron (`fonts/orbitron.woff2`, SIL Open Font License —

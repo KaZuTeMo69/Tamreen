@@ -1,7 +1,9 @@
-/* Brand: black & white base (light / dark), violet and lime as the secondary colours.
+/* Brand: black & white base (light / dark), violet and lime as the secondary colours, used the same way in
+   both themes: lime for the big fills (next workout, "on" chips, done sets, tips, Finish), violet for the
+   highlights (progress, the goal ring, chart best, the active tab, focus) and violet cards (bodyweight, notes).
    --lime / --violet are fills (text on them: --on-lime black, --on-violet white, same in both themes).
-   --hi is the highlight for thin marks and text on a card (chart best, progress, focus): violet in light,
-   lime in dark — lime on white is nearly invisible. --edge outlines cards; --muted is secondary text;
+   --hi is violet for thin marks and text: the brand violet in light, a lighter violet in dark (the brand
+   violet is only 3.6:1 on black). --name is the name at the top: violet in light, lime in dark. --edge outlines cards; --muted is secondary text;
    --on-ink is text on an --ink fill; --field is an input's background. Every text pair clears 4.5:1 and
    every chart mark 3:1 against its surface in both themes (checked with the dataviz contrast tool). */
 /* Readex Pro (SIL Open Font License, fonts/ReadexPro-OFL.txt): Arabic text. Only its Arabic letters are
@@ -11,13 +13,13 @@
 /* Orbitron (SIL Open Font License, fonts/Orbitron-OFL.txt): the name, and in English the titles, buttons and big numbers */
 @font-face{font-family:"Orbitron";src:url("../fonts/orbitron.woff2") format("woff2");font-weight:400 900;font-display:swap}
 :root{--lime:#C6FF33;--on-lime:#000000;--violet:#7D39EB;--on-violet:#FFFFFF;--r:22px;
-  --bg:#FFFFFF;--card:#F4F4F4;--edge:#E6E6E6;--ink:#000000;--muted:#636363;--line:#E2E2E2;--hi:#7D39EB;
+  --bg:#FFFFFF;--card:#F4F4F4;--edge:#E6E6E6;--ink:#000000;--muted:#636363;--line:#E2E2E2;--hi:#7D39EB;--name:#7D39EB;
   --on-ink:#FFFFFF;--field:#FFFFFF;--wash:rgba(255,255,255,.2);--scrim:rgba(0,0,0,.45);--shadow:rgba(0,0,0,.12);color-scheme:light}
 /* FEATURE: dark mode — follows the phone unless Settings forces light or dark (data-theme on <html>).
    The two blocks are the same values: one for "follow the phone", one for "always dark". */
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000000;--card:#141414;--edge:#262626;--ink:#FFFFFF;--muted:#A1A1A1;--line:#2A2A2A;--hi:#C6FF33;
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000000;--card:#141414;--edge:#262626;--ink:#FFFFFF;--muted:#A1A1A1;--line:#2A2A2A;--hi:#A57AF1;--name:#C6FF33;
   --on-ink:#000000;--field:#0A0A0A;--wash:rgba(0,0,0,.1);--scrim:rgba(0,0,0,.72);--shadow:rgba(0,0,0,.6);color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#000000;--card:#141414;--edge:#262626;--ink:#FFFFFF;--muted:#A1A1A1;--line:#2A2A2A;--hi:#C6FF33;
+:root[data-theme="dark"]{--bg:#000000;--card:#141414;--edge:#262626;--ink:#FFFFFF;--muted:#A1A1A1;--line:#2A2A2A;--hi:#A57AF1;--name:#C6FF33;
   --on-ink:#000000;--field:#0A0A0A;--wash:rgba(0,0,0,.1);--scrim:rgba(0,0,0,.72);--shadow:rgba(0,0,0,.6);color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 /* no pinch or double-tap zoom (see main.js); scrolling still works */
@@ -31,9 +33,11 @@ body{background:var(--bg);color:var(--ink);font-family:'Readex Pro','DM Sans',sy
 h1{font-size:36px;font-weight:800;letter-spacing:-.5px;margin:12px 0 0}
 .sub{color:var(--muted);font-size:15px;margin-top:2px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-/* the name, top left in both languages (the bar is always left-to-right); tapping it opens Settings */
-.me-bar{display:flex;direction:ltr;justify-content:flex-start;align-items:center;min-height:40px}
-.me{border:0;background:none;padding:6px 0;margin:0;color:var(--ink);cursor:pointer;max-width:100%;
+/* the name, on the title's line (the end of it); tapping it opens Settings */
+.ttl{flex:1;min-width:0}
+.hrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.hrow h1{min-width:0;overflow-wrap:anywhere}
+.me{border:0;background:none;padding:6px 0;margin:0;color:var(--name);cursor:pointer;max-width:48%;flex:none;
   font-family:'Orbitron','Readex Pro',sans-serif;font-size:21px;font-weight:900;letter-spacing:.02em;line-height:1.2;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .me.empty{color:var(--muted);font-size:15px;font-weight:700}
@@ -150,7 +154,7 @@ nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(sa
   box-shadow:0 6px 28px var(--shadow);z-index:20}
 nav button{flex:1;border:0;background:none;font-family:inherit;font-size:12px;font-weight:700;color:var(--muted);
   padding:10px 4px;border-radius:999px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
-nav button.on{background:var(--bg);color:var(--hi)}
+nav button.on{background:var(--violet);color:var(--on-violet)}
 nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 #timer{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + env(safe-area-inset-bottom));
   width:min(430px,calc(100% - 36px));background:var(--ink);color:var(--on-ink);border-radius:999px;padding:12px 20px;
