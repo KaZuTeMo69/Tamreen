@@ -231,8 +231,8 @@ function setName(v){ D.name=v.trim().slice(0,30); saved(); }
 function setDefUnit(u){ D.unit=u; saved(); }
 function setTheme(t){ D.theme=t; applyTheme(); saved(); }
 function setAutoRest(v){ D.autoRest=v==="on"; saved(); }
-function setGoal(v){ const n=setting(v,1,31,tx("الهدف من ١ لـ ٣١","The goal is 1 to 31")); if(n!==null){ D.goal=Math.round(n); saved(); } }
-function setRest(i,v){ const n=setting(v,5,900,tx("الراحة من ٥ لـ ٩٠٠ ثانية","Rest is 5 to 900 seconds")); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
+function setGoal(v){ const n=setting(v,1,31,tx("الهدف من 1 لـ 31","The goal is 1 to 31")); if(n!==null){ D.goal=Math.round(n); saved(); } }
+function setRest(i,v){ const n=setting(v,5,900,tx("الراحة من 5 لـ 900 ثانية","Rest is 5 to 900 seconds")); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
 function setBar(u,v){ const n=setting(v,0,200,tx("اكتب وزن البار","Type the bar weight")); if(n!==null){ D[u==="lb"?"barLb":"bar"]=n; saved(); } }
 function setPlates(u,v){
   const list=[...new Set(v.split(/[\s,،;]+/).map(num).filter(x=>x>0))].sort((a,b)=>b-a);
@@ -268,8 +268,8 @@ function readExForm(){
   const e={n:val("f-n").trim().slice(0,80),eq:val("f-eq"),sets:int("f-sets"),lo:int("f-lo"),hi:int("f-hi")};
   FLAGS.forEach(f=>{ e[f]=document.getElementById("f-"+f).checked; });
   if(e.assist) e.addw=true;   // assistance is typed in the weight box, like added weight
-  const err=!e.n?tx("اكتب اسم التمرين","Type the exercise name"):!(e.sets>=1&&e.sets<=10)?tx("الستات من ١ لـ ١٠","Sets are 1 to 10")
-    :!(e.lo>=1&&e.hi<=100&&e.lo<=e.hi)?tx("العدّات: من ١ لـ ١٠٠، والأولى أصغر","Reps are 1 to 100, the first one smaller"):"";
+  const err=!e.n?tx("اكتب اسم التمرين","Type the exercise name"):!(e.sets>=1&&e.sets<=10)?tx("الستات من 1 لـ 10","Sets are 1 to 10")
+    :!(e.lo>=1&&e.hi<=100&&e.lo<=e.hi)?tx("العدّات: من 1 لـ 100، والأولى أصغر","Reps are 1 to 100, the first one smaller"):"";
   return {e,err};
 }
 /* the form sheet; on a mistake it says what's wrong and opens again with what was typed */

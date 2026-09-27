@@ -69,7 +69,7 @@ module.exports=async()=>{
   check('F3 goal shows on plan', (await p.textContent('.ring-n')).includes('/ 12'));
   await p.click('text=ابدأ الحصة');
   const rest=await p.$$eval('#ex-a1 button[onclick^="startTimer"]',b=>b.map(x=>x.textContent+"|"+x.getAttribute('onclick')));
-  check('F3 rest buttons use settings', rest.includes('راحة ٦٠|startTimer(60)')&&rest.includes('١٨٠|startTimer(180)'), rest);
+  check('F3 rest buttons use settings', rest.includes('راحة 60|startTimer(60)')&&rest.includes('180|startTimer(180)'), rest);
   await ev(()=>{ draft.units.c2="kg"; plateCalc("c2"); }); await p.fill('#minput','100'); await p.click('#myes');
   body=await p.textContent('#mbody');
   check('F3 plate calc uses bar 15 + custom plates', body.includes('1 × 25')&&body.includes('1 × 10')&&body.includes('باقي 7.5'), body);

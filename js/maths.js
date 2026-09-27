@@ -135,7 +135,7 @@ function plateauText(p,u){
   }
   const t=topSet(p.last),w=ex.assist||!t.kg?0:conv(t.w,t.u,u),st=step(ex,u),light=w?Math.max(st,Math.floor(w*0.9/st+1e-9)*st):0;
   return light?tx(`${n} حصص من غير تحسّن — خُد أسبوع أخف: ${light} ${UL[u]} بنفس العدّات`,`No progress in ${p.since} workouts — take a lighter week: ${light} ${u}, same reps`)
-    :tx(`${n} حصص من غير تحسّن — خُد أسبوع أخف: ست أقل ووقّف قبل الفشل بـ ٢–٣`,`No progress in ${p.since} workouts — take a lighter week: one set fewer, stop 2–3 reps short`);
+    :tx(`${n} حصص من غير تحسّن — خُد أسبوع أخف: ست أقل ووقّف قبل الفشل بـ 2–3`,`No progress in ${p.since} workouts — take a lighter week: one set fewer, stop 2–3 reps short`);
 }
 /* the weight typed on a best set, in unit u (same rounding as the pre-filled weights) */
 const wIn=(t,u)=>t.u===u?num(t.w):conv(t.w,t.u,u);
@@ -148,5 +148,5 @@ function histLine(id,upTo,unit){
   const ex=byId(id),u=unit||unitOf(id),h=historyOf(id,upTo).slice(-3).reverse();
   if(!h.length) return "";
   const t=h.map(topSet);
-  return `${tx("آخر ٣","Last 3")}${t.some(x=>x.kg)?` (${UL[u]})`:""}: `+t.map(x=>setShort(ex,x,u)).join(" · ");
+  return `${tx("آخر 3","Last 3")}${t.some(x=>x.kg)?` (${UL[u]})`:""}: `+t.map(x=>setShort(ex,x,u)).join(" · ");
 }

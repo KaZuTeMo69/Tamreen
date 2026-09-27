@@ -197,7 +197,7 @@ const LOGS={
       ${d?tx(`${d<0?"نزلت":"زادت"} ${Math.abs(d).toFixed(1)} ${UL[D.unit]} من أول وزن`,`${d<0?"Down":"Up"} ${Math.abs(d).toFixed(1)} ${UL[D.unit]} since the first weigh-in`)
         :tx("نفس أول وزن","Same as the first weigh-in")}</div>`},
   waist:{f:"cm",get title(){ return tx("محيط الوسط","Waist"); },unit:()=>"cm",ph:()=>tx("بالسنتيمتر","in cm"),
-    get hint(){ return tx("قيس كل ٤ أسابيع بس.","Measure every 4 weeks, no more."); },
+    get hint(){ return tx("قيس كل 4 أسابيع بس.","Measure every 4 weeks, no more."); },
     show:v=>v,store:v=>v,
     diff:d=>`<div class="small" style="margin-top:12px;color:${d<0?'var(--hi)':'var(--muted)'}">
       ${d<0?tx(`نزلت ${Math.abs(d).toFixed(1)} سم من أول قياس`,`Down ${Math.abs(d).toFixed(1)} cm since the first measurement`)
@@ -258,14 +258,14 @@ function vProg(){
 
   <div class="label">${tx("الحجم الأسبوعي","Weekly volume")}</div>
   <div class="card">
-    ${weeks.some(w=>w.n)?`<div class="small muted">${tx(`مجموع الوزن × العدّات لكل أسبوع (من السبت) بالـ${UL[U]} — آخر ١٢ أسبوع`,
+    ${weeks.some(w=>w.n)?`<div class="small muted">${tx(`مجموع الوزن × العدّات لكل أسبوع (من السبت) بالـ${UL[U]} — آخر 12 أسبوع`,
         `Weight × reps added up per week (from Saturday), in ${U} — last 12 weeks`)}</div>
       <div class="chart-host" id="ch-week"></div>
       <details class="tbl"><summary>${tx("الأرقام","Numbers")}</summary><table>
         <tr><th>${tx("الأسبوع","Week")}</th><th>${tx("حصص","Workouts")}</th><th>${tx("الحجم","Volume")}</th></tr>
         ${weeks.slice().reverse().map((w,i)=>`<tr><td>${i?fdate(w.start):tx("الأسبوع ده","This week")}</td><td class="num">${nl(w.n)}</td>
           <td class="num">${Math.round(fromKg(w.kg,U)).toLocaleString("en")}</td></tr>`).join("")}</table></details>`
-    :`<div class="muted small">${tx("مفيش حصص في آخر ١٢ أسبوع.","No workouts in the last 12 weeks.")}</div>`}
+    :`<div class="muted small">${tx("مفيش حصص في آخر 12 أسبوع.","No workouts in the last 12 weeks.")}</div>`}
   </div>
 
   ${logCard("bw")}
@@ -353,7 +353,7 @@ function vProgram(){
           <button class="chip" onclick="removeEx('${k}',${i})">${tx("شيل","Remove")}</button></div></div>`).join("")}
       <div style="margin-top:14px"><button class="btn lime" onclick="addEx('${k}')">+ ${tx("تمرين","Exercise")}</button></div>
     </div>`; };
-  return `<div class="top"><div><h1>${tx("البرنامج","Program")}</h1><div class="sub">${tx("أول ٣ تمارين في كل يوم هما الحد الأدنى","The first 3 exercises of each day are the minimum")}</div></div>
+  return `<div class="top"><div><h1>${tx("البرنامج","Program")}</h1><div class="sub">${tx("أول 3 تمارين في كل يوم هما الحد الأدنى","The first 3 exercises of each day are the minimum")}</div></div>
     <button class="btn light" style="width:auto;padding:12px 20px;font-size:15px" onclick="go('set')">${tx("رجوع","Back")}</button></div>
   ${ORDER.map(day).join("")}
   ${D.program?`<div style="margin-top:22px"><button class="btn danger" onclick="resetProgram()">${tx("رجّع البرنامج الأصلي","Back to the built-in program")}</button></div>`:""}`;

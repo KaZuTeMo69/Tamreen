@@ -145,7 +145,7 @@ function drawCharts(){
     columnChart(wk,weeks.map((w,i)=>({v:fromKg(w.kg,U),label:i===weeks.length-1?tx("الأسبوع ده","This week"):fdate(w.start),
       tip:[`${Math.round(fromKg(w.kg,U)).toLocaleString("en")} ${UL[U]}`,tx(`${w.n?nl(w.n):"مفيش"} حصص`,`${w.n||"No"} workout${w.n===1?"":"s"}`),
         tx(`أسبوع ${fdate(w.start)}`,`Week of ${fdate(w.start)}`)]})),
-      {fmt:compact,partial:weeks.length-1,label:tx("الحجم الأسبوعي لآخر ١٢ أسبوع","Weekly volume, last 12 weeks")});
+      {fmt:compact,partial:weeks.length-1,label:tx("الحجم الأسبوعي لآخر 12 أسبوع","Weekly volume, last 12 weeks")});
   }
 }
 let resizeT=null;

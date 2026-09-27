@@ -113,7 +113,7 @@ All three fonts are free to use, share and host (OFL), so they can stay in this 
 
 Every piece of text is written twice, `tx("عربي","English")`, next to where it is used. The language is a
 setting of the phone (`localStorage` key `tamreen-v2-lang`), not of the data, so backups, restores and
-"delete all data" leave it alone. In English the layout runs left-to-right: the charts put the newest
+"delete all data" leave it alone. Numbers are always written 0–9, in Arabic too (Arabic digits typed on the keyboard are still read). In English the layout runs left-to-right: the charts put the newest
 workout on the right and the calendar starts Saturday on the left. Exercise names are the ones you type,
 so they are the same in both languages; a day description you edit is shown as you wrote it. The older
 test suites pin Arabic (`tests/lib.js`); `tests/i18n.test.js` covers English.

@@ -63,7 +63,7 @@ module.exports=async()=>{
   const q=await open({time:"2026-09-26T10:00:00Z"});
   await add(q,A1);
   const t=await q.textContent("#app");
-  check("Arabic: card and advice", t.includes("محتاج انتباه") && t.includes("٣ حصص من غير تحسّن — خُد أسبوع أخف: 100 كجم بنفس العدّات") && t.includes("أسبوع أخف"));
+  check("Arabic: card and advice", t.includes("محتاج انتباه") && t.includes("3 حصص من غير تحسّن — خُد أسبوع أخف: 100 كجم بنفس العدّات") && t.includes("أسبوع أخف"));
   check("Arabic: no page errors", q.errs.length===0, q.errs);
   await q.done();
 };
