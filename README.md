@@ -1,12 +1,17 @@
 # تمرين — Tamreen
 
-A mobile workout log for a 3-day A / B / C rotation, in Egyptian Arabic.
+A mobile workout log for a 3-day A / B / C rotation, in English (left-to-right) or Egyptian Arabic
+(right-to-left) — English by default, switch in Settings → Language.
 Plain HTML, CSS and JavaScript — no build step, no libraries. Hosted on GitHub Pages.
 
 All data lives in the phone's browser storage (`localStorage`, key `tamreen-v2`).
-Use the backup buttons in the السجل tab — there is no other copy.
+Use the backup buttons in the Log tab — there is no other copy.
 
-**Ask Claude:** the "🤖 اسأل Claude عن الحصة" button on a workout (new or opened from the log)
+**Home screen:** the next workout (lime card, start or switch it there), days trained this month against the
+goal (ring), bodyweight with its trend (violet card), this week Saturday to Friday, the last workout
+(volume, sets, minutes, records) and the latest records. Each card opens the screen with the details.
+
+**Ask Claude:** the "🤖 Ask Claude about it" button on a workout (new or opened from the log)
 turns it into a ready-to-paste message — today's sets, the date and recent history per exercise — and
 opens the share sheet (phone) or copies it (computer). Paste it into the Claude chat; no API key or cost.
 
@@ -15,7 +20,8 @@ opens the share sheet (phone) or copies it (computer). Paste it into the Claude 
 ```
 index.html        page markup; loads the CSS and scripts below in order
 css/app.css       all styles
-js/program.js     the built-in workout program; edits made in the app are saved in the data (Settings → البرنامج)
+js/i18n.js        language: tx(arabic, english), direction, number format (loaded in <head>)
+js/program.js     the built-in workout program; edits made in the app are saved in the data (Settings → Program)
 js/seed.js        the first three sessions, loaded on a fresh install
 js/store.js       app state, load / save, small helpers, data migration
 js/maths.js       volume, best set, next-weight suggestion
@@ -28,7 +34,7 @@ js/coach.js       builds the "Ask Claude" message for a session
 js/main.js        wires the tab bar and draws the first screen
 sw.js             service worker: keeps a copy of the app so it opens offline
 manifest.webmanifest, icons/   make it installable (home-screen icon, full screen)
-fonts/            Tafkir Arabic (trial) — see below
+fonts/            Tafkir Arabic (trial) and Orbitron — see below
 .nojekyll         tells GitHub Pages to serve files as-is (no Jekyll)
 tests/            browser tests (not used by the app itself)
 package.json      only for the tests
@@ -81,13 +87,28 @@ Brand colours: black & white for the base (dark / light mode), with violet `#7D3
 as the secondary colours. They are CSS tokens at the top of `css/app.css`: lime and violet are fills
 (black text on lime, white on violet); `--hi` is the highlight for thin marks and highlighted text —
 lime in dark mode, violet in light mode (lime on white is nearly invisible). Dark mode follows the phone
-unless Settings → المظهر forces it. Use the tokens for anything new — the theme test fails on a
+unless Settings → Theme forces it. Use the tokens for anything new — the theme test fails on a
 hard-coded colour. Every text pair is at least 4.5:1 and every chart mark 3:1 in both themes.
 
-Font: Tafkir Arabic (`fonts/tafkir-arabic.woff2`, converted from the supplied OTF) for text, DM Sans for
-numbers. The supplied file is the **trial** version (`fonts/Tafkir-LICENSE.txt`: "Demo / Trial"); it has
+Fonts:
+- English: DM Sans (Google Fonts) for text; Orbitron (`fonts/orbitron.woff2`, SIL Open Font License —
+  `fonts/Orbitron-OFL.txt`) for titles, buttons and big numbers.
+- Arabic: Tafkir Arabic (`fonts/tafkir-arabic.woff2`, converted from the supplied OTF) for text, DM Sans for
+  numbers.
+- The name at the top left (tap it for Settings) is Orbitron in both languages.
+
+Tafkir: The supplied file is the **trial** version (`fonts/Tafkir-LICENSE.txt`: "Demo / Trial"); it has
 one weight, and this repo is public, so the file can be downloaded by anyone — get a proper licence
 from the foundry (Kutype) before relying on it.
+
+## Languages
+
+Every piece of text is written twice, `tx("عربي","English")`, next to where it is used. The language is a
+setting of the phone (`localStorage` key `tamreen-v2-lang`), not of the data, so backups, restores and
+"delete all data" leave it alone. In English the layout runs left-to-right: the charts put the newest
+workout on the right and the calendar starts Saturday on the left. Exercise names are the ones you type,
+so they are the same in both languages; a day description you edit is shown as you wrote it. The older
+test suites pin Arabic (`tests/lib.js`); `tests/i18n.test.js` covers English.
 
 ## Offline and install
 

@@ -53,7 +53,7 @@ const normNum=v=>String(v??"").replace(/[٠-٩]/g,c=>c.charCodeAt(0)-0x660)
 const num=v=>+normNum(v)||0;
 const ym=s=>s.slice(0,7);
 /* FIX: "YYYY-MM-DD" read as a local date — new Date(s) alone is UTC midnight, a day early west of UTC */
-const fdate=s=>new Date(s+"T00:00:00").toLocaleDateString("ar-EG",{day:"numeric",month:"short"});
+const fdate=s=>new Date(s+"T00:00:00").toLocaleDateString(LOCALE(),{day:"numeric",month:"short"});
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const unitOf=id=>D.units[id]||D.unit||"kg";
 const perSide=id=>!!D.sides[id];
@@ -65,7 +65,7 @@ const toKg=(v,u)=>num(v)*(u==="lb"?0.4536:1);
 const fromKg=(kg,u)=>u==="lb"?kg/0.4536:kg;
 /* a weight logged in one unit, shown in another (rounded to 0.5) */
 const conv=(v,from,to)=>from===to?num(v):Math.round(fromKg(toKg(v,from),to)*2)/2;
-const UL={kg:"كجم",lb:"باوند"};
+const UL={get kg(){ return tx("كجم","kg"); },get lb(){ return tx("باوند","lb"); }};
 const clone=o=>JSON.parse(JSON.stringify(o));
 const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
 /* only http(s) links — a pinned or restored "javascript:" link is dropped */

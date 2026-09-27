@@ -59,14 +59,14 @@ module.exports=async()=>{
   check('F3 lb plate rows shown when lb is used', !!(await p.$('text=وزن البار (باوند)')));
   const fields=await p.$$('input.field');
   await fields[0].fill('Ahmed'); await fields[0].press('Tab');
-  check('F3 name → avatar initial', (await p.textContent('button.avatar'))==='A' && await ev(()=>D.name)==='Ahmed');
-  await ev(()=>setName("محمد")); check('F3 Arabic name initial', (await p.textContent('button.avatar'))==='م');
+  check('F3 name → shown in the top bar', (await p.textContent('button.me'))==='Ahmed' && await ev(()=>D.name)==='Ahmed');
+  await ev(()=>setName("محمد")); check('F3 Arabic name shown', (await p.textContent('button.me'))==='محمد');
   await ev(()=>setGoal("٥٠")); check('F3 goal out of range rejected', await ev(()=>D.goal)===10);
   await ev(()=>setGoal("12")); await ev(()=>setRest(0,"60")); await ev(()=>setRest(1,"180"));
   await ev(()=>setPlates("kg","25, 20 ،10")); await ev(()=>setBar("kg","15"));
   check('F3 plates parsed & sorted', await ev(()=>D.plates.join())==='25,20,10');
   await p.click('nav button[data-tab=plan]');
-  check('F3 goal shows on plan', (await p.$$('.pill')).length===12 && (await p.textContent('.card .row')).includes('/ 12'));
+  check('F3 goal shows on plan', (await p.textContent('.ring-n')).includes('/ 12'));
   await p.click('text=ابدأ الحصة');
   const rest=await p.$$eval('#ex-a1 button[onclick^="startTimer"]',b=>b.map(x=>x.textContent+"|"+x.getAttribute('onclick')));
   check('F3 rest buttons use settings', rest.includes('راحة ٦٠|startTimer(60)')&&rest.includes('١٨٠|startTimer(180)'), rest);

@@ -53,6 +53,6 @@ function sessionText(d){
   return lines.join("\n");
 }
 async function askClaude(){
-  if(!Object.values(draft.entries).some(rows=>rows.some(r=>r.r||r.r2))){ toast("سجّل ست واحد على الأقل"); return; }
+  if(!Object.values(draft.entries).some(rows=>rows.some(r=>r.r||r.r2))){ toast(tx("سجّل ست واحد على الأقل","Log at least one set")); return; }
   await giveText(sessionText(draft));
 }

@@ -44,7 +44,7 @@ function topSet(h){
   },null);
 }
 /* FEATURE: next-session weight suggestion, driven by RIR — in the unit the exercise is logged in.
-   The unit is written in Arabic (كجم / باوند) so the sentence keeps reading right-to-left. */
+   In Arabic the unit is written in Arabic (كجم / باوند) so the sentence keeps reading right-to-left. */
 function suggest(ex,upTo,unit){
   const h=lastFor(ex.id,upTo); if(!h) return null;
   const scored=h.rows.filter(r=>Math.max(num(r.r),num(r.r2))>0);
@@ -52,30 +52,30 @@ function suggest(ex,upTo,unit){
   const last=scored[scored.length-1];
   const u=unit||h.u, reps=Math.max(num(last.r),num(last.r2)), w=conv(last.w,h.u,u), rir=h.rir;
   const st=step(ex,u), fmt=v=>+v.toFixed(2), tgt=v=>`${fmt(v)} ${UL[u]}`;
-  const one=ex.sec?"ثانية":"عدّة", many=ex.sec?"ثواني":"عدّات";
+  const one=ex.sec?tx("ثانية","sec"):tx("عدّة","reps"), many=ex.sec?tx("ثواني","sec"):tx("عدّات","reps");
   if(!w){ // bodyweight
-    if(rir===undefined) return `آخر مرة ${reps} ${one} — استهدف ${reps+1}`;
-    if(rir>=3) return `RIR ${rir} — ضيف وزن أو زوّد لـ ${reps+3} ${many}`;
-    if(rir<=1) return `آخر مرة ${reps} ${one} و RIR ${rir} — استهدف ${reps+1}`;
-    return `آخر مرة ${reps} ${one} — استهدف ${reps+2}`;
+    if(rir===undefined) return tx(`آخر مرة ${reps} ${one} — استهدف ${reps+1}`,`Last time ${reps} ${one} — aim for ${reps+1}`);
+    if(rir>=3) return tx(`RIR ${rir} — ضيف وزن أو زوّد لـ ${reps+3} ${many}`,`RIR ${rir} — add weight or go for ${reps+3} ${many}`);
+    if(rir<=1) return tx(`آخر مرة ${reps} ${one} و RIR ${rir} — استهدف ${reps+1}`,`Last time ${reps} ${one} at RIR ${rir} — aim for ${reps+1}`);
+    return tx(`آخر مرة ${reps} ${one} — استهدف ${reps+2}`,`Last time ${reps} ${one} — aim for ${reps+2}`);
   }
   if(ex.assist){ // FIX: less assistance is progress
-    const less=n=>Math.max(0,w-st*n), aid=v=>v?`مساعدة ${tgt(v)}`:"من غير مساعدة";
-    if(rir===undefined) return reps>=ex.hi?`آخر مرة ${aid(w)} × ${reps} — جرّب ${aid(less(1))}`
-      :`آخر مرة ${aid(w)} × ${reps} — ثبّت المساعدة واستهدف ${ex.hi}`;
-    if(rir>=3) return `RIR ${rir} — سهلة، جرّب ${aid(less(2))}`;
-    if(rir==2)  return `RIR 2 — جرّب ${aid(less(1))}`;
-    if(reps<ex.lo&&rir===0) return `صعبة — زوّد المساعدة لـ ${tgt(w+st)}`;
-    if(reps>=ex.hi) return `RIR ${rir} وكمّلت العدّات — جرّب ${aid(less(1))}`;
-    return `ثبّت على ${aid(w)} واستهدف ${ex.hi} عدّات`;
+    const less=n=>Math.max(0,w-st*n), aid=v=>v?tx(`مساعدة ${tgt(v)}`,`${tgt(v)} assist`):tx("من غير مساعدة","no assist");
+    if(rir===undefined) return reps>=ex.hi?tx(`آخر مرة ${aid(w)} × ${reps} — جرّب ${aid(less(1))}`,`Last time ${aid(w)} × ${reps} — try ${aid(less(1))}`)
+      :tx(`آخر مرة ${aid(w)} × ${reps} — ثبّت المساعدة واستهدف ${ex.hi}`,`Last time ${aid(w)} × ${reps} — same assist, aim for ${ex.hi}`);
+    if(rir>=3) return tx(`RIR ${rir} — سهلة، جرّب ${aid(less(2))}`,`RIR ${rir} — easy, try ${aid(less(2))}`);
+    if(rir==2)  return tx(`RIR 2 — جرّب ${aid(less(1))}`,`RIR 2 — try ${aid(less(1))}`);
+    if(reps<ex.lo&&rir===0) return tx(`صعبة — زوّد المساعدة لـ ${tgt(w+st)}`,`Too hard — raise the assist to ${tgt(w+st)}`);
+    if(reps>=ex.hi) return tx(`RIR ${rir} وكمّلت العدّات — جرّب ${aid(less(1))}`,`RIR ${rir} with all reps done — try ${aid(less(1))}`);
+    return tx(`ثبّت على ${aid(w)} واستهدف ${ex.hi} عدّات`,`Stay at ${aid(w)}, aim for ${ex.hi} reps`);
   }
-  if(rir===undefined) return reps>=ex.hi?`آخر مرة ${fmt(w)} × ${reps} — جرّب ${tgt(w+st)}`
-    :`آخر مرة ${fmt(w)} × ${reps} — ثبّت الوزن واستهدف ${ex.hi}`;
-  if(rir>=3) return `RIR ${rir} — الوزن خفيف، جرّب ${tgt(w+st*2)}`;
-  if(rir==2)  return `RIR 2 — جرّب ${tgt(w+st)}`;
-  if(reps<ex.lo&&rir===0) return `الوزن تقيل — انزل لـ ${tgt(Math.max(st,w-st))}`;
-  if(reps>=ex.hi) return `RIR ${rir} وكمّلت العدّات — جرّب ${tgt(w+st)}`;
-  return `ثبّت على ${tgt(w)} واستهدف ${ex.hi} عدّات`;
+  if(rir===undefined) return reps>=ex.hi?tx(`آخر مرة ${fmt(w)} × ${reps} — جرّب ${tgt(w+st)}`,`Last time ${fmt(w)} × ${reps} — try ${tgt(w+st)}`)
+    :tx(`آخر مرة ${fmt(w)} × ${reps} — ثبّت الوزن واستهدف ${ex.hi}`,`Last time ${fmt(w)} × ${reps} — same weight, aim for ${ex.hi}`);
+  if(rir>=3) return tx(`RIR ${rir} — الوزن خفيف، جرّب ${tgt(w+st*2)}`,`RIR ${rir} — too light, try ${tgt(w+st*2)}`);
+  if(rir==2)  return tx(`RIR 2 — جرّب ${tgt(w+st)}`,`RIR 2 — try ${tgt(w+st)}`);
+  if(reps<ex.lo&&rir===0) return tx(`الوزن تقيل — انزل لـ ${tgt(Math.max(st,w-st))}`,`Too heavy — drop to ${tgt(Math.max(st,w-st))}`);
+  if(reps>=ex.hi) return tx(`RIR ${rir} وكمّلت العدّات — جرّب ${tgt(w+st)}`,`RIR ${rir} with all reps done — try ${tgt(w+st)}`);
+  return tx(`ثبّت على ${tgt(w)} واستهدف ${ex.hi} عدّات`,`Stay at ${tgt(w)}, aim for ${ex.hi} reps`);
 }
 /* FEATURE: personal records. One pass over the sessions in date order, keeping each exercise's best so
    far; a session sets a record when it beats every earlier session: a heavier working weight (lifts and
@@ -101,12 +101,13 @@ function recordMap(){
   });
   return out;
 }
-/* "أتقل وزن: 110 كجم × 6" · "أحسن ست: +5 كجم × 8" · "أكتر عدّات: 22" · "أطول ثبات: 50 ثانية" */
+/* "أتقل وزن: 110 كجم × 6" · "أحسن ست: +5 كجم × 8" · "أكتر عدّات: 22" · "أطول ثبات: 50 ثانية"
+   (English: "Heaviest: 110 kg × 6" · "Best set: +5 kg × 8" · "Most reps: 22" · "Longest hold: 50 sec") */
 function recordText(pr){
   const ex=exDef(pr.id),w=num(pr.w),U=UL[pr.u];
-  if(!w) return ex.sec?`أطول ثبات: ${pr.reps} ثانية`:`أكتر عدّات: ${pr.reps}`;
-  const load=ex.assist?`مساعدة ${w} ${U}`:`${ex.addw?"+":""}${w} ${U}`;
-  return `${pr.kind==="heavy"?"أتقل وزن":"أحسن ست"}: ${load} × ${pr.reps}`;
+  if(!w) return ex.sec?tx(`أطول ثبات: ${pr.reps} ثانية`,`Longest hold: ${pr.reps} sec`):tx(`أكتر عدّات: ${pr.reps}`,`Most reps: ${pr.reps}`);
+  const load=ex.assist?tx(`مساعدة ${w} ${U}`,`${w} ${U} assist`):`${ex.addw?"+":""}${w} ${U}`;
+  return `${pr.kind==="heavy"?tx("أتقل وزن","Heaviest"):tx("أحسن ست","Best set")}: ${load} × ${pr.reps}`;
 }
 /* the weight typed on a best set, in unit u (same rounding as the pre-filled weights) */
 const wIn=(t,u)=>t.u===u?num(t.w):conv(t.w,t.u,u);
@@ -119,5 +120,5 @@ function histLine(id,upTo,unit){
   const ex=byId(id),u=unit||unitOf(id),h=historyOf(id,upTo).slice(-3).reverse();
   if(!h.length) return "";
   const t=h.map(topSet);
-  return `آخر ٣${t.some(x=>x.kg)?` (${UL[u]})`:""}: `+t.map(x=>setShort(ex,x,u)).join(" · ");
+  return `${tx("آخر ٣","Last 3")}${t.some(x=>x.kg)?` (${UL[u]})`:""}: `+t.map(x=>setShort(ex,x,u)).join(" · ");
 }

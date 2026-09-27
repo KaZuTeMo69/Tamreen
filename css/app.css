@@ -5,6 +5,8 @@
    --on-ink is text on an --ink fill; --field is an input's background. Every text pair clears 4.5:1 and
    every chart mark 3:1 against its surface in both themes (checked with the dataviz contrast tool). */
 @font-face{font-family:"Tafkir";src:url("../fonts/tafkir-arabic.woff2") format("woff2");font-weight:100 900;font-display:swap}
+/* Orbitron (SIL Open Font License, fonts/Orbitron-OFL.txt): the name, and in English the titles, buttons and big numbers */
+@font-face{font-family:"Orbitron";src:url("../fonts/orbitron.woff2") format("woff2");font-weight:400 900;font-display:swap}
 :root{--lime:#C6FF33;--on-lime:#000000;--violet:#7D39EB;--on-violet:#FFFFFF;--r:22px;
   --bg:#FFFFFF;--card:#F4F4F4;--edge:#E6E6E6;--ink:#000000;--muted:#636363;--line:#E2E2E2;--hi:#7D39EB;
   --on-ink:#FFFFFF;--field:#FFFFFF;--wash:rgba(255,255,255,.2);--scrim:rgba(0,0,0,.45);--shadow:rgba(0,0,0,.12);color-scheme:light}
@@ -23,8 +25,12 @@ body{background:var(--bg);color:var(--ink);font-family:'Tafkir','DM Sans',system
 h1{font-size:36px;font-weight:800;letter-spacing:-.5px;margin:12px 0 0}
 .sub{color:var(--muted);font-size:15px;margin-top:2px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.avatar{width:52px;height:52px;border-radius:50%;background:var(--lime);color:var(--on-lime);
-  display:grid;place-items:center;font-weight:800;font-size:20px;flex:none}
+/* the name, top left in both languages (the bar is always left-to-right); tapping it opens Settings */
+.me-bar{display:flex;direction:ltr;justify-content:flex-start;align-items:center;min-height:40px}
+.me{border:0;background:none;padding:6px 0;margin:0;color:var(--ink);cursor:pointer;max-width:100%;
+  font-family:'Orbitron','Tafkir',sans-serif;font-size:21px;font-weight:900;letter-spacing:.02em;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me.empty{color:var(--muted);font-size:15px;font-weight:700}
 .label{font-size:19px;font-weight:700;margin:26px 0 10px}
 .card{background:var(--card);border:1px solid var(--edge);border-radius:var(--r);padding:18px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0}
@@ -47,9 +53,44 @@ button:active,a.chip:active,label.chip:active{transform:scale(.96);filter:bright
 .chip.tag{background:transparent;color:var(--muted);border:1px solid var(--line);cursor:default}
 .chip.tag:active{transform:none;filter:none}
 .chip.w{padding:6px 9px;font-size:11px}
-.pills{display:flex;gap:5px;margin-top:12px}
-.pill{flex:1;height:10px;border-radius:999px;background:var(--line);transition:background .3s,height .3s}
-.pill.on{background:var(--hi);height:16px}
+/* home screen: next workout (lime), month ring, bodyweight (violet), this week, last workout */
+.hero{margin-top:18px;background:var(--lime);color:var(--on-lime);border-radius:26px;padding:20px 20px 12px}
+.hero-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.04em}
+.hero-title{font-size:34px;font-weight:800;line-height:1.15;margin-top:6px}
+.hero-tag{font-size:15px;font-weight:600;margin-top:2px}
+.hero-ex{margin-top:10px;opacity:.8}
+.hero .btn{margin-top:16px;background:var(--on-lime);color:var(--lime)}
+.hero-link{display:block;width:100%;margin-top:4px;border:0;background:none;color:var(--on-lime);font-family:inherit;
+  font-size:14px;font-weight:700;padding:10px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.nowrap{white-space:nowrap}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.duo .card{padding:16px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ring-box{position:relative;width:84px;height:84px;margin:4px 0}
+.ring{width:84px;height:84px;display:block}
+.ring circle{fill:none;stroke-width:9}
+.ring .track{stroke:var(--line)}
+.ring .fill{stroke:var(--hi);stroke-linecap:round}
+.ring-n{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;direction:ltr}
+.ring-n b{font-size:24px;font-weight:700}
+.hi{color:var(--hi);font-weight:700}
+.bwc{background:var(--violet);color:var(--on-violet);border-color:var(--violet)}
+.bw-n b{font-size:26px;font-weight:700}
+.bw-empty{font-weight:700;margin-top:auto}
+.spark{width:100%;height:34px;display:block;overflow:visible}
+.spark polyline{fill:none;stroke:var(--on-violet);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.spark circle{fill:var(--on-violet)}
+.week{margin-top:12px}
+.wdays{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wd{aspect-ratio:1;max-width:40px;margin:0 auto;width:100%;border-radius:50%;display:grid;place-items:center;
+  font-size:12px;font-weight:700;color:var(--muted);box-shadow:inset 0 0 0 2px var(--line)}
+.wd.on{background:var(--lime);color:var(--on-lime);box-shadow:none}
+.wd.today{box-shadow:inset 0 0 0 2px var(--ink);color:var(--ink)}
+.wd.on.today{box-shadow:inset 0 0 0 2px var(--on-lime);color:var(--on-lime)}
+.wd.future{opacity:.55}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.stats div{display:flex;flex-direction:column;min-width:0}
+.stats b{font-size:20px;font-weight:700}
 .ex{background:var(--card);border:1px solid var(--edge);border-radius:var(--r);padding:16px;margin-bottom:12px}
 .ex h3{margin:0;font-size:17px;font-weight:700}
 .ex .meta{font-size:13px;color:var(--muted);margin-top:2px}
@@ -68,7 +109,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--hi);outline-offs
 .hint{font-size:11px;color:var(--muted);text-align:center;font-family:'DM Sans',sans-serif}
 .hints{display:flex;gap:6px;margin-bottom:-2px}
 .hints .i{width:18px;flex:none}
-.prev{min-width:52px;text-align:left;font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;flex:none}
+.prev{min-width:52px;text-align:end;font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif;flex:none}
 .note{margin-top:12px;background:var(--violet);color:var(--on-violet);border-radius:14px;padding:10px 14px;font-size:14px;font-weight:500}
 .tip{margin-top:10px;background:var(--lime);color:var(--on-lime);border-radius:14px;padding:10px 14px;font-size:14px;font-weight:600}
 .hist{margin-top:8px;font-size:12px;color:var(--muted);font-family:'DM Sans',sans-serif}
@@ -98,7 +139,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--hi);outline-offs
 .tbl{margin-top:10px}
 .tbl summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);padding:6px 0}
 .tbl table{width:100%;border-collapse:collapse;font-size:13px}
-.tbl th{color:var(--muted);font-weight:700;text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
+.tbl th{color:var(--muted);font-weight:700;text-align:start;padding:6px 4px;border-bottom:1px solid var(--line)}
 .tbl td{padding:6px 4px;border-bottom:1px solid var(--line)}
 /* log calendar */
 .cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:center}
@@ -140,7 +181,7 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;st
 #mform.hide{display:none}
 .flabel{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--muted)}
 .frow{display:flex;gap:8px}
-.ftext{text-align:right;font-family:inherit;font-size:16px}
+.ftext{text-align:start;font-family:inherit;font-size:16px}
 .check{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink)}
 .check input{width:20px;height:20px;padding:0;flex:none;accent-color:var(--hi)}
 .chip:disabled{opacity:.35;cursor:default}
@@ -157,9 +198,20 @@ nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;st
 body.timing #toast{bottom:calc(160px + env(safe-area-inset-bottom))}
 body.sheet-on #toast{top:calc(16px + env(safe-area-inset-top));bottom:auto}
 .field{width:110px;flex:none;padding:10px 6px;font-size:16px;border-radius:12px}
-.field.txt{width:170px;text-align:right;font-family:inherit}
+.field.txt{width:170px;text-align:start;font-family:inherit}
 .row.stack{flex-direction:column;align-items:stretch;gap:8px}
+.chips{display:flex;gap:4px;flex:none}
 .row.stack .field{width:100%}
-button.avatar{border:0;padding:0;font-family:inherit;cursor:pointer}
 .hide{display:none}
+/* FEATURE: English (left-to-right): DM Sans for text, Orbitron for titles, buttons and big numbers.
+   Orbitron is wide, so those run a little smaller than the Arabic ones. */
+html[lang="en"] body{font-family:'DM Sans',system-ui,sans-serif}
+html[lang="en"] :is(h1,.label,.btn,.stat,#timer b,.cal-head b,.hero-title){font-family:'Orbitron','DM Sans',sans-serif}
+html[lang="en"] h1{font-size:28px;font-weight:800;letter-spacing:0}
+html[lang="en"] .label{font-size:15px;font-weight:700;letter-spacing:.03em}
+html[lang="en"] .btn{font-size:15px;letter-spacing:.03em}
+html[lang="en"] #modal .mbtns .btn{font-size:14px}
+html[lang="en"] .cal-head b{font-size:14px}
+html[lang="en"] .hero-title{font-size:28px}
+html[lang="en"] .stat{font-size:.9em}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

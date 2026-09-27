@@ -1,6 +1,6 @@
 /* ══ modal / toast ════════════════════════════════════ */
 /* html: a small form built by the caller (values already escaped); onYes reads it back from the page */
-function sheet({text,body="",value,type="text",area,html,yes="تأكيد",danger,onYes}){
+function sheet({text,body="",value,type="text",area,html,yes=tx("تأكيد","Confirm"),danger,onYes}){
   const m=document.getElementById("modal"),inp=document.getElementById("minput"),ta=document.getElementById("marea");
   document.getElementById("mtext").textContent=text;
   document.getElementById("mbody").textContent=body;
@@ -10,10 +10,10 @@ function sheet({text,body="",value,type="text",area,html,yes="تأكيد",danger
   if(area!==undefined){ ta.value=area; setTimeout(()=>{ ta.focus(); ta.select(); },80); }
   inp.classList.toggle("hide",value===undefined);
   if(value!==undefined){ inp.type=type; inp.value=value;
-    inp.style.textAlign=type==="text"?"right":"center"; inp.style.fontFamily=type==="text"?"inherit":"'DM Sans'";
+    inp.style.textAlign=type==="text"?"start":"center"; inp.style.fontFamily=type==="text"?"inherit":"'DM Sans'";
     inp.style.fontSize="16px"; }
   const y=document.getElementById("myes"),n=document.getElementById("mno");
-  y.textContent=yes; y.className="btn"+(danger?" danger":"");
+  y.textContent=yes; y.className="btn"+(danger?" danger":""); n.textContent=tx("إلغاء","Cancel");
   const close=()=>{m.classList.remove("on");document.body.classList.remove("sheet-on");
     y.onclick=null;n.onclick=null;m.onclick=null;inp.onkeydown=null;};
   y.onclick=()=>{ buzz(18); const v=inp.value; close(); onYes&&onYes(v); };
@@ -35,7 +35,7 @@ function paintTimer(){
   const left=Math.max(0,Math.round((endAt-Date.now())/1000));
   document.getElementById("tval").textContent=
     String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0");
-  if(left<=0&&tick){ stopTimer(); buzz(400); toast("الراحة خلصت"); }
+  if(left<=0&&tick){ stopTimer(); buzz(400); toast(tx("الراحة خلصت","Rest over")); }
 }
 function startTimer(sec,until){          // until: resume a rest that was running before a reload
   stopTimer(); endAt=until||Date.now()+sec*1000;

@@ -1,5 +1,7 @@
 /* ══ program ══════════════════════════════════════════ */
-const EQ={machine:"جهاز",dumbbell:"دمبل",barbell:"بار",cable:"كابل",body:"وزن الجسم"};
+/* equipment names in the current language (getters, so a language switch needs no reload) */
+const EQ={get machine(){ return tx("جهاز","Machine"); },get dumbbell(){ return tx("دمبل","Dumbbell"); },
+  get barbell(){ return tx("بار","Barbell"); },get cable(){ return tx("كابل","Cable"); },get body(){ return tx("وزن الجسم","Bodyweight"); }};
 /* the built-in program; an edited copy lives in D.program (see the editor in actions.js) */
 const DEFAULT_PROGRAM={
  A:{label:"تمرين A",tag:"ضغط رجل + دفع وسحب أفقي",ex:[
@@ -38,6 +40,10 @@ function loadProgram(){
     .forEach(e=>{ if(!seen.has(e.id)) seen.set(e.id,e); });
   ALL=[...seen.values()];
 }
+/* a day's name and description in the current language; a description the person wrote is shown as written */
+const dayLabel=k=>tx("تمرين ","Workout ")+k;
+const TAG_EN={A:"Leg press + horizontal push & pull",B:"Vertical pull first + single-leg",C:"Dips first + horizontal press"};
+const dayTag=k=>{ const t=PROGRAM[k].tag; return !isAr()&&t===DEFAULT_PROGRAM[k].tag?TAG_EN[k]:t; };
 const byId=id=>ALL.find(x=>x.id===id);
 /* never undefined — an id from an imported file that no definition knows still shows up and saves */
 const exDef=id=>byId(id)||{id,n:id,eq:"machine",sets:1,lo:1,hi:99};
