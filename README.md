@@ -15,10 +15,18 @@ goal (ring), bodyweight with its trend (violet card), this week Saturday to Frid
 the workout and the Progress tab say what to do: 3 → take a lighter week (about 90% of the last top weight),
 4 → go for your best again, 5+ → swap it for a variation. The Ask Claude message mentions it too.
 
-**Faster logging:** tap last time's numbers on a set to copy them; "Same again" repeats the set above;
-"+1 rep" adds a rep to the last set; the rest timer starts by itself when you type a set's reps (not for
-warm-ups; Settings → Rest buttons can turn it off); "📌 Setup" keeps a note per exercise (seat height, pin)
-that shows every workout.
+**The workout screen** is built for one hand between sets. One exercise fills the screen — its name, its sets and
+"reps left in the tank" — with `3 / 7` and a bar at the top (a mark after the third exercise = the minimum
+session) and ← / Next at the bottom (or swipe). Finish is at the top of every exercise; the last page ("Wrap-up")
+has notes and Ask Claude.
+- The faint numbers in each box are last session's. Tap the set's circle to log it exactly like last time, or
+  +/− to log one rep more / less (weights move 2.5 kg for dumbbells, cables and added weight, 5 kg for machines
+  and barbells; 5 / 10 lb). Tap a number to type it. A logged set gets a ✓.
+- The rest timer starts itself when a set is logged: 120 s for the first three exercises, 90 s after the others
+  (Settings → Rest between sets; it can be turned off). Warm-up sets don't start it.
+- "Reps left in the tank" is asked once, when the last set is in (or when you move on without it).
+- ⋯ holds what's set once: unit, right / left, warm-up sets, number of sets, swap / rename, the how-to video and
+  YouTube link, the plate calculator (barbell), a setup note (seat height, pin) and a manual rest.
 
 **Ask Claude:** the "🤖 Ask Claude about it" button on a workout (new or opened from the log)
 turns it into a ready-to-paste message — today's sets, the date and recent history per exercise — and
@@ -35,9 +43,10 @@ js/seed.js        the first three sessions, loaded on a fresh install
 js/store.js       app state, load / save, small helpers, data migration
 js/maths.js       volume, best set, next-weight suggestion
 js/ui.js          bottom sheet, toast, rest timer
-js/views.js       the screens (plan, session, progress, log, settings) and render()
+js/views.js       the screens (plan, progress, log, settings, program) and render()
 js/charts.js      the SVG charts on the progress tab (drawn after render at the card's width)
 js/actions.js     what the buttons do
+js/session.js     the workout screen: one exercise at a time, steppers, rest timer, RIR, the ⋯ menu
 js/backup.js      JSON backup / restore, CSV import / export, share / copy helpers, wipe
 js/coach.js       builds the "Ask Claude" message for a session
 js/main.js        wires the tab bar and draws the first screen

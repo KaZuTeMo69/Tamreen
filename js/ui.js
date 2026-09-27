@@ -1,4 +1,11 @@
 /* ══ modal / toast ════════════════════════════════════ */
+/* closes the bottom sheet (also used by buttons inside a sheet's own form) */
+function closeSheet(){
+  const m=document.getElementById("modal");
+  m.classList.remove("on"); document.body.classList.remove("sheet-on");
+  document.getElementById("myes").onclick=null; document.getElementById("mno").onclick=null; m.onclick=null;
+  document.getElementById("minput").onkeydown=null;
+}
 /* html: a small form built by the caller (values already escaped); onYes reads it back from the page */
 function sheet({text,body="",value,type="text",area,html,yes=tx("تأكيد","Confirm"),danger,onYes}){
   const m=document.getElementById("modal"),inp=document.getElementById("minput"),ta=document.getElementById("marea");
@@ -12,10 +19,8 @@ function sheet({text,body="",value,type="text",area,html,yes=tx("تأكيد","Co
   if(value!==undefined){ inp.type=type; inp.value=value;
     inp.style.textAlign=type==="text"?"start":"center"; inp.style.fontFamily=type==="text"?"inherit":"'DM Sans'";
     inp.style.fontSize="16px"; }
-  const y=document.getElementById("myes"),n=document.getElementById("mno");
+  const y=document.getElementById("myes"),n=document.getElementById("mno"),close=closeSheet;
   y.textContent=yes; y.className="btn"+(danger?" danger":""); n.textContent=tx("إلغاء","Cancel");
-  const close=()=>{m.classList.remove("on");document.body.classList.remove("sheet-on");
-    y.onclick=null;n.onclick=null;m.onclick=null;inp.onkeydown=null;};
   y.onclick=()=>{ buzz(18); const v=inp.value; close(); onYes&&onYes(v); };
   inp.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); y.onclick(); } };   // FIX: Enter confirms
   n.onclick=close; m.onclick=e=>{ if(e.target===m) close(); };

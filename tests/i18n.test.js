@@ -60,7 +60,9 @@ module.exports=async()=>{
   { const hit=await arabicLeft(); check("workout: no Arabic left", !hit, hit&&(await app()).slice(Math.max(0,hit.index-40),hit.index+40)); }
   check("workout: English suggestion", /RIR 2 — try 125 kg/.test(await app()), (await p.textContent(".tip")));
   const inp=await p.$$("#sets-a1 input"); await inp[0].fill("125"); await inp[1].fill("8");
-  check("workout: count and button follow", (await p.textContent("#cnt"))==="1 / 6 exercises logged"&&(await p.textContent("#fin"))==="Finish workout (1)");
+  check("workout: position, progress and finish button", (await p.textContent("#pos"))==="1 / 6" && (await p.$$(".seg.on")).length===1 && (await p.textContent("#fin"))==="Finish");
+  await ev(()=>{ draft.at=draft.ids.length; render(); });
+  check("wrap-up: count in English", (await p.textContent("#cnt"))==="1 / 6 exercises logged");
   await ev(()=>swap("a2"));
   check("sheets: English title and buttons", (await p.textContent("#mtext"))==="Rename the exercise"&&(await p.textContent("#mno"))==="Cancel"&&(await p.textContent("#myes"))==="Save");
   await p.click("#mno");

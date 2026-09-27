@@ -26,7 +26,7 @@ const DEFAULT_PROGRAM={
   {id:"c4",n:"Leg Extension",eq:"machine",sets:3,lo:10,hi:12},
   {id:"c4b",n:"Seated Leg Curl",eq:"machine",sets:3,lo:10,hi:12},
   {id:"c5",n:"Face Pulls",eq:"cable",sets:3,lo:15,hi:20},
-  {id:"c6",n:"Standing Calf Raises",eq:"machine",sets:4,lo:12,hi:15}]}};
+  {id:"c6",n:"Calf Raise (Leg Press)",eq:"machine",sets:4,lo:12,hi:15}]}};
 const ORDER=["A","B","C"],GOAL=10,KEY="tamreen-v2";
 const PLATES=[20,15,10,5,2.5,1.25];
 /* PROGRAM = the program in use. ALL = every exercise the app knows, including ones taken out of the

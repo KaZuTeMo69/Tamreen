@@ -45,8 +45,9 @@ module.exports=async()=>{
   check('B10 suggestion in lb with lb step', sg.includes('باوند')&&!sg.includes('كجم'), sg);
   await ev(()=>{ D.cursor="A"; render(); }); await p.click('nav button[data-tab=plan]'); await p.click('text=ابدأ الحصة');
   check('B10 pre-filled weights converted to lb', await ev(()=>draft.entries.a2.map(r=>r.w).join())==='22,26.5,31', await ev(()=>draft.entries.a2.map(r=>r.w).join()));
-  const prev=await p.$$eval('#sets-a2 .prev',els=>els.slice(1).map(e=>e.textContent));
-  check('B10 previous column converted to lb', prev.join()==='22×12,26.5×10,31×10', prev);
+  await ev(()=>{ draft.at=draft.ids.indexOf("a2"); render(); });
+  const prev=await p.$$eval('#sets-a2 input',els=>els.map(e=>e.placeholder));   // weight, reps per set
+  check('B10 last time (faint numbers) converted to lb', prev.join()==='22,12,26.5,10,31,10', prev);
   // plate calculator in lb
   await ev(()=>{ draft.units.c2="lb"; plateCalc("c2"); }); await p.fill('#minput','135'); await p.click('#myes');
   let body=await p.textContent('#mbody'), title=await p.textContent('#mtext');
@@ -68,8 +69,11 @@ module.exports=async()=>{
   await p.click('nav button[data-tab=plan]');
   check('F3 goal shows on plan', (await p.textContent('.ring-n')).includes('/ 12'));
   await p.click('text=ابدأ الحصة');
-  const rest=await p.$$eval('#ex-a1 button[onclick^="startTimer"]',b=>b.map(x=>x.textContent+"|"+x.getAttribute('onclick')));
-  check('F3 rest buttons use settings', rest.includes('راحة 60|startTimer(60)')&&rest.includes('180|startTimer(180)'), rest);
+  await ev(()=>logSet('a1',0));
+  check('F3 rest after a main lift uses the first-3 setting (180 s)', (await p.textContent('#tval'))==='03:00', await p.textContent('#tval'));
+  await ev(()=>{ stopTimer(); draft.at=3; render(); logSet('a4',0); });
+  check('F3 rest after other exercises uses the other setting (60 s)', (await p.textContent('#tval'))==='01:00', await p.textContent('#tval'));
+  await ev(()=>stopTimer());
   await ev(()=>{ draft.units.c2="kg"; plateCalc("c2"); }); await p.fill('#minput','100'); await p.click('#myes');
   body=await p.textContent('#mbody');
   check('F3 plate calc uses bar 15 + custom plates', body.includes('1 × 25')&&body.includes('1 × 10')&&body.includes('باقي 7.5'), body);

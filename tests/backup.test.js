@@ -47,7 +47,7 @@ module.exports=async()=>{
   // very old backup (before names were frozen, merged leg card) → migration runs
   await restoreFile('ancient.json',JSON.stringify({sessions:[{date:"2026-08-10",workout:"C",entries:{c4:[{w:"40",r:"12"}]},units:{c4:"kg"}}],migrated:0}));
   await p.click('#myes');
-  check('B13 migration runs after restore', await ev(()=>{const s=D.sessions[0];return !!s.entries.c4b&&!s.entries.c4&&s.names.c4b==="Seated Leg Curl"&&D.migrated===2;}));
+  check('B13 migration runs after restore', await ev(()=>{const s=D.sessions[0];return !!s.entries.c4b&&!s.entries.c4&&s.names.c4b==="Seated Leg Curl"&&D.migrated===3;}));
   // pinning a link
   await ev(()=>pinVideo('a1')); await p.fill('#minput','javascript:alert(1)'); await p.click('#myes');
   check('B13 pinning javascript: rejected', await ev(()=>!D.videos.a1));
@@ -68,11 +68,11 @@ module.exports=async()=>{
 
   // B16 — edit-mode back button, − set, toast above timer, viewport
   await ev(()=>{ D.sessions.push({date:"2026-09-20",workout:"A",entries:{a1:[{w:"50",r:"10",r2:"",warm:false}]},units:{a1:"kg"},names:{},counts:{},sides:{},rir:{}}); save(); openSession(D.sessions.length-1); });
-  await p.click('text=رجوع');
+  await p.click('#back');
   check('B16 back without changes leaves directly', await ev(()=>draft===null&&!document.getElementById('modal').classList.contains('on')));
   await ev(()=>openSession(D.sessions.length-1));
   const inp=await p.$$('#sets-a1 input'); await inp[1].fill('11');
-  await p.click('text=رجوع');
+  await p.click('#back');
   check('B16 back with changes asks first', await ev(()=>document.getElementById('modal').classList.contains('on')&&draft!==null));
   await p.click('#mno');
   await ev(()=>delSet('a1'));   // 3 rows: last row empty → removed without asking

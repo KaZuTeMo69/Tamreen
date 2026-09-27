@@ -37,7 +37,11 @@ module.exports=async()=>{
   }
   await ev(()=>go("plan")); await p.click(".hero .btn");
   const ses=await ev(()=>document.getElementById("app").innerText);
-  check("Arabic workout: numbers in 0–9 (start time, rest buttons, counts)", !INDIC.test(ses) && /راحة 90/.test(ses), ses.match(INDIC)?.index);
+  check("Arabic workout: numbers in 0–9 (start time, position, sets)", !INDIC.test(ses) && /1 \/ \d/.test(ses), ses.match(INDIC)?.index);
+  await ev(()=>exMenu(draft.ids[0]));
+  const menu=await p.textContent("#modal");
+  check("Arabic ⋯ menu: numbers in 0–9", !INDIC.test(menu) && /\(\d+ ث\)/.test(menu), menu.match(INDIC)?.index);
+  await ev(()=>closeSheet());
   const first=await ev(()=>draft.ids[0]);   // the day's first exercise (it has a weight box)
   await (await p.$$(`#sets-${first} input`))[1].fill("٨");   // an Arabic keyboard still types ٨ — read as 8
   check("typing Arabic digits still works", await ev(id=>draft.entries[id][0].r,first)==="8");

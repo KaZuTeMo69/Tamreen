@@ -14,6 +14,7 @@ module.exports=async()=>{
     D.bw=[{date:"2026-09-20",kg:80}]; D.cursor="B"; save(); render();
   });
   await p.click('text=ابدأ الحصة');
+  await ev(()=>goEx(draft.ids.length));   // the button is on the wrap-up page
   check('button on a new session', !!(await p.$('button:has-text("اسأل Claude")')));
   await p.click('button:has-text("اسأل Claude")');
   check('no sets yet → asks to log one', (await p.textContent('#toast')).includes('سجّل ست واحد'));
@@ -61,7 +62,7 @@ module.exports=async()=>{
   check('fallback box hidden for other sheets', await ev(()=>{ swap('b7'); const h=getComputedStyle(document.getElementById('marea')).display==="none"; document.getElementById('mno').click(); return h; }));
   // finish, then ask about the same session from the log: history must not include itself
   await p.click('#fin');
-  await ev(()=>openSession(D.sessions.findIndex(s=>s.date==="2026-09-19")));
+  await ev(()=>{ openSession(D.sessions.findIndex(s=>s.date==="2026-09-19")); goEx(draft.ids.length); });
   check('button on an old session', !!(await p.$('button:has-text("اسأل Claude")')));
   const old=await ev(()=>sessionText(draft));
   check('old session: history excludes itself', old.includes('Today: 20kg×12 (warm-up), 50kg×12, 50kg×10 · RIR 1') && old.includes('Last time (7 days ago): 45kg×12, 50kg×10 · RIR 2') && !old.includes('55kg'));

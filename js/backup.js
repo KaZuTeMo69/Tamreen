@@ -46,7 +46,7 @@ function csvRows(txt){
 }
 /* CSV → sessions (accepts exports from any version of the app) */
 const ALIASES={"chest cable row":"a3","pull-up":"b1","pull up":"b1","pull-up (assisted)":"b1",
-  "leg extension + seated curl":"c4b","seated calf raise":"c6","standing calf raises":"c6",
+  "leg extension + seated curl":"c4b","seated calf raise":"c6","standing calf raises":"c6","calf raise (leg press)":"c6",
   "leg press / hack squat":"a1"};
 function nameToId(name){
   const k=String(name||"").trim().toLowerCase();
