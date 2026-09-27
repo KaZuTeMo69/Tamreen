@@ -109,6 +109,34 @@ function recordText(pr){
   const load=ex.assist?tx(`مساعدة ${w} ${U}`,`${w} ${U} assist`):`${ex.addw?"+":""}${w} ${U}`;
   return `${pr.kind==="heavy"?tx("أتقل وزن","Heaviest"):tx("أحسن ست","Best set")}: ${load} × ${pr.reps}`;
 }
+/* FEATURE: plateau check. An exercise has stalled when its best set (the e1RM score, or reps / seconds for
+   bodyweight moves) hasn't beaten its best-ever for 3+ workouts in a row. The advice moves on each time:
+   3 → take a lighter week; 4 (the week after) → go for the best again; 5+ → swap it for a variation.
+   h = historyOf(...) for the workouts to look at, oldest first. */
+const STALL=3,SWAP=5;
+function plateauOf(h){
+  if(h.length<STALL+1) return null;
+  let best=-1,at=0;
+  h.forEach((x,i)=>{ const sc=topSet(x).sc; if(sc>best+1e-6){ best=sc; at=i; } });
+  const since=h.length-1-at;
+  return since<STALL?null:{id:h[0].id,since,stage:since>=SWAP?"swap":since>STALL?"beat":"light",
+    bestDate:h[at].date,best:topSet(h[at]),last:h[h.length-1]};
+}
+const plateau=(id,upTo)=>plateauOf(historyOf(id,upTo));
+const PLATEAU_CHIP={light:["أسبوع أخف","Lighter week"],beat:["اكسر رقمك","Beat your best"],swap:["بدّله","Swap"]};
+/* the advice, in unit u. A lighter week is about 90% of the last top weight, rounded down to the
+   exercise's step (assisted and bodyweight moves: one set fewer instead). */
+function plateauText(p,u){
+  const ex=exDef(p.id),n=nl(p.since); u=u||p.last.u;
+  if(p.stage==="swap") return tx(`${n} حصص من غير تحسّن — وقت تبدّله بتمرين شبهه`,`No progress in ${p.since} workouts — time to swap it for a variation`);
+  if(p.stage==="beat"){
+    const b=p.best,w=b.kg?`${ex.assist?tx("مساعدة ","assist "):ex.addw?"+":""}${wIn(b,u)} ${UL[u]} × ${b.reps}`:`${b.reps} ${ex.sec?tx("ثانية","sec"):tx("عدّة","reps")}`;
+    return tx(`${n} حصص من غير تحسّن — بعد الأسبوع الأخف، ارجع لأحسن رقم ليك: ${w}`,`No progress in ${p.since} workouts — after the lighter week, go for your best again: ${w}`);
+  }
+  const t=topSet(p.last),w=ex.assist||!t.kg?0:conv(t.w,t.u,u),st=step(ex,u),light=w?Math.max(st,Math.floor(w*0.9/st+1e-9)*st):0;
+  return light?tx(`${n} حصص من غير تحسّن — خُد أسبوع أخف: ${light} ${UL[u]} بنفس العدّات`,`No progress in ${p.since} workouts — take a lighter week: ${light} ${u}, same reps`)
+    :tx(`${n} حصص من غير تحسّن — خُد أسبوع أخف: ست أقل ووقّف قبل الفشل بـ ٢–٣`,`No progress in ${p.since} workouts — take a lighter week: one set fewer, stop 2–3 reps short`);
+}
 /* the weight typed on a best set, in unit u (same rounding as the pre-filled weights) */
 const wIn=(t,u)=>t.u===u?num(t.w):conv(t.w,t.u,u);
 /* one best set as short text: "100×8", "+5×8" (added), "−20×6" (assistance), "10" (reps only) */

@@ -1,6 +1,6 @@
 /* ══ state ════════════════════════════════════════════ */
 /* everything the app stores; settings live here too (name, units, goal, rest, bar & plates) */
-const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},program:null,retired:{},theme:"auto",
+const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},program:null,retired:{},theme:"auto",exNotes:{},autoRest:true,
   name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],
   lastBackup:0,changedAt:0,migrated:0});
 let D=defaults();

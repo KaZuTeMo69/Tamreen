@@ -36,6 +36,9 @@ function vPlan(){
   const prs=recordMap(),last=order[0];
   const recent=order.flatMap(({s,i})=>(prs.get(i)||[]).map(pr=>({s,i,pr}))).slice(0,3);
   const lastSets=last?Object.values(last.s.entries||{}).reduce((n,rows)=>n+working(rows).length,0):0;
+  /* stalled exercises in the program, longest first */
+  const stalled=[...new Set(ORDER.flatMap(k=>PROGRAM[k].ex.map(e=>e.id)))].map(id=>plateau(id)).filter(Boolean)
+    .sort((a,b)=>b.since-a.since).slice(0,3);
   return `${me()}<div class="top"><div><h1>${tx("اللي جاي","Next up")}</h1>
     <div class="sub">${new Date(now+"T00:00:00").toLocaleDateString(LOCALE(),{weekday:"long",day:"numeric",month:"long"})}</div></div></div>
 
@@ -75,13 +78,18 @@ function vPlan(){
       aria-label="${esc(fdate(d))}${trained.has(d)?" ✓":""}"><span>${letters[i]}</span></div>`).join("")}</div>
   </div>
 
+  ${stalled.length?`<div class="label">${tx("محتاج انتباه","Needs attention")}</div>
+  <div class="card stalls">${stalled.map(x=>`<div class="row tap" onclick="showProgress('${x.id}')">
+    <div><div style="font-weight:700"><bdi>${esc(nameOf(exDef(x.id)))}</bdi></div><div class="small muted">${esc(plateauText(x,unitOf(x.id)))}</div></div>
+    <span class="chip ${x.stage==="swap"?"vio":"on"} nowrap">${tx(...PLATEAU_CHIP[x.stage])}</span></div>`).join("")}</div>`:""}
+
   ${last?`<div class="label">${tx("آخر حصة","Last workout")}</div>
   <div class="card tap lastw" onclick="openSession(${last.i})">
     <div class="row" style="padding-top:0"><div><b>${dayLabel(last.s.workout)}</b>
       <div class="small muted">${fdate(last.s.date)} · ${agoDays(daysSince(new Date(last.s.date+"T00:00:00").getTime()))}</div></div>
       ${prs.has(last.i)?`<span class="chip on">🏆 ${nl(prs.get(last.i).length)}</span>`:"<span class=\"muted\">›</span>"}</div>
     <div class="stats">
-      <div><b class="num stat">${Math.round(volume(last.s)).toLocaleString("en")}</b><span class="small muted">${tx("كجم حجم","kg volume")}</span></div>
+      <div><b class="num stat">${Math.round(fromKg(volume(last.s),D.unit)).toLocaleString("en")}</b><span class="small muted">${tx(`${UL[D.unit]} حجم`,`${D.unit} volume`)}</span></div>
       <div><b class="num stat">${nl(lastSets)}</b><span class="small muted">${tx("ستات","sets")}</span></div>
       <div><b class="num stat">${last.s.mins?nl(last.s.mins):"—"}</b><span class="small muted">${tx("دقيقة","min")}</span></div>
     </div>
@@ -95,7 +103,7 @@ function vPlan(){
   <div class="label">${tx("تمارين النهارده","Today's exercises")}</div>
   <div class="card">${w.ex.map((e,i)=>`<div class="row">
       <div><div style="font-weight:${i<3?700:500};color:${i<3?'var(--ink)':'var(--muted)'}">${esc(nameOf(e))}</div>
-      <div class="small muted num">${EQ[e.eq]} · ${e.sets} × ${e.lo}–${e.hi}${e.sec?" sec":""}</div></div>
+      <div class="small muted num">${EQ[e.eq]} · ${e.sets} × ${e.lo}–${e.hi}${e.sec?tx(" ث"," sec"):""}</div></div>
       ${i===2?`<span class="chip on">${tx("الحد الأدنى","Minimum")}</span>`:''}</div>`).join("")}</div>
 
   <div style="margin-top:22px"><button class="btn light" onclick="startPast()">${tx("سجّل حصة بتاريخ قديم","Log a past workout")}</button></div>`;
@@ -117,14 +125,17 @@ function setsHTML(e){
         ${hideW?"":`<input inputmode="decimal" placeholder="—" value="${esc(cur.w)}" oninput="edit('${e.id}',${s},'w',this.value)">`}
         <input inputmode="numeric" placeholder="—" value="${esc(cur.r)}" oninput="edit('${e.id}',${s},'r',this.value)">
         ${side?`<input inputmode="numeric" placeholder="—" value="${esc(cur.r2)}" oninput="edit('${e.id}',${s},'r2',this.value)">`:""}
-        <span class="prev"${p?.warm?' style="opacity:.55"':""}>${p?.r?`${pw?esc(pw)+"×":""}${esc(p.r)}`:(draft.edit==null?"—":"")}</span></div>`;
+        ${p?.r?`<button class="prev copy"${p.warm?' style="opacity:.55"':""} onclick="copyPrev('${e.id}',${s})" title="${tx("انسخ اللي فات","Copy last time")}">${
+          pw?esc(pw)+"×":""}${esc(p.r)}</button>`:`<span class="prev">${draft.edit==null?"—":""}</span>`}</div>`;
     }).join("")}`;
 }
 
 function vSession(){
   const editing=draft.edit!=null,exs=draft.ids.map(exDef);
   const card=(e,i)=>{
-    const sg=editing?null:suggest(e,draft.date,draft.units[e.id]), hl=histLine(e.id,draft.date,draft.units[e.id]);
+    /* a stalled exercise gets the plateau advice instead of the usual next-weight tip */
+    const pl=editing?null:plateau(e.id,draft.date);
+    const sg=editing||pl?null:suggest(e,draft.date,draft.units[e.id]), hl=histLine(e.id,draft.date,draft.units[e.id]);
     return `<div class="ex" id="ex-${e.id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div><h3>${esc(draft.names[e.id])}</h3>
@@ -132,7 +143,9 @@ function vSession(){
         <div class="num stat" style="font-size:22px;color:var(--line);font-weight:700">${String(i+1).padStart(2,"0")}</div>
       </div>
       ${sg?`<div class="tip">${esc(sg)}</div>`:""}
+      ${pl?`<div class="stall">${esc(plateauText(pl,draft.units[e.id]))}</div>`:""}
       ${hl?`<div class="hist">${esc(hl)}</div>`:""}
+      ${D.exNotes[e.id]?`<div class="setup tap" onclick="editSetup('${e.id}')">📌 ${esc(D.exNotes[e.id])}</div>`:""}
       <div class="ctrls">
         ${(e.eq==="body"&&!e.addw)?"":`<select onchange="setUnit('${e.id}',this.value)">
           <option value="kg" ${draft.units[e.id]==="kg"?"selected":""}>kg</option>
@@ -142,11 +155,14 @@ function vSession(){
         <a class="chip ${D.videos[e.id]?"ink":""}" href="${esc(safeUrl(D.videos[e.id])||("https://www.youtube.com/results?search_query="+encodeURIComponent(e.n+" proper form technique")))}" target="_blank" rel="noopener">▶ ${tx("شرح","How-to")}</a>
         <button class="chip" onclick="pinVideo('${e.id}')">${D.videos[e.id]?tx("غيّر اللينك","Change link"):tx("ثبّت لينك","Pin link")}</button>
         <button class="chip" onclick="swap('${e.id}')">${tx("بدّل","Rename")}</button>
+        ${D.exNotes[e.id]?"":`<button class="chip" onclick="editSetup('${e.id}')">📌 ${tx("ضبط الجهاز","Setup")}</button>`}
       </div>
       <div class="sets" id="sets-${e.id}">${setsHTML(e)}</div>
       <div class="ctrls">
         <button class="chip" onclick="addSet('${e.id}')">+ ${tx("ست","Set")}</button>
         <button class="chip" onclick="delSet('${e.id}')">− ${tx("ست","Set")}</button>
+        <button class="chip" onclick="sameAsAbove('${e.id}')">${tx("زي اللي فوق","Same again")}</button>
+        <button class="chip" onclick="plusRep('${e.id}')">+1 ${tx("عدّة","rep")}</button>
         <button class="chip" onclick="startTimer(${D.rest[0]})">${tx("راحة","Rest")} ${nl(D.rest[0])}</button>
         <button class="chip" onclick="startTimer(${D.rest[1]})">${nl(D.rest[1])}</button>
       </div>
@@ -215,6 +231,7 @@ function vProg(){
   const setText=t=>t.kg?`${ex.assist?tx("مساعدة ","assist "):""}<span dir="ltr">${ex.addw&&!ex.assist?"+":""}${wIn(t,u)} ${esc(u)} × ${t.reps}</span>`
     :`${t.reps} ${ex.sec?tx("ثانية","sec"):tx("عدّة","reps")}`;
   const rm=t=>(t.kg||ex.addw)&&!noBw&&!ex.sec?` · ≈${Math.round(fromKg(t.sc,u))} 1RM`:"";
+  const pl=plateau(progEx);
   return `${me()}<div class="top"><div><h1>${tx("التقدم","Progress")}</h1><div class="sub">${tx("الأرقام مش المرايا","Numbers, not the mirror")}</div></div></div>
 
   <div class="label">${tx("تمرين واحد عبر الوقت","One exercise over time")}</div>
@@ -226,6 +243,7 @@ function vProg(){
     ${h.length?`<div class="small muted">${tx("أحسن ست في كل حصة — ","Best set of each workout — ")}${noBw?tx("سجّل وزنك عشان تظهر الأرقام","log your bodyweight to see the numbers")
         :weighted?tx(`1RM تقديري بالـ${UL[u]}`,`estimated 1RM in ${u}`):ex.sec?tx("بالثواني","in seconds"):tx("بالعدّات","in reps")}</div>
       <div class="chart-host" id="ch-ex"></div>
+      ${pl?`<div class="stall">${esc(plateauText(pl,u))}</div>`:""}
       <div style="margin-top:6px">${h.slice(-4).reverse().map(x=>`<div class="row">
         <div class="num" style="font-weight:700">${setText(x.t)}</div>
         <div class="small muted num">${fdate(x.date)}${rm(x.t)}</div></div>`).join("")}</div>
@@ -286,6 +304,7 @@ function vSet(){
   <div class="card">
     ${row(tx("الزرار الأول","First button"),field(D.rest[0],"setRest(0,this.value)","numeric"))}
     ${row(tx("الزرار التاني","Second button"),field(D.rest[1],"setRest(1,this.value)","numeric"))}
+    ${row(tx("يبدأ لوحده بعد كل ست","Start after each set"),chips([["on",tx("أيوه","On")],["off",tx("لأ","Off")]],D.autoRest===false?"off":"on","setAutoRest"))}
   </div>
 
   <div class="label">${tx("حاسبة أوزان البار","Plate calculator")}</div>
@@ -375,7 +394,7 @@ function vLog(){
     .sort((a,b)=>a.s.date<b.s.date?1:-1).map(({s,i})=>`
     <div class="row tap" onclick="openSession(${i})">
       <div><div style="font-weight:700">${dayLabel(s.workout)}${prs.has(i)?` <span class="chip on" title="${tx("أرقام قياسية","Records")}">🏆 ${nl(prs.get(i).length)}</span>`:""}</div>
-      <div class="small muted num">${Math.round(volume(s)).toLocaleString("en")} kg ${tx("إجمالي","total")}${s.mins?` · ${nl(s.mins)} ${tx("دقيقة","min")}`:""}</div></div>
+      <div class="small muted num">${Math.round(fromKg(volume(s),D.unit)).toLocaleString("en")} ${D.unit} ${tx("إجمالي","total")}${s.mins?` · ${nl(s.mins)} ${tx("دقيقة","min")}`:""}</div></div>
       <div class="small muted num">${s.note?`<span title="${tx("فيها ملاحظة","Has a note")}">📝</span> `:""}${fdate(s.date)} ›</div></div>`).join("")}</div>`
    :`<div class="card muted small">${tx("مفيش حصص لسه.","No workouts yet.")}</div>`}
   <div class="label">${tx("النسخ الاحتياطي","Backup")}</div>
