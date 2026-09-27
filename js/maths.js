@@ -5,7 +5,7 @@ const working=rows=>(rows||[]).filter(r=>r.r&&!r.warm);
 function volume(s){
   let t=0;
   for(const [id,rows] of Object.entries(s.entries||{})){
-    const ex=byId(id); if(!ex||ex.assist) continue;
+    const ex=exDef(id); if(ex.assist) continue;   // an unknown id (another program) still counts
     const u=s.units?.[id]||"kg", mult=(ex.eq==="dumbbell"&&!ex.uni&&!sidesIn(s,id))?2:1;
     working(rows).forEach(r=>{ t+=toKg(r.w,u)*(num(r.r)+num(r.r2))*mult; });
   }
@@ -36,7 +36,7 @@ function loadKg(ex,w,u,date){
 }
 /* best working set of a session: kg = the number typed (weight / added / assistance), sc = e1RM score */
 function topSet(h){
-  const ex=byId(h.id);
+  const ex=exDef(h.id);
   return h.rows.reduce((b,r)=>{
     const kg=toKg(r.w,h.u), reps=Math.max(num(r.r),num(r.r2)), load=loadKg(ex,r.w,h.u,h.date);
     const sc=load>0?load*(1+reps/30):reps;
@@ -86,8 +86,8 @@ function recordMap(){
   D.sessions.map((s,i)=>({s,i})).sort((a,b)=>a.s.date<b.s.date?-1:a.s.date>b.s.date?1:a.i-b.i).forEach(({s,i})=>{
     const found=[];
     for(const [id,rows] of Object.entries(s.entries||{})){
-      const ex=byId(id),h={id,date:s.date,rows:working(rows),u:s.units?.[id]||"kg"};
-      if(!ex||!h.rows.length) continue;
+      const ex=exDef(id),h={id,date:s.date,rows:working(rows),u:s.units?.[id]||"kg"};
+      if(!h.rows.length) continue;
       const t=topSet(h), weighed=!ex.assist&&(ex.eq!=="body"||ex.addw);
       const heavy=weighed?h.rows.reduce((m,r)=>toKg(r.w,h.u)>toKg(m.w,h.u)?r:m,h.rows[0]):null;
       const heavyKg=heavy?toKg(heavy.w,h.u):0, b=best[id];
@@ -145,7 +145,7 @@ function setShort(ex,t,u){
   return `${ex.assist?"−":ex.addw?"+":""}${wIn(t,u)}×${t.reps}`;
 }
 function histLine(id,upTo,unit){
-  const ex=byId(id),u=unit||unitOf(id),h=historyOf(id,upTo).slice(-3).reverse();
+  const ex=exDef(id),u=unit||unitOf(id),h=historyOf(id,upTo).slice(-3).reverse();
   if(!h.length) return "";
   const t=h.map(topSet);
   return `${tx("آخر 3","Last 3")}${t.some(x=>x.kg)?` (${UL[u]})`:""}: `+t.map(x=>setShort(ex,x,u)).join(" · ");

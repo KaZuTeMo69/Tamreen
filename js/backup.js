@@ -25,7 +25,9 @@ async function giveText(text){
   sheet({text:tx("انسخ الرسالة دي والصقها في Claude","Copy this message and paste it into Claude"),area:text,yes:tx("تمام","OK")});
 }
 async function backup(){
-  if(!await giveFile(`tamreen-backup-${today()}.json`,JSON.stringify(D),"application/json")) return;
+  /* the program travels with the backup (schema 1; null = the built-in) */
+  const file={...D,program:programStored?toSchema():null};
+  if(!await giveFile(`tamreen-backup-${today()}.json`,JSON.stringify(file),"application/json")) return;
   D.lastBackup=Date.now(); save(); render(false); toast(tx("النسخة اتحفظت","Backup saved"));
 }
 
@@ -66,9 +68,11 @@ function parseCSV(txt){
   const map=new Map(),skipped=[];
   lines.forEach(c=>{
     const date=c[iD]?.trim(), wk=c[iW]?.trim(), nm=c[iE]?.trim();
-    if(!isDate(date)||!PROGRAM[wk]) return;
-    /* FIX: the exercise id (newer exports) wins over the name, so renamed exercises aren't dropped */
-    const id=(iId>=0&&byId(c[iId]?.trim())?c[iId].trim():null)||nameToId(nm);
+    if(!isDate(date)||!ID_RE.test(wk||"")) return;   // any program's workouts, not only today's
+    /* FIX: the exercise id (newer exports) wins over the name, so renamed exercises aren't dropped;
+       an id from another program is kept as it is (its history stays under the saved name) */
+    const own=iId>=0?c[iId]?.trim():"";
+    const id=(own&&ID_RE.test(own)?own:null)||nameToId(nm);
     if(!id){ skipped.push(nm); return; }
     const key=date+"|"+wk;
     if(!map.has(key)) map.set(key,{date,workout:wk,entries:{},units:{},names:{},counts:{},rir:{}});
@@ -77,7 +81,7 @@ function parseCSV(txt){
       w:normNum(c[iWt]), r:normNum(c[iR]), r2:(iL>=0?normNum(c[iL]):""),
       warm:iWarm>=0&&/warm/i.test(c[iWarm]||"")});
     s.units[id]=(iU>=0&&c[iU]?.trim()==="lb")?"lb":"kg";
-    s.names[id]=nm||byId(id).n;
+    s.names[id]=nm||exDef(id).n;
     s.counts[id]=s.entries[id].length;
     const rir=iRir>=0?normNum(c[iRir]):"";
     if(rir!==""&&[0,1,2,3].includes(+rir)) s.rir[id]=+rir;
@@ -91,17 +95,19 @@ function parseCSV(txt){
 /* FIX: a JSON backup is checked and cleaned before it replaces anything.
    Fields the file has replace the current ones; fields it lacks (older backups) are kept. */
 function cleanSession(s){
-  if(!s||!isDate(s.date)||!PROGRAM[s.workout]||!s.entries||typeof s.entries!=="object") return null;
+  if(!s||!isDate(s.date)||!ID_RE.test(String(s.workout))||!s.entries||typeof s.entries!=="object") return null;
   const out={date:s.date,workout:s.workout,entries:{},units:{},counts:{},rir:{}};
+  if(typeof s.label==="string"&&s.label.trim()) out.label=s.label.trim().slice(0,40);   // the workout's name when it was logged
   if(s.names&&typeof s.names==="object") out.names={};   // very old backups have none — migrate() adds them
   for(const [id,rows] of Object.entries(s.entries)){
-    if(!Array.isArray(rows)) continue;
+    if(!Array.isArray(rows)||!ID_RE.test(id)) continue;
     out.entries[id]=rows.map(r=>({w:normNum(r?.w),r:normNum(r?.r),r2:normNum(r?.r2),warm:!!r?.warm}));
     out.units[id]=s.units?.[id]==="lb"?"lb":"kg";
     if(out.names) out.names[id]=String(s.names[id]??(byId(id)?.n||id)).slice(0,80);
     out.counts[id]=out.entries[id].length;
     if([0,1,2,3].includes(s.rir?.[id])) out.rir[id]=s.rir[id];
   }
+  if(!Object.keys(out.entries).length) return null;   // a workout with no exercises in it isn't a workout
   if(s.sides&&typeof s.sides==="object"){ out.sides={}; for(const id in s.sides) if(s.sides[id]) out.sides[id]=true; }
   const mins=Math.round(num(s.mins)); if(mins>=1&&mins<=600) out.mins=mins;
   if(typeof s.note==="string"&&s.note.trim()) out.note=s.note.trim().slice(0,1000);
@@ -110,31 +116,31 @@ function cleanSession(s){
 function cleanBackup(obj){
   const d={...D},has=k=>obj[k]!==undefined&&obj[k]!==null;
   const numIn=(v,lo,hi,def)=>{ const t=normNum(v),x=+t; return t&&!isNaN(x)&&x>=lo&&x<=hi?x:def; };
-  /* the program (all three days, each with at least one valid exercise) and taken-out exercises */
+  /* the program: schema 1 (this version) or the older {A, B, C} shape (d.program; undefined = the file has none
+     or it's unusable → the current one stays; null = the built-in). restored() stores it under its own key. */
+  delete d.program;
+  if(obj.program===null) d.program=null;
+  else if(obj.program&&typeof obj.program==="object"){
+    if(obj.program.schema!==undefined){ const r=checkProgram(obj.program);
+      if(r.ok&&r.program.workouts.every(w=>w.exercises.every(x=>x.id))) d.program=r.program; }
+    else{ const sch=fromLegacy(obj.program); if(sch) d.program=sch; }
+  }
+  /* exercises taken out of a program */
   const cleanEx=e=>{
-    if(!e||typeof e!=="object"||!/^[a-z0-9]{1,24}$/i.test(String(e.id))||!EQ[e.eq]) return null;
+    if(!e||typeof e!=="object"||!ID_RE.test(String(e.id))||!EQUIPMENT.includes(e.eq)) return null;
     const int=(v,lo,hi,def)=>Math.round(numIn(v,lo,hi,def));
-    const x={id:String(e.id),n:String(e.n??e.id).slice(0,80),eq:e.eq,sets:int(e.sets,1,10,3),lo:int(e.lo,1,100,8),hi:int(e.hi,1,100,12)};
+    const x={id:String(e.id),n:String(e.n??e.id).slice(0,80),eq:e.eq,sets:int(e.sets,1,10,3),lo:int(e.lo,1,600,8),hi:int(e.hi,1,600,12)};
     if(x.hi<x.lo) x.hi=x.lo;
     FLAGS.forEach(f=>{ if(e[f]) x[f]=true; });
     return x;
   };
-  if(obj.program===null) d.program=null;
-  else if(obj.program&&typeof obj.program==="object"){
-    const P={},seen=new Set();
-    const ok=ORDER.every(k=>{
-      const ex=(Array.isArray(obj.program[k]?.ex)?obj.program[k].ex:[]).map(cleanEx).filter(e=>e&&!seen.has(e.id)&&seen.add(e.id));
-      P[k]={label:DEFAULT_PROGRAM[k].label,tag:String(obj.program[k]?.tag??DEFAULT_PROGRAM[k].tag).slice(0,80),ex};
-      return ex.length>0;
-    });
-    if(ok) d.program=P;
-  }
   if(has("retired")){ d.retired={}; Object.values(obj.retired).map(cleanEx).forEach(e=>{ if(e) d.retired[e.id]=e; }); }
-  const ids=new Set([...ALL.map(e=>e.id),...Object.values(d.program||{}).flatMap(p=>p.ex.map(e=>e.id)),...Object.keys(d.retired||{})]);
+  d.sessions=obj.sessions.map(cleanSession).filter(Boolean);
+  const ids=new Set([...ALL.map(e=>e.id),...(d.program?d.program.workouts.flatMap(w=>w.exercises.map(x=>x.id)):[]),
+    ...Object.keys(d.retired||{}),...d.sessions.flatMap(s=>Object.keys(s.entries))]);
   const map=(src,ok)=>{ const m={}; for(const [id,v] of Object.entries(src||{})){ const x=ids.has(id)&&ok(v); if(x) m[id]=x; } return m; };
   const log=(L,f)=>(Array.isArray(L)?L:[]).filter(x=>isDate(x?.date)&&num(x[f])>0).map(x=>({date:x.date,[f]:num(x[f])}));
   const plates=(L,def)=>{ const x=Array.isArray(L)?[...new Set(L.map(num).filter(v=>v>0))].sort((a,b)=>b-a):[]; return x.length?x:def; };
-  d.sessions=obj.sessions.map(cleanSession).filter(Boolean);
   if(has("waist")) d.waist=log(obj.waist,"cm");
   if(has("bw")) d.bw=log(obj.bw,"kg");
   if(has("units")) d.units=map(obj.units,v=>(v==="kg"||v==="lb")&&v);
@@ -143,7 +149,7 @@ function cleanBackup(obj){
   if(has("videos")) d.videos=map(obj.videos,safeUrl);
   if(has("exNotes")) d.exNotes=map(obj.exNotes,v=>String(v).trim().slice(0,120));
   if(typeof obj.autoRest==="boolean") d.autoRest=obj.autoRest;
-  if(PROGRAM[obj.cursor]) d.cursor=obj.cursor;
+  if(typeof obj.cursor==="string"&&ID_RE.test(obj.cursor)) d.cursor=obj.cursor;   // checked against the program on load
   if(obj.unit==="kg"||obj.unit==="lb") d.unit=obj.unit;
   if(["auto","light","dark"].includes(obj.theme)) d.theme=obj.theme;
   if(has("name")) d.name=String(obj.name).slice(0,30);
@@ -156,7 +162,9 @@ function cleanBackup(obj){
   return d;
 }
 function restore(){ document.getElementById("restoreFile").click(); }
-function restored(){ loadProgram(); applyTheme(); migrate(); D.lastBackup=D.changedAt=Date.now(); save(); draft=null; tab="log"; render(); toast(tx("اترجّعت ✓","Restored ✓")); }
+function restored(program){
+  if(program!==undefined) storeProgram(program);   // a backup's own program (null = the built-in)
+  loadProgram(); applyTheme(); migrate(); D.lastBackup=D.changedAt=Date.now(); save(); draft=null; tab="log"; render(); toast(tx("اترجّعت ✓","Restored ✓")); }
 document.getElementById("restoreFile").addEventListener("change",e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const rd=new FileReader();
@@ -175,6 +183,8 @@ document.getElementById("restoreFile").addEventListener("change",e=>{
           onYes:()=>{ D.sessions=sessions; D.migrated=2; restored(); }});
       }else{
         const obj=JSON.parse(txt);
+        /* a program file (schema 1) opened here goes to the program preview instead */
+        if(obj&&!Array.isArray(obj.sessions)&&Array.isArray(obj.workouts)){ previewProgram(txt); e.target.value=""; return; }
         if(!obj||!Array.isArray(obj.sessions)) throw 0;
         const clean=cleanBackup(obj),bad=obj.sessions.length-clean.sessions.length;
         sheet({text:tx("استرجاع النسخة؟","Restore the backup?"),
@@ -182,7 +192,7 @@ document.getElementById("restoreFile").addEventListener("change",e=>{
                (bad?tx(`\n${bad} حصة فيها بيانات بايظة وهتتجاهل.`,`\n${bad} broken workouts will be skipped.`):"")+
                tx(`\nده هيستبدل كل الداتا الحالية.`,`\nThis replaces all your current data.`),
           yes:tx("استرجاع","Restore"),danger:true,
-          onYes:()=>{ D=clean; restored(); }});
+          onYes:()=>{ const program=clean.program; delete clean.program; D=clean; restored(program); }});
       }
     }catch(err){ toast(tx("الملف مش صالح","That file can’t be read")); }
     e.target.value="";
@@ -202,6 +212,6 @@ async function exportCSV(){
 function wipe(){
   sheet({text:tx("هيتمسح كل السجل نهائيًا","This deletes your whole log for good"),body:tx("اعمل نسخة احتياطية الأول لو مش متأكد.","Make a backup first if you’re not sure."),
     yes:tx("امسح الكل","Delete everything"),danger:true,
-    onYes:()=>{ D={...defaults(),migrated:2}; loadProgram(); applyTheme();
+    onYes:()=>{ D={...defaults(),migrated:4}; loadProgram(); applyTheme();
       save(); render(); toast(tx("اتمسح","Deleted")); buzz(40); }});
 }

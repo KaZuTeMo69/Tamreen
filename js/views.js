@@ -45,7 +45,7 @@ function vPlan(){
   <div class="hero">
     <div class="hero-head"><span class="eyebrow">${tx("الحصة الجاية","Next workout")}</span>
       <span class="small">${tx(`${nl(w.ex.length)} تمارين`,`${w.ex.length} exercises`)}</span></div>
-    <div class="hero-title">${dayLabel(D.cursor)}</div>
+    <div class="hero-title">${esc(dayLabel(D.cursor))}</div>
     <div class="hero-tag">${esc(dayTag(D.cursor))}</div>
     <div class="hero-ex small">${w.ex.slice(0,3).map(e=>`<bdi>${esc(nameOf(e))}</bdi>`).join(" · ")}${w.ex.length>3?` <span class="nowrap">${tx(`+ ${nl(w.ex.length-3)} تانيين`,`+ ${w.ex.length-3} more`)}</span>`:""}</div>
     <button class="btn" onclick="start()">${tx("ابدأ الحصة","Start workout")}</button>
@@ -85,7 +85,7 @@ function vPlan(){
 
   ${last?`<div class="label">${tx("آخر حصة","Last workout")}</div>
   <div class="card tap lastw" onclick="openSession(${last.i})">
-    <div class="row" style="padding-top:0"><div><b>${dayLabel(last.s.workout)}</b>
+    <div class="row" style="padding-top:0"><div><b>${esc(sessionLabel(last.s))}</b>
       <div class="small muted">${fdate(last.s.date)} · ${agoDays(daysSince(new Date(last.s.date+"T00:00:00").getTime()))}</div></div>
       ${prs.has(last.i)?`<span class="chip on">🏆 ${nl(prs.get(last.i).length)}</span>`:"<span class=\"muted\">›</span>"}</div>
     <div class="stats">
@@ -143,10 +143,13 @@ function logCard(key){
 function vProg(){
   /* exercises taken out of the program stay pickable while they have history */
   const old=ALL.filter(e=>!inProgram(e.id)&&historyOf(e.id).length);
+  /* history under ids nothing defines any more (another program, an imported file): by their saved names */
+  const known=new Set(ALL.map(e=>e.id));
+  [...new Set(D.sessions.flatMap(s=>Object.keys(s.entries||{})))].filter(id=>!known.has(id)&&historyOf(id).length).forEach(id=>old.push(exDef(id)));
   const groups=[...ORDER.map(k=>[dayLabel(k),PROGRAM[k].ex]),...(old.length?[[tx("تمارين مش في البرنامج","Not in the program"),old]]:[])];
   if(!groups.some(([,list])=>list.some(e=>e.id===progEx))) progEx=PROGRAM[ORDER[0]].ex[0].id;
   const ex=exDef(progEx),u=unitOf(progEx),h=historyOf(progEx).map(x=>({date:x.date,t:topSet(x)}));
-  const noBw=ex.addw&&!D.bw.length,weighted=!(ex.eq==="body"&&!ex.addw);
+  const noBw=ex.addw&&!D.bw.length,weighted=!noLoad(ex);
   const weeks=weekSeries(),U=D.unit;
   /* FIX: shown in the exercise's unit, as a left-to-right block so "kg" doesn't reorder the numbers;
      dips / pull-ups say what the number is */
@@ -217,10 +220,21 @@ function vSet(){
     "The main unit is for exercises you haven't picked a unit for, and for bodyweight.")}</div>
 
   <div class="label">${tx("البرنامج","Program")}</div>
-  <div class="card"><div class="row tap" style="padding:0" onclick="go('program')">
-    <div><div style="font-weight:700">${tx("التمارين والستات والعدّات","Exercises, sets and reps")}</div>
-      <div class="small muted">${D.program?tx("متعدّل","Edited"):tx("البرنامج الأصلي","Built-in program")}</div></div>
-    <span class="muted">›</span></div></div>
+  <div class="card">
+    <div class="row tap" style="padding-top:0" onclick="go('program')">
+      <div><div style="font-weight:700">${esc(programTitle())}</div>
+        <div class="small muted">${tx(`${ORDER.length} تمارين (أيام) · ${ORDER.reduce((n,k)=>n+PROGRAM[k].ex.length,0)} تمرين — اضغط للتعديل`,
+          `${ORDER.length} workout${ORDER.length===1?"":"s"} · ${ORDER.reduce((n,k)=>n+PROGRAM[k].ex.length,0)} exercises — tap to edit`)}</div></div>
+      <span class="muted">›</span></div>
+    <button class="btn lime" id="getProgram" onclick="copyProgramPrompt()">✨ ${tx("اعمل برنامجك مع Claude","Get your program")}</button>
+    <div class="small muted" style="margin-top:8px">${tx("بينسخ رسالة تلصقها في Claude: هيسألك عن جسمك وهدفك ومعداتك، ويرد ببرنامج تستورده هنا.",
+      "Copies a message to paste into Claude: it asks about your body, goal and equipment, then replies with a program you import here.")}</div>
+    <div class="mlist" style="margin-top:8px">
+      <button class="mi" onclick="importProgram()">⬇ ${tx("استيراد برنامج (JSON)","Import a program (JSON)")}</button>
+      <button class="mi" onclick="exportProgram()">⬆ ${tx("تصدير البرنامج ده (JSON)","Export this program (JSON)")}</button>
+      ${programStored?`<button class="mi" onclick="resetProgram()">↺ ${tx("رجّع البرنامج الأصلي","Back to the built-in program")}</button>`:""}
+    </div>
+  </div>
 
   <div class="label">${tx("الراحة بين الستات (ثواني)","Rest between sets (seconds)")}</div>
   <div class="card">
@@ -261,7 +275,7 @@ const flagText=e=>[e.uni&&tx("كل جنب لوحده","one side at a time"),e.as
   .filter(Boolean).map(t=>" · "+t).join("");
 function vProgram(){
   const day=k=>{ const P=PROGRAM[k];
-    return `<div class="label">${dayLabel(k)}</div>
+    return `<div class="label">${esc(dayLabel(k))}</div>
     <div class="card">
       <div class="row tap" style="padding-top:0" onclick="editTag('${k}')">
         <div class="small muted">${esc(dayTag(k))}</div><span class="chip">${tx("تعديل الوصف","Edit description")}</span></div>
@@ -278,10 +292,10 @@ function vProgram(){
           <button class="chip" onclick="removeEx('${k}',${i})">${tx("شيل","Remove")}</button></div></div>`).join("")}
       <div style="margin-top:14px"><button class="btn lime" onclick="addEx('${k}')">+ ${tx("تمرين","Exercise")}</button></div>
     </div>`; };
-  return `<div class="top"><div><h1>${tx("البرنامج","Program")}</h1><div class="sub">${tx("أول 3 تمارين في كل يوم هما الحد الأدنى","The first 3 exercises of each day are the minimum")}</div></div>
+  return `<div class="top"><div><h1>${tx("البرنامج","Program")}</h1><div class="sub">${esc(programTitle())} · ${tx("أول 3 تمارين في كل يوم هما الحد الأدنى","the first 3 exercises of each day are the minimum")}</div></div>
     <button class="btn light" style="width:auto;padding:12px 20px;font-size:15px" onclick="go('set')">${tx("رجوع","Back")}</button></div>
   ${ORDER.map(day).join("")}
-  ${D.program?`<div style="margin-top:22px"><button class="btn danger" onclick="resetProgram()">${tx("رجّع البرنامج الأصلي","Back to the built-in program")}</button></div>`:""}`;
+  ${programStored?`<div style="margin-top:22px"><button class="btn danger" onclick="resetProgram()">${tx("رجّع البرنامج الأصلي","Back to the built-in program")}</button></div>`:""}`;
 }
 
 /* FEATURE: month calendar of training days (Saturday first, like the week in Egypt); tap a day to open it.
@@ -292,9 +306,9 @@ function calendarCard(){
   const byDate={}; D.sessions.forEach((s,i)=>{ if(ym(s.date)===m) (byDate[s.date]=byDate[s.date]||[]).push(i); });
   const count=Object.keys(byDate).length,isNow=m===ym(now);
   const cell=d=>{
-    const iso=`${m}-${pad2(d)}`,on=byDate[iso],letters=on?[...new Set(on.map(i=>D.sessions[i].workout))].join(" "):"";
+    const iso=`${m}-${pad2(d)}`,on=byDate[iso],letters=on?[...new Set(on.map(i=>String(D.sessions[i].workout).slice(0,2)))].join(" "):"";
     const cls=["day",on?"on":"",iso===now?"today":"",iso>now?"future":""].join(" ");
-    const name=`${fdate(iso)}${on?` — ${on.map(i=>dayLabel(D.sessions[i].workout)).join(tx("، ",", "))}`:""}`;
+    const name=`${fdate(iso)}${on?` — ${on.map(i=>sessionLabel(D.sessions[i])).join(tx("، ",", "))}`:""}`;
     return on?`<button class="${cls}" onclick="openSession(${on[on.length-1]})" aria-label="${esc(name)}">${nl(d)}<small>${letters}</small></button>`
       :`<div class="${cls}" aria-label="${esc(name)}">${nl(d)}</div>`;
   };
@@ -318,7 +332,7 @@ function vLog(){
   ${n?`<div class="card">${D.sessions.map((s,i)=>({s,i}))
     .sort((a,b)=>a.s.date<b.s.date?1:-1).map(({s,i})=>`
     <div class="row tap" onclick="openSession(${i})">
-      <div><div style="font-weight:700">${dayLabel(s.workout)}${prs.has(i)?` <span class="chip on" title="${tx("أرقام قياسية","Records")}">🏆 ${nl(prs.get(i).length)}</span>`:""}</div>
+      <div><div style="font-weight:700">${esc(sessionLabel(s))}${prs.has(i)?` <span class="chip on" title="${tx("أرقام قياسية","Records")}">🏆 ${nl(prs.get(i).length)}</span>`:""}</div>
       <div class="small muted num">${Math.round(fromKg(volume(s),D.unit)).toLocaleString("en")} ${D.unit} ${tx("إجمالي","total")}${s.mins?` · ${nl(s.mins)} ${tx("دقيقة","min")}`:""}</div></div>
       <div class="small muted num">${s.note?`<span title="${tx("فيها ملاحظة","Has a note")}">📝</span> `:""}${fdate(s.date)} ›</div></div>`).join("")}</div>`
    :`<div class="card muted small">${tx("مفيش حصص لسه.","No workouts yet.")}</div>`}

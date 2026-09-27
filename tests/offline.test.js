@@ -69,7 +69,7 @@ module.exports=async()=>{
   check("settings: install button once the browser offers it", !!(await q.$("button:has-text('ثبّت التطبيق')")));
   await q.click("button:has-text('ثبّت التطبيق')");
   check("install button opens the browser prompt", await q.evaluate(()=>window.__asked)===1);
-  await q.waitForFunction(()=>!document.querySelector("#app button.lime"));
+  await q.waitForFunction(()=>!document.querySelector('#app button[onclick="installApp()"]'));
   check("button gone after installing", !(await q.$("button:has-text('ثبّت التطبيق')")));
   check("no page errors", q.errs.length===0, q.errs);
   await q.done();

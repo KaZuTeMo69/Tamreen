@@ -1,6 +1,7 @@
 /* ══ state ════════════════════════════════════════════ */
-/* everything the app stores; settings live here too (name, units, goal, rest, bar & plates) */
-const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},program:null,retired:{},theme:"auto",exNotes:{},autoRest:true,
+/* everything the app stores; settings live here too (name, units, goal, rest, bar & plates).
+   The program has its own key (PROGRAM_KEY, see program.js). */
+const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},retired:{},theme:"auto",exNotes:{},autoRest:true,
   name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],
   lastBackup:0,changedAt:0,migrated:0});
 let D=defaults();
@@ -10,19 +11,8 @@ let calMonth=null;        // month shown in the log calendar, "YYYY-MM" (null = 
 
 try{
   const raw=localStorage.getItem(KEY);
-  if(raw) D={...D,...JSON.parse(raw)};
-  else{
-    D.sessions=SEED_SESSIONS.map(s=>{
-      const units={},names={...(s.names||{})},counts={};
-      Object.keys(s.entries).forEach(id=>{ units[id]="kg"; counts[id]=s.entries[id].length;
-        if(!names[id]) names[id]=(ALL.find(x=>x.id===id)||{}).n||id; });
-      return {date:s.date,workout:s.workout,entries:s.entries,units,names,counts,rir:{}};
-    });
-    D.cursor="A";
-    D.swaps={a3:"Chest Cable Row"};
-    D.sides={a5:true,b2:true,b3:true,b5:true,c3:true};
-    D.migrated=2;
-  }
+  /* a new phone starts empty (the app is shared: nobody gets someone else's history) */
+  if(raw) D={...D,...JSON.parse(raw)}; else D.migrated=4;
 }catch(e){}
 loadProgram();
 /* FEATURE: dark mode. "auto" follows the phone; "light" / "dark" force it (the CSS reads data-theme).
@@ -58,7 +48,7 @@ const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&g
 const unitOf=id=>D.units[id]||D.unit||"kg";
 const perSide=id=>!!D.sides[id];
 const nameOf=e=>D.swaps[e.id]||e.n;
-const nameIn=(s,id)=>s.names?.[id]||(byId(id)?nameOf(byId(id)):id);
+const nameIn=(s,id)=>s.names?.[id]||nameOf(exDef(id));
 /* was this exercise logged right / left in that session? (older records: any left-side reps) */
 const sidesIn=(s,id)=>s.sides?!!s.sides[id]:(s.entries?.[id]||[]).some(r=>r.r2!==""&&r.r2!=null);
 const toKg=(v,u)=>num(v)*(u==="lb"?0.4536:1);
@@ -80,9 +70,16 @@ const setCount=(s,e)=>s.counts?.[e.id]||(s.entries?.[e.id]?.length)||e.sets;
 /* one-time migrations (also run after a restore):
    2 — split the old merged leg card + freeze historical names;
    3 — c6 is done on the leg press: "Seated Calf Raise" / "Standing Calf Raises" → "Calf Raise (Leg Press)",
-       in the program, the saved rename and past workouts (only the label; the sets are untouched) */
+       in the program, the saved rename and past workouts (only the label; the sets are untouched);
+   4 — a program edited in an older version (D.program) moves to its own key as schema-1 JSON */
 function migrate(){
-  if(D.migrated>=3) return;
+  if(D.migrated>=4) return;
+  if((D.migrated||0)<3) migrate3();
+  if(D.program){ const sch=fromLegacy(D.program); if(sch) storeProgram(sch); }
+  delete D.program; loadProgram();
+  D.migrated=4; save();
+}
+function migrate3(){
   if((D.migrated||0)<2) D.sessions.forEach(s=>{
     if(s.workout==="C"&&s.entries?.c4&&!s.entries.c4b){
       s.entries.c4b=s.entries.c4; delete s.entries.c4;
@@ -98,6 +95,5 @@ function migrate(){
   if(OLD.includes(D.swaps?.c6)) delete D.swaps.c6;
   [...Object.values(D.program||{}).flatMap(p=>p.ex||[]),D.retired?.c6].forEach(e=>{ if(e?.id==="c6"&&OLD.includes(e.n)) e.n=NEW; });
   D.sessions.forEach(s=>{ if(OLD.includes(s.names?.c6)) s.names.c6=NEW; });
-  D.migrated=3; save();
 }
 migrate();

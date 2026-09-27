@@ -88,7 +88,7 @@ module.exports=async()=>{
 
   // an edited description is shown as written, in both languages
   await ev(()=>{ go("program"); editTag("B"); }); await p.fill("#minput","Back day"); await p.click("#myes");
-  check("edited description kept as written", (await app()).includes("Back day")&&await ev(()=>D.program.B.tag)==="Back day");
+  check("edited description kept as written", (await app()).includes("Back day")&&await ev(()=>PROGRAM.B.tag)==="Back day");
   check("other days keep the English default", (await app()).includes("Dips first + horizontal press"));
 
   // wiping the data keeps the language (it belongs to the phone, not the data)

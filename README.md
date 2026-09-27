@@ -1,11 +1,14 @@
 # تمرين — Tamreen
 
-A mobile workout log for a 3-day A / B / C rotation, in English (left-to-right) or Egyptian Arabic
-(right-to-left) — English by default, switch in Settings → Language.
+A mobile workout log, in English (left-to-right) or Egyptian Arabic (right-to-left) — English by default,
+switch in Settings → Language. It ships with a 3-workout A / B / C program, and anyone can load their own
+(see **Programs** below). No accounts and no server: each person opens the same link, and their phone keeps
+their own program and history.
 Plain HTML, CSS and JavaScript — no build step, no libraries. Hosted on GitHub Pages.
 
 All data lives in the phone's browser storage (`localStorage`, key `tamreen-v2`).
-Use the backup buttons in the Log tab — there is no other copy.
+Use the backup buttons in the Log tab — there is no other copy. A JSON backup holds the history, the settings and
+the program in use (`program`: schema 1, or `null` for the built-in); backups from older versions still restore.
 
 **Home screen:** the next workout (lime card, start or switch it there), days trained this month against the
 goal (ring), bodyweight with its trend (violet card), this week Saturday to Friday, the last workout
@@ -28,6 +31,23 @@ has notes and Ask Claude.
 - ⋯ holds what's set once: unit, right / left, warm-up sets, number of sets, swap / rename, the how-to video and
   YouTube link, the plate calculator (barbell), a setup note (seat height, pin) and a manual rest.
 
+**Programs:** Settings → Program. "Get your program" copies a message for the Claude chat: Claude asks for
+height, weight, age, experience, goal, equipment, sessions per week and injuries, then replies with the
+program as JSON. Paste it into "Import a program" (or choose the file), check the preview, and confirm.
+"Export this program" gives the JSON to share. The rotation follows the program: 2, 3 or 5 workouts all work.
+
+- Format (schema 1): `{"schema":1,"name":…,"workouts":[{"id":"A","label":…,"tag":…,"exercises":[{"id":"leg-press-1",
+  "name":…,"equipment":"machine|dumbbell|barbell|cable|body","sets":3,"repLow":8,"repHigh":10,"perSide":false,
+  "isTime":false,"addWeight":false}]}]}`; optional `"assisted":true` (with `addWeight`) for machine-assisted
+  pull-ups, where the weight logged is assistance. The full schema and an example are in `js/programs.js`.
+- The program in use is stored under its own key (`tamreen-v2-program`), apart from the history.
+- Exercise ids link a program to the history. An id the app already knows under a different name gets a new
+  one (name slug + counter), so two exercises never share a history; duplicate ids in a file are refused.
+- Switching programs never deletes anything: past workouts keep the name they were logged under, and
+  exercises that leave the program keep their definitions, so the log, charts and CSV show them as before.
+- Errors name the field, e.g. `workouts[1].exercises[0].equipment (Romanian Deadlift, in Workout B) → one of …`.
+- The program editor (tap the program in Settings) changes exercises, sets, reps and equipment in place.
+
 **Ask Claude:** the "🤖 Ask Claude about it" button on a workout (new or opened from the log)
 turns it into a ready-to-paste message — today's sets, the date and recent history per exercise — and
 opens the share sheet (phone) or copies it (computer). Paste it into the Claude chat; no API key or cost.
@@ -38,8 +58,8 @@ opens the share sheet (phone) or copies it (computer). Paste it into the Claude 
 index.html        page markup; loads the CSS and scripts below in order
 css/app.css       all styles
 js/i18n.js        language: tx(arabic, english), direction, number format (loaded in <head>)
-js/program.js     the built-in workout program; edits made in the app are saved in the data (Settings → Program)
-js/seed.js        the first three sessions, loaded on a fresh install
+js/program.js     the program model: the built-in program, schema-1 checks, loading the program in use
+js/programs.js    program import (paste / file) with preview, export, and the "Get your program" prompt
 js/store.js       app state, load / save, small helpers, data migration
 js/maths.js       volume, best set, next-weight suggestion
 js/ui.js          bottom sheet, toast, rest timer
@@ -84,7 +104,8 @@ npm test -- backup                # only suites whose file name contains "backup
 ```
 
 GitHub runs the same tests on every pull request and every push to `main` (`.github/workflows/tests.yml`);
-a red check on a pull request means something broke. Each `tests/*.test.js` file covers one batch of changes. `tests/fixtures/v1-data.json` is data saved by
+a red check on a pull request means something broke. Each `tests/*.test.js` file covers one batch of changes. Most suites start from `tests/fixtures/seed-data.json`
+(three workouts from August); `open({seed:false})` starts from an empty phone, like a new user. `tests/fixtures/v1-data.json` is data saved by
 the original single-file app, used to check that old data still loads.
 
 ## Deploying changes

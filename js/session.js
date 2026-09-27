@@ -9,7 +9,7 @@
 const hasReps=r=>!!(r.r||r.r2);
 /* a set counts as done (✓, rest timer, RIR) once its reps are in — both sides for right / left sets */
 const doneRow=(id,r)=>draft.sides[id]?!!(r.r&&r.r2):hasReps(r);
-const bodyOnly=e=>e.eq==="body"&&!e.addw;
+const bodyOnly=noLoad;   // no weight box (plain bodyweight, holds)
 /* stepper sizes. kg: dumbbells, cables and added weight 2.5; machines, barbell and assistance 5.
    lb: 5 / 10. Reps move by 1, seconds (holds) by 5. The next-weight advice keeps its own steps (step()). */
 const incOf=(e,u)=>{ const small=e.eq==="dumbbell"||e.eq==="cable"||(e.addw&&!e.assist); return u==="lb"?(small?5:10):(small?2.5:5); };
@@ -39,7 +39,7 @@ function vSession(){
   return `<div class="stop">
     <div class="stop-row">
       <button class="iconbtn" id="back" onclick="cancel()" aria-label="${editing?tx("رجوع","Back"):tx("إلغاء","Cancel")}">${editing?prevG:"✕"}</button>
-      <div class="stitle tap" onclick="pickDate()"><b>${dayLabel(draft.workout)}</b>
+      <div class="stitle tap" onclick="pickDate()"><b>${esc(labelText(draft.label,draft.workout))}</b>
         <span class="small muted"><b class="num" id="pos">${at<n?`<bdi dir="ltr">${at+1} / ${n}</bdi>`:tx("الختام","Wrap-up")}</b> · <span class="when">${fdate(draft.date)}${began}</span></span></div>
       <button class="btn lime fin" id="fin" onclick="finish()">${editing?tx("حفظ","Save"):tx("إنهاء","Finish")}</button>
     </div>

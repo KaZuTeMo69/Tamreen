@@ -6,10 +6,11 @@ document.getElementById("nav").addEventListener("click",e=>{
 /* FIX: reopen a workout that was still open when the page closed (tab killed, phone restarted…) */
 (function resumeDraft(){
   let d=null; try{ d=JSON.parse(localStorage.getItem(DRAFT_KEY)||"null"); }catch(e){}
-  if(!d||!PROGRAM[d.workout]||!d.entries||!d.date||(d.edit!=null&&!D.sessions[d.edit])) return;
+  /* a new workout must still be in the program; an old one being edited can be from any program */
+  if(!d||!d.entries||!d.date||(d.edit!=null?!D.sessions[d.edit]:!PROGRAM[d.workout])) return;
   d.counts=d.counts||{}; d.rir=d.rir||{}; d.units=d.units||{}; d.names=d.names||{}; d.sides=d.sides||{};
   if(!Array.isArray(d.ids)||!d.ids.length)    // saved before exercise lists were kept with the workout
-    d.ids=Object.keys(d.entries).length?Object.keys(d.entries):PROGRAM[d.workout].ex.map(e=>e.id);
+    d.ids=Object.keys(d.entries).length?Object.keys(d.entries):(PROGRAM[d.workout]?.ex||[]).map(e=>e.id);
   d.ids.map(exDef).forEach(e=>{               // fill anything missing
     if(!Array.isArray(d.entries[e.id])||!d.entries[e.id].length)
       d.entries[e.id]=Array.from({length:e.sets},()=>({w:"",r:"",r2:"",warm:false}));
@@ -19,6 +20,7 @@ document.getElementById("nav").addEventListener("click",e=>{
     if(d.sides[e.id]===undefined) d.sides[e.id]=perSide(e.id);
   });
   d.at=Math.min(Math.max(0,d.at|0),d.ids.length); d.asked=d.asked||{};
+  d.label=d.label||(d.edit!=null?D.sessions[d.edit].label:null)||PROGRAM[d.workout]?.label;
   const restEnd=d.restEnd; delete d.restEnd;
   draft=d;
   if(restEnd>Date.now()) startTimer(0,restEnd);

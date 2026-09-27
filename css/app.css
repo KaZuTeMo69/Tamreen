@@ -260,6 +260,14 @@ body.in-session{padding-bottom:calc(160px + env(safe-area-inset-bottom))}   /* p
   .stp{grid-template-columns:32px 1fr 32px}
   .sv input{font-size:19px}
 }
+/* program import / preview (js/programs.js) */
+.perr{background:var(--violet);color:var(--on-violet);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:600;
+  direction:ltr;text-align:left;overflow-wrap:anywhere}
+.pj{min-height:180px;font-family:'DM Sans',monospace;font-size:14px;direction:ltr;text-align:left}
+.pvlist{display:flex;flex-direction:column;gap:10px}
+.pvw{border-top:1px solid var(--line);padding-top:10px}
+.pvw .small{margin-top:2px;line-height:1.5}
+#getProgram{margin-top:12px}
 .mrow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:40px;font-size:15px}
 .mrow .chips{flex-wrap:wrap;justify-content:flex-end;align-items:center}
 .mrow .chips b{min-width:22px;text-align:center}

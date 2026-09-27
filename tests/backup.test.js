@@ -47,7 +47,7 @@ module.exports=async()=>{
   // very old backup (before names were frozen, merged leg card) → migration runs
   await restoreFile('ancient.json',JSON.stringify({sessions:[{date:"2026-08-10",workout:"C",entries:{c4:[{w:"40",r:"12"}]},units:{c4:"kg"}}],migrated:0}));
   await p.click('#myes');
-  check('B13 migration runs after restore', await ev(()=>{const s=D.sessions[0];return !!s.entries.c4b&&!s.entries.c4&&s.names.c4b==="Seated Leg Curl"&&D.migrated===3;}));
+  check('B13 migration runs after restore', await ev(()=>{const s=D.sessions[0];return !!s.entries.c4b&&!s.entries.c4&&s.names.c4b==="Seated Leg Curl"&&D.migrated===4;}));
   // pinning a link
   await ev(()=>pinVideo('a1')); await p.fill('#minput','javascript:alert(1)'); await p.click('#myes');
   check('B13 pinning javascript: rejected', await ev(()=>!D.videos.a1));
