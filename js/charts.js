@@ -124,7 +124,7 @@ function setPlain(ex,t,u){
 }
 /* what the exercise chart plots: estimated 1RM for anything with a weight, reps / seconds otherwise */
 function exerciseSeries(id){
-  const ex=exDef(id),u=unitOf(id),weighted=!(ex.eq==="body"&&!ex.addw);
+  const ex=exDef(id),u=unitOf(id),weighted=!noLoad(ex);
   return historyOf(id).map(h=>{ const t=topSet(h); return {date:h.date,t,v:weighted?fromKg(t.sc,u):t.sc}; });
 }
 
@@ -133,7 +133,7 @@ function drawCharts(){
   if(draft||tab!=="prog") return;
   const ex=exDef(progEx),u=unitOf(progEx),host=document.getElementById("ch-ex");
   if(host){
-    const weighted=!(ex.eq==="body"&&!ex.addw),numbers=!(ex.addw&&!D.bw.length);
+    const weighted=!noLoad(ex),numbers=!(ex.addw&&!D.bw.length);
     const unit=weighted?UL[u]:ex.sec?tx("ثانية","sec"):tx("عدّة","reps"),fmt=v=>`${Math.round(v)}`;
     lineChart(host,exerciseSeries(progEx).slice(-10).map(p=>({date:p.date,v:p.v,
       tip:[numbers?`${Math.round(p.v)} ${unit}`:setPlain(ex,p.t,u),numbers?setPlain(ex,p.t,u):"",fdate(p.date)].filter(Boolean)})),

@@ -25,7 +25,7 @@ function swap(id){
     value:draft.names[id],yes:tx("حفظ","Save"),
     onYes:v=>{ v=v.trim();
       if(!old){ v?D.swaps[id]=v:delete D.swaps[id]; save(); }
-      draft.names[id]=v||byId(id).n; render(false); toast(tx("اتغيّر","Changed")); }});
+      draft.names[id]=v||exDef(id).n; render(false); toast(tx("اتغيّر","Changed")); }});
 }
 function pinVideo(id){
   sheet({text:tx("لينك يوتيوب للتمرين","YouTube link for this exercise"),body:tx("سيبه فاضي للرجوع للبحث التلقائي.","Leave it empty to go back to a search."),
@@ -68,7 +68,7 @@ function blankDraft(workout,date,edit){
     units[e.id]=u; names[e.id]=nameOf(e); sides[e.id]=perSide(e.id);
   });
   /* FEATURE: duration — a workout started today is timed from now; a back-dated one isn't */
-  return {workout,ids,entries,counts,rir,units,names,sides,date,edit,note:"",startedAt:date===today()?Date.now():0,at:0,asked:{}};
+  return {workout,label:PROGRAM[workout].label,ids,entries,counts,rir,units,names,sides,date,edit,note:"",startedAt:date===today()?Date.now():0,at:0,asked:{}};
 }
 /* FEATURE: a note per session, and (old sessions) the duration in minutes — typed, so no redraw */
 function setNote(v){ draft.note=v.slice(0,1000); saveDraft(); }
@@ -82,7 +82,7 @@ function startPast(){
    which used to be dropped on save), then any the program has added since */
 function openSession(i){
   const s=D.sessions[i],entries={},counts={},units={},names={},sides={};
-  const own=Object.keys(s.entries||{}),ids=[...own,...PROGRAM[s.workout].ex.map(e=>e.id).filter(id=>!own.includes(id))];
+  const own=Object.keys(s.entries||{}),ids=[...own,...(PROGRAM[s.workout]?.ex||[]).map(e=>e.id).filter(id=>!own.includes(id))];
   ids.map(exDef).forEach(e=>{
     const rows=s.entries?.[e.id]||[], n=Math.max(e.sets,rows.length);
     counts[e.id]=n;
@@ -92,12 +92,14 @@ function openSession(i){
     sides[e.id]=(s.sides||rows.length)?sidesIn(s,e.id):perSide(e.id);
   });
   draft={workout:s.workout,ids,entries,counts,rir:clone(s.rir||{}),units,names,sides,date:s.date,edit:i,
-    note:s.note||"",mins:s.mins||0,at:0,asked:{}};
+    note:s.note||"",mins:s.mins||0,at:0,asked:{},label:s.label||PROGRAM[s.workout]?.label};
   draft.snap=snapOf(draft); render();
 }
 /* what an edit changes — used to ask before leaving an old session with unsaved changes */
 const snapOf=d=>JSON.stringify([d.entries,d.rir,d.units,d.names,d.sides,d.date,d.note,d.mins]);
-function skip(){ D.cursor=ORDER[(ORDER.indexOf(D.cursor)+1)%3]; save(); render(); toast(tx("اتبدّل","Switched")); }
+/* the rotation: next workout in the program, back to the first after the last (any number of workouts) */
+const nextWorkout=k=>ORDER[(ORDER.indexOf(k)+1)%ORDER.length];
+function skip(){ D.cursor=nextWorkout(D.cursor); save(); render(); toast(tx("اتبدّل","Switched")); }
 function cancel(){
   if(draft.edit!=null){
     const leave=()=>{ draft=null; tab="log"; render(); };
@@ -118,6 +120,7 @@ function finish(){
   });
   const rir={}; Object.entries(draft.rir).forEach(([k,v])=>{ if(v!==undefined) rir[k]=v; });
   const rec={date:draft.date,workout:draft.workout,entries,units,names,counts,sides,rir};
+  if(draft.edit!=null&&D.sessions[draft.edit].label) rec.label=D.sessions[draft.edit].label;   // the workout name it was logged under
   const note=(draft.note||"").trim(); if(note) rec.note=note;
   /* duration: timed for a new workout (kept only if 1–300 minutes), typed when editing an old one */
   const mins=draft.edit!=null?draft.mins:draft.startedAt?Math.round((Date.now()-draft.startedAt)/6e4):0;
@@ -127,7 +130,7 @@ function finish(){
   try{ navigator.storage?.persisted?.().then(p=>p||navigator.storage.persist()).catch(()=>{}); }catch(e){}
   if(draft.edit!=null){ D.sessions[draft.edit]=rec; draft=null; save(); tab="log"; render(); toast(tx("اتحفظ ✓","Saved ✓")); buzz(30); return; }
   D.sessions.push(rec);
-  D.cursor=ORDER[(ORDER.indexOf(rec.workout)+1)%3];
+  D.cursor=nextWorkout(rec.workout);
   draft=null; stopTimer(); save(); tab="plan"; render();
   toast(rec.mins?tx(`حصة اتسجّلت ✓ · ${nl(rec.mins)} دقيقة`,`Workout logged ✓ · ${rec.mins} min`):tx("حصة اتسجّلت ✓","Workout logged ✓"));
   /* FEATURE: records set today */
@@ -184,13 +187,12 @@ function setPlates(u,v){
 }
 
 /* ══ program editor (FEATURE) ═════════════════════════ */
-/* The first change copies the built-in program into D.program. An exercise taken out of the program is
-   kept in D.retired so its old sessions still know what it was. Renaming keeps one history (D.swaps);
-   "replace" starts a new exercise with its own history. */
+/* Edits the program in use and saves it (PROGRAM_KEY); the first edit of the built-in makes a copy.
+   An exercise taken out of the program is kept in D.retired so its old sessions still know what it was.
+   Renaming keeps one history (D.swaps); "replace" starts a new exercise with its own history and id. */
 const FLAGS=["uni","addw","assist","sec"];
-const newExId=()=>"x"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-function myProgram(){ if(!D.program) D.program=clone(DEFAULT_PROGRAM); return D.program; }
-function programChanged(msg){ loadProgram(); save(); render(false); if(msg) toast(msg); }
+function myProgram(){ if(!programStored){ PROGRAM=clone(PROGRAM); programStored=true; } return PROGRAM; }
+function programChanged(msg){ storeProgram(toSchema()); save(); render(false); if(msg) toast(msg); }
 const retire=e=>{ D.retired={...D.retired,[e.id]:clone(e)}; };
 function exFormHTML(e){
   const box=(f,label)=>`<label class="check"><input type="checkbox" id="f-${f}" ${e[f]?"checked":""}> ${label}</label>`;
@@ -221,7 +223,7 @@ function exForm(title,body,e,done){
     const r=readExForm(); if(r.err){ toast(r.err); return exForm(title,body,r.e,done); } done(r.e); }});
 }
 const withFlags=(target,e)=>{ FLAGS.forEach(f=>{ if(e[f]) target[f]=true; else delete target[f]; }); return target; };
-const makeEx=e=>withFlags({id:newExId(),n:e.n,eq:e.eq,sets:e.sets,lo:e.lo,hi:e.hi},e);
+const makeEx=e=>withFlags({id:newExId(e.n),n:e.n,eq:e.eq,sets:e.sets,lo:e.lo,hi:e.hi},e);
 function editEx(k,i){
   const e=PROGRAM[k].ex[i];
   exForm(tx("تعديل التمرين","Edit exercise"),tx("نفس التمرين ونفس السجل — لو هتغيّره لتمرين تاني استخدم «استبدال».",
@@ -259,13 +261,4 @@ function moveEx(k,i,d){
 function editTag(k){
   sheet({text:tx(`وصف ${dayLabel(k)}`,`${dayLabel(k)} description`),value:dayTag(k),yes:tx("حفظ","Save"),
     onYes:v=>{ v=v.trim().slice(0,80); if(!v||v===dayTag(k)) return; myProgram()[k].tag=v; programChanged(tx("اتحفظ","Saved")); }});
-}
-function resetProgram(){
-  sheet({text:tx("ترجّع البرنامج الأصلي؟","Go back to the built-in program?"),body:tx("التمارين اللي ضفتها هتتشال من البرنامج، بس سجلها بيفضل.",
-    "Exercises you added leave the program, but their history stays."),yes:tx("رجّع","Reset"),danger:true,
-    onYes:()=>{
-      const builtIn=new Set(Object.values(DEFAULT_PROGRAM).flatMap(p=>p.ex.map(e=>e.id)));
-      Object.values(PROGRAM).flatMap(p=>p.ex).forEach(e=>{ if(!builtIn.has(e.id)) retire(e); });
-      D.program=null; programChanged(tx("رجع الأصلي","Back to the built-in program"));
-    }});
 }

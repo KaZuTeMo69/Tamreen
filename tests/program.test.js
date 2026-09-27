@@ -19,9 +19,9 @@ module.exports=async()=>{
     await p.click("#myes");
   }
 
-  check("starts on the built-in program", await ev(()=>D.program===null&&PROGRAM===DEFAULT_PROGRAM));
+  check("starts on the built-in program", await ev(()=>!programStored&&PROGRAM===DEFAULT_PROGRAM&&!localStorage.getItem(PROGRAM_KEY)));
   await p.click("nav button[data-tab=set]");
-  await p.click("text=التمارين والستات والعدّات");
+  await p.click("#app .row.tap >> text=البرنامج الأصلي");
   check("editor opens from Settings, Settings tab stays lit", (await text()).includes("البرنامج") &&
     await ev(()=>document.querySelector("nav button[data-tab=set]").classList.contains("on")));
   check("three days listed with their exercises", await ev(()=>document.querySelectorAll(".prow").length)===20);
@@ -29,7 +29,7 @@ module.exports=async()=>{
   // edit a2: 4 sets of 6–8 — same exercise, same history
   const hA2=await ev(()=>historyOf("a2").length);
   await ev(()=>editEx("A",1)); await form({sets:4,lo:6,hi:8});
-  check("edit: sets and reps saved", await ev(()=>{ const e=PROGRAM.A.ex[1]; return e.id==="a2"&&e.sets===4&&e.lo===6&&e.hi===8&&D.program!==null; }));
+  check("edit: sets and reps saved", await ev(()=>{ const e=PROGRAM.A.ex[1]; return e.id==="a2"&&e.sets===4&&e.lo===6&&e.hi===8&&programStored&&!("program" in D)&&JSON.parse(localStorage.getItem(PROGRAM_KEY)).workouts[0].exercises[1].sets===4; }));
   check("edit: history unchanged", await ev(()=>historyOf("a2").length)===hA2);
   // rename through the editor = same history, new display name
   await ev(()=>editEx("A",1)); await form({n:"Incline DB Press (low)"});
@@ -99,19 +99,28 @@ module.exports=async()=>{
   check("restore: program back", await ev(()=>PROGRAM.B.tag==="Pull day"&&PROGRAM.C.ex.length===1&&PROGRAM.A.ex[1].sets===4));
   check("restore: retired exercise and its unit back", await ev(id=>byId(id)?.n==="Cable Fly"&&D.units[id]==="lb",fly));
 
-  // a tampered backup: bad exercise dropped, a day left empty → whole program refused
+  // a tampered backup (this version's format): any bad field → the whole program is refused, the current one stays
   const bad=JSON.parse(fs.readFileSync(file,"utf8"));
-  bad.program.A.ex.push({id:"<x>",n:"bad",eq:"rocket"});
-  bad.program.B.ex=[{id:"zz9",eq:"rocket"}];
+  bad.program.workouts[0].exercises.push({id:"x-1",name:"bad",equipment:"rocket",sets:3,repLow:8,repHigh:12});
   fs.writeFileSync(file,JSON.stringify(bad));
-  await ev(()=>{ D.program=null; loadProgram(); save(); });
+  await ev(()=>storeProgram(null));
   await p.setInputFiles("#restoreFile",file); await p.waitForSelector("#modal.on"); await p.click("#myes");
-  check("restore: program with an empty day refused (built-in kept)", await ev(()=>D.program===null&&PROGRAM===DEFAULT_PROGRAM));
+  check("restore: tampered program refused (built-in kept)", await ev(()=>!programStored&&PROGRAM===DEFAULT_PROGRAM));
+  // an older backup ({A, B, C} program): a bad exercise is dropped; a day left empty refuses the whole program
+  const legacy=(B)=>({sessions:[],program:{A:{tag:"Old A",ex:[{id:"a1",n:"Leg Press",eq:"machine",sets:3,lo:8,hi:10},{id:"<x>",n:"bad",eq:"rocket"}]},
+    B:{tag:"Old B",ex:B},C:{tag:"Old C",ex:[{id:"c1",n:"Dips",eq:"body",addw:true,sets:4,lo:6,hi:10}]}}});
+  fs.writeFileSync(file,JSON.stringify(legacy([{id:"b7",n:"Lat Pulldown",eq:"machine",sets:3,lo:10,hi:12}])));
+  await p.setInputFiles("#restoreFile",file); await p.waitForSelector("#modal.on"); await p.click("#myes");
+  check("restore: older program format accepted, bad exercise dropped", await ev(()=>programStored&&PROGRAM.A.tag==="Old A"&&PROGRAM.A.ex.length===1&&PROGRAM.B.ex[0].id==="b7"));
+  await ev(()=>storeProgram(null));
+  fs.writeFileSync(file,JSON.stringify(legacy([{id:"zz9",eq:"rocket"}])));
+  await p.setInputFiles("#restoreFile",file); await p.waitForSelector("#modal.on"); await p.click("#myes");
+  check("restore: older program with an empty day refused (built-in kept)", await ev(()=>!programStored&&PROGRAM===DEFAULT_PROGRAM));
 
   // reset
   await ev(()=>{ myProgram().A.ex.push({id:"xtest1",n:"Temp",eq:"machine",sets:3,lo:8,hi:12}); programChanged(); go("program"); });
   await p.click("text=رجّع البرنامج الأصلي"); await p.click("#myes");
-  check("reset: built-in program back, added exercise kept as retired", await ev(()=>D.program===null&&!inProgram("xtest1")&&!!D.retired.xtest1));
+  check("reset: built-in program back, added exercise kept as retired", await ev(()=>!programStored&&!inProgram("xtest1")&&!!D.retired.xtest1));
   check("no page errors", p.errs.length===0, p.errs);
   await p.done();
 

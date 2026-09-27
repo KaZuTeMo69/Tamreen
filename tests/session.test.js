@@ -213,7 +213,7 @@ module.exports=async()=>{
   await p.reload();
   const c6=await ev(()=>({name:nameOf(byId("c6")),past:D.sessions[0].names.c6,sets:D.sessions[0].entries.c6,swap:D.swaps.c6,a3:D.swaps.a3,v:D.migrated}));
   check("old data: renamed everywhere, sets untouched", c6.name==="Calf Raise (Leg Press)"&&c6.past==="Calf Raise (Leg Press)"&&c6.swap===undefined&&c6.a3==="Chest Cable Row"
-    &&JSON.stringify(c6.sets)==='[{"w":"60","r":"15","r2":"","warm":false}]'&&c6.v===3, c6);
+    &&JSON.stringify(c6.sets)==='[{"w":"60","r":"15","r2":"","warm":false}]'&&c6.v===4, c6);
   check("CSV of old files still finds c6", await ev(()=>nameToId("Seated Calf Raise")==="c6"&&nameToId("Calf Raise (Leg Press)")==="c6"));
   const csvHead=await ev(async()=>{ let out=""; window.giveFile=async(n,t)=>{ out=t; return true; }; await exportCSV(); return out.replace(/^﻿/,"").split("\n")[0]; });
   check("CSV columns unchanged", csvHead==="date,workout,exercise,exercise_id,set,warmup,weight,unit,reps,reps_left,rir,session_minutes,session_note", csvHead);
