@@ -4,22 +4,93 @@ const me=()=>`<div class="me-bar"><button class="me${D.name.trim()?"":" empty"}"
   esc(D.name.trim())||tx("اكتب اسمك","Add your name")}</button></div>`;
 /* FEATURE: nudge for a backup when something changed and the last one is over a week old */
 const needBackup=()=>D.sessions.length&&D.changedAt>D.lastBackup&&daysSince(D.lastBackup)>=7;
+/* FEATURE: home screen — next workout (lime), this week and the month goal, bodyweight (violet),
+   the last workout and recent records. Every card opens the screen with the details. */
+const agoDays=n=>n<=0?tx("النهارده","today"):n===1?tx("امبارح","yesterday"):tx(`من ${nl(n)} يوم`,`${n} days ago`);
+/* a small ring: done / goal */
+function ringSVG(done,goal){
+  const r=34,c=2*Math.PI*r,f=Math.min(1,done/Math.max(1,goal));
+  return `<svg class="ring" viewBox="0 0 84 84" aria-hidden="true"><circle class="track" cx="42" cy="42" r="${r}"/>
+    ${f?`<circle class="fill" cx="42" cy="42" r="${r}" stroke-dasharray="${(c*f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 42 42)"/>`:""}</svg>`;
+}
+/* a line through the last weigh-ins, oldest → newest in reading order */
+function sparkSVG(vals){
+  if(vals.length<2) return "";
+  const W=120,H=34,lo=Math.min(...vals),hi=Math.max(...vals),span=hi-lo||1,n=vals.length;
+  const pt=(v,i)=>{ const x=2+i*(W-4)/(n-1); return `${(isAr()?W-x:x).toFixed(1)},${(3+(1-(v-lo)/span)*(H-6)).toFixed(1)}`; };
+  const last=pt(vals[n-1],n-1).split(",");
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <polyline points="${vals.map(pt).join(" ")}"/><circle cx="${last[0]}" cy="${last[1]}" r="3"/></svg>`;
+}
 function vPlan(){
-  const w=PROGRAM[D.cursor],c=monthCount();
-  return `${me()}<div class="top">
-    <div><h1>${tx("اللي جاي","Next up")}</h1><div class="sub">${dayLabel(D.cursor)} — ${esc(dayTag(D.cursor))}</div></div></div>
+  const w=PROGRAM[D.cursor],c=monthCount(),now=today();
+  /* this week, Saturday first */
+  const ws=weekStart(now),trained=new Set(D.sessions.map(s=>s.date));
+  const week=Array.from({length:7},(_,i)=>addDays(ws,i)),weekN=week.filter(d=>trained.has(d)).length;
+  const letters=isAr()?["س","ح","ن","ث","ر","خ","ج"]:["S","S","M","T","W","T","F"];
+  /* bodyweight: latest and change since the first weigh-in, in the main unit */
+  const bw=[...D.bw].sort((a,b)=>a.date<b.date?-1:1),bwShow=x=>LOGS.bw.show(x.kg);
+  const bwDiff=bw.length>1?+(bwShow(bw[bw.length-1])-bwShow(bw[0])).toFixed(1):0;
+  /* the latest workout, and the latest records */
+  const order=D.sessions.map((s,i)=>({s,i})).sort((a,b)=>a.s.date<b.s.date?1:a.s.date>b.s.date?-1:b.i-a.i);
+  const prs=recordMap(),last=order[0];
+  const recent=order.flatMap(({s,i})=>(prs.get(i)||[]).map(pr=>({s,i,pr}))).slice(0,3);
+  const lastSets=last?Object.values(last.s.entries||{}).reduce((n,rows)=>n+working(rows).length,0):0;
+  return `${me()}<div class="top"><div><h1>${tx("اللي جاي","Next up")}</h1>
+    <div class="sub">${new Date(now+"T00:00:00").toLocaleDateString(LOCALE(),{weekday:"long",day:"numeric",month:"long"})}</div></div></div>
 
-  <div class="label">${tx("أيام الشهر","Days this month")}</div>
-  <div class="card">
-    <div class="row" style="padding-top:0">
-      <div><span class="num stat" style="font-size:30px;font-weight:700">${c}</span><span class="muted num"> / ${D.goal}</span></div>
-      ${c>=D.goal?`<span class="chip on">${tx("هدف الشهر تم","Month goal done")}</span>`:`<span class="muted small">${tx("الشهر هو المقياس، مش الأسبوع","The month counts, not the week")}</span>`}
-    </div>
-    <div class="pills">${Array.from({length:D.goal},(_,i)=>`<div class="pill ${i<c?'on':''}"></div>`).join("")}</div>
+  <div class="hero">
+    <div class="hero-head"><span class="eyebrow">${tx("الحصة الجاية","Next workout")}</span>
+      <span class="small">${tx(`${nl(w.ex.length)} تمارين`,`${w.ex.length} exercises`)}</span></div>
+    <div class="hero-title">${dayLabel(D.cursor)}</div>
+    <div class="hero-tag">${esc(dayTag(D.cursor))}</div>
+    <div class="hero-ex small">${w.ex.slice(0,3).map(e=>`<bdi>${esc(nameOf(e))}</bdi>`).join(" · ")}${w.ex.length>3?` <span class="nowrap">${tx(`+ ${nl(w.ex.length-3)} تانيين`,`+ ${w.ex.length-3} more`)}</span>`:""}</div>
+    <button class="btn" onclick="start()">${tx("ابدأ الحصة","Start workout")}</button>
+    <button class="hero-link" onclick="skip()">${tx("بدّل لتمرين تاني","Switch to the next day")}</button>
   </div>
 
   ${needBackup()?`<div class="note tap" onclick="backup()">${D.lastBackup?tx(`بقالك ${nl(daysSince(D.lastBackup))} يوم من غير نسخة احتياطية`,`No backup for ${nl(daysSince(D.lastBackup))} days`)
     :tx("لسه ماعملتش نسخة احتياطية","No backup yet")}${tx(" — اضغط هنا واعملها"," — tap here to make one")}</div>`:""}
+
+  <div class="duo">
+    <div class="card goal tap" onclick="go('log')">
+      <div class="small muted">${tx("أيام الشهر","Days this month")}</div>
+      <div class="ring-box">${ringSVG(c,D.goal)}<div class="ring-n"><b class="num stat">${c}</b><span class="muted num"> / ${D.goal}</span></div></div>
+      <div class="small ${c>=D.goal?"hi":"muted"}">${c>=D.goal?tx("هدف الشهر تم ✓","Month goal done ✓"):tx(`فاضل ${nl(D.goal-c)}`,`${D.goal-c} to go`)}</div>
+    </div>
+    <div class="card bwc tap" onclick="go('prog')">
+      <div class="small">${tx("وزن الجسم","Bodyweight")}</div>
+      ${bw.length?`<div class="bw-n"><b class="num stat">${bwShow(bw[bw.length-1])}</b> <span class="small">${UL[D.unit]}</span></div>
+        ${sparkSVG(bw.slice(-12).map(bwShow))}
+        <div class="small">${bw.length>1?(bwDiff?tx(`${bwDiff<0?"نزلت":"زادت"} ${Math.abs(bwDiff)} من ${fdate(bw[0].date)}`,`${bwDiff<0?"−":"+"}${Math.abs(bwDiff)} since ${fdate(bw[0].date)}`)
+          :tx(`ثابت من ${fdate(bw[0].date)}`,`Same since ${fdate(bw[0].date)}`)):fdate(bw[0].date)}</div>`
+      :`<div class="bw-empty">${tx("سجّل وزنك","Log your weight")} ›</div>`}
+    </div>
+  </div>
+
+  <div class="card week">
+    <div class="row" style="padding:0 0 10px"><b>${tx("الأسبوع ده","This week")}</b>
+      <span class="small muted">${tx(`${nl(weekN)} حصص`,`${weekN} workout${weekN===1?"":"s"}`)}</span></div>
+    <div class="wdays">${week.map((d,i)=>`<div class="wd ${trained.has(d)?"on":""} ${d===now?"today":""} ${d>now?"future":""}"
+      aria-label="${esc(fdate(d))}${trained.has(d)?" ✓":""}"><span>${letters[i]}</span></div>`).join("")}</div>
+  </div>
+
+  ${last?`<div class="label">${tx("آخر حصة","Last workout")}</div>
+  <div class="card tap lastw" onclick="openSession(${last.i})">
+    <div class="row" style="padding-top:0"><div><b>${dayLabel(last.s.workout)}</b>
+      <div class="small muted">${fdate(last.s.date)} · ${agoDays(daysSince(new Date(last.s.date+"T00:00:00").getTime()))}</div></div>
+      ${prs.has(last.i)?`<span class="chip on">🏆 ${nl(prs.get(last.i).length)}</span>`:"<span class=\"muted\">›</span>"}</div>
+    <div class="stats">
+      <div><b class="num stat">${Math.round(volume(last.s)).toLocaleString("en")}</b><span class="small muted">${tx("كجم حجم","kg volume")}</span></div>
+      <div><b class="num stat">${nl(lastSets)}</b><span class="small muted">${tx("ستات","sets")}</span></div>
+      <div><b class="num stat">${last.s.mins?nl(last.s.mins):"—"}</b><span class="small muted">${tx("دقيقة","min")}</span></div>
+    </div>
+  </div>`:""}
+
+  ${recent.length?`<div class="label">${tx("أرقام قياسية","Records")}</div>
+  <div class="card">${recent.map(({s,i,pr})=>`<div class="row tap" onclick="openSession(${i})">
+    <div><div style="font-weight:700">🏆 <bdi>${esc(nameIn(s,pr.id))}</bdi></div><div class="small muted">${esc(recordText(pr))}</div></div>
+    <div class="small muted num nowrap">${fdate(s.date)}</div></div>`).join("")}</div>`:""}
 
   <div class="label">${tx("تمارين النهارده","Today's exercises")}</div>
   <div class="card">${w.ex.map((e,i)=>`<div class="row">
@@ -27,9 +98,7 @@ function vPlan(){
       <div class="small muted num">${EQ[e.eq]} · ${e.sets} × ${e.lo}–${e.hi}${e.sec?" sec":""}</div></div>
       ${i===2?`<span class="chip on">${tx("الحد الأدنى","Minimum")}</span>`:''}</div>`).join("")}</div>
 
-  <div style="margin-top:22px"><button class="btn" onclick="start()">${tx("ابدأ الحصة","Start workout")}</button></div>
-  <div style="margin-top:10px"><button class="btn light" onclick="skip()">${tx("بدّل لتمرين تاني","Switch to the next day")}</button></div>
-  <div style="margin-top:10px"><button class="btn light" onclick="startPast()">${tx("سجّل حصة بتاريخ قديم","Log a past workout")}</button></div>`;
+  <div style="margin-top:22px"><button class="btn light" onclick="startPast()">${tx("سجّل حصة بتاريخ قديم","Log a past workout")}</button></div>`;
 }
 
 function setsHTML(e){

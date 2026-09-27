@@ -14,7 +14,7 @@ module.exports=async()=>{
   check("tab bar and timer in English", await ev(()=>[...document.querySelectorAll("nav span")].map(s=>s.textContent).join()+"|"+
     document.querySelector("#timer .small").textContent)==="Plan,Progress,Log,Settings|Rest");
   check("plan: title, day and its English description",
-    (await app()).includes("Next up")&&(await app()).includes("Workout A — Leg press + horizontal push & pull"));
+    (await app()).includes("Next up")&&(await p.textContent(".hero-title"))==="Workout A"&&(await p.textContent(".hero-tag"))==="Leg press + horizontal push & pull");
 
   // the name, top left, opens Settings
   check("no name yet: asks for one", (await p.textContent("button.me")).trim()==="Add your name");

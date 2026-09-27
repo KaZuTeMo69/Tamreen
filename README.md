@@ -7,6 +7,10 @@ Plain HTML, CSS and JavaScript — no build step, no libraries. Hosted on GitHub
 All data lives in the phone's browser storage (`localStorage`, key `tamreen-v2`).
 Use the backup buttons in the Log tab — there is no other copy.
 
+**Home screen:** the next workout (lime card, start or switch it there), days trained this month against the
+goal (ring), bodyweight with its trend (violet card), this week Saturday to Friday, the last workout
+(volume, sets, minutes, records) and the latest records. Each card opens the screen with the details.
+
 **Ask Claude:** the "🤖 Ask Claude about it" button on a workout (new or opened from the log)
 turns it into a ready-to-paste message — today's sets, the date and recent history per exercise — and
 opens the share sheet (phone) or copies it (computer). Paste it into the Claude chat; no API key or cost.

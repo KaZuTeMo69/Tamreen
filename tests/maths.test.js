@@ -66,7 +66,7 @@ module.exports=async()=>{
   await ev(()=>setPlates("kg","25, 20 ،10")); await ev(()=>setBar("kg","15"));
   check('F3 plates parsed & sorted', await ev(()=>D.plates.join())==='25,20,10');
   await p.click('nav button[data-tab=plan]');
-  check('F3 goal shows on plan', (await p.$$('.pill')).length===12 && (await p.textContent('.card .row')).includes('/ 12'));
+  check('F3 goal shows on plan', (await p.textContent('.ring-n')).includes('/ 12'));
   await p.click('text=ابدأ الحصة');
   const rest=await p.$$eval('#ex-a1 button[onclick^="startTimer"]',b=>b.map(x=>x.textContent+"|"+x.getAttribute('onclick')));
   check('F3 rest buttons use settings', rest.includes('راحة ٦٠|startTimer(60)')&&rest.includes('١٨٠|startTimer(180)'), rest);
