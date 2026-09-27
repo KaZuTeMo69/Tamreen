@@ -19,7 +19,7 @@ module.exports=async()=>{
   await p.click("#fin");
   check("finish: records sheet opens", await modalOn());
   const title=await p.textContent("#mtext"), body=await p.textContent("#mbody");
-  check("sheet title counts 3 records", title.includes("٣ أرقام قياسية جديدة"), title);
+  check("sheet title counts 3 records", title.includes("3 أرقام قياسية جديدة"), title);
   check("heavier weight → أتقل وزن", body.includes("Leg Press / Hack Squat\nأتقل وزن: 110 كجم × 8"), body);
   check("more reps at bodyweight → أكتر عدّات", body.includes("Hanging Knee Raises\nأكتر عدّات: 22"), body);
   check("same weight, more reps → أحسن ست", body.includes("Lateral Raises\nأحسن ست: 10 كجم × 12"), body);
@@ -29,7 +29,7 @@ module.exports=async()=>{
   check("the saved-message toast sits above the sheet, not on it", toastBottom<=sheetTop, {toastBottom,sheetTop});
   await p.click("#myes");
   await ev(()=>go("log"));
-  check("log: trophy with count on that session", (await p.textContent("#app")).includes("🏆 ٣"));
+  check("log: trophy with count on that session", (await p.textContent("#app")).includes("🏆 3"));
 
   // a weaker workout: no sheet
   await ev(()=>{ D.cursor="A"; go("plan"); });
@@ -66,11 +66,11 @@ module.exports=async()=>{
   await p.click("#fin");
   const rec=await ev(()=>D.sessions.at(-1));
   check("finish: 55 minutes and the note saved", rec.mins===55&&rec.note==="كتف شمال واجعني شوية", rec);
-  check("finish toast shows the duration", (await p.textContent("#toast")).includes("٥٥ دقيقة"));
+  check("finish toast shows the duration", (await p.textContent("#toast")).includes("55 دقيقة"));
   if(await modalOn()) await p.click("#myes");
   await ev(()=>go("log"));
   const logText=await p.textContent("#app");
-  check("log row: duration and a note mark", logText.includes("٥٥ دقيقة")&&logText.includes("📝"));
+  check("log row: duration and a note mark", logText.includes("55 دقيقة")&&logText.includes("📝"));
 
   // editing it: note + minutes editable, leaving with changes asks first
   await ev(()=>openSession(D.sessions.length-1));

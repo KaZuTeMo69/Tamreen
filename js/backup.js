@@ -141,6 +141,8 @@ function cleanBackup(obj){
   if(has("sides")) d.sides=map(obj.sides,v=>!!v);
   if(has("swaps")) d.swaps=map(obj.swaps,v=>String(v).trim().slice(0,80));
   if(has("videos")) d.videos=map(obj.videos,safeUrl);
+  if(has("exNotes")) d.exNotes=map(obj.exNotes,v=>String(v).trim().slice(0,120));
+  if(typeof obj.autoRest==="boolean") d.autoRest=obj.autoRest;
   if(PROGRAM[obj.cursor]) d.cursor=obj.cursor;
   if(obj.unit==="kg"||obj.unit==="lb") d.unit=obj.unit;
   if(["auto","light","dark"].includes(obj.theme)) d.theme=obj.theme;

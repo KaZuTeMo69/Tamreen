@@ -45,6 +45,9 @@ function sessionText(d){
       (e.uni?", one side at a time":""));
     lines.push(`   Today: ${setsLine(e,rows,d.units?.[e.id]||unitOf(e.id),!!d.sides?.[e.id])}${rirText(d.rir?.[e.id])}`);
     if(!hist.length){ lines.push("   First time doing this exercise."); return; }
+    /* same rule as the app's plateau check, on the workouts before this one */
+    const pl=plateauOf(historyOf(e.id).filter(h=>h.date<d.date));
+    if(pl) lines.push(`   Plateau: no new best set in the last ${pl.since} workouts (best was ${pl.bestDate}).`);
     const [last,...older]=hist, sideOf=h=>h.all.some(r=>r.r2);
     lines.push(`   Last time (${agoText(daysBetween(last.date,d.date))}): ${setsLine(e,last.all,last.u,sideOf(last))}${rirText(last.rir)}`);
     if(older.length) lines.push("   Before: "+older.map(h=>`${h.date.slice(5)}: ${setsLine(e,h.all,h.u,sideOf(h))}${rirText(h.rir)}`).join(" | "));

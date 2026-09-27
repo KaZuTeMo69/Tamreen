@@ -10,7 +10,7 @@ module.exports=async()=>{
 
     // fresh install: the three seed sessions (August)
     check(`${lang}: hero shows the next day`, (await txt(".hero .hero-title"))===t("تمرين A","Workout A")
-      && (await txt(".hero")).includes("Leg Press / Hack Squat") && (await txt(".hero")).includes(t("+ ٣ تانيين","+ 3 more")));
+      && (await txt(".hero")).includes("Leg Press / Hack Squat") && (await txt(".hero")).includes(t("+ 3 تانيين","+ 3 more")));
     check(`${lang}: month ring 0 of 10`, (await txt(".ring-n")).replace(/\s/g,"")==="0/10" && !(await p.$(".ring .fill")));
     check(`${lang}: no weigh-in yet → prompt`, (await txt(".bwc")).includes(t("سجّل وزنك","Log your weight")) && !(await p.$(".bwc .spark")));
     check(`${lang}: last workout = the newest seed session`, (await txt(".lastw")).includes(t("تمرين C","Workout C")));
@@ -36,11 +36,11 @@ module.exports=async()=>{
     await ev(()=>{ draft.startedAt=Date.now()-45*6e4; });
     await p.click("#fin"); await p.click("#myes");
     check(`${lang}: after a workout the hero moves on`, (await txt(".hero-title"))===t("تمرين B","Workout B"));
-    check(`${lang}: today filled in the week`, await ev(()=>document.querySelectorAll(".wd")[0].classList.contains("on")) && (await txt(".week")).includes(t("١ حصص","1 workout")));
+    check(`${lang}: today filled in the week`, await ev(()=>document.querySelectorAll(".wd")[0].classList.contains("on")) && (await txt(".week")).includes(t("1 حصص","1 workout")));
     check(`${lang}: ring 1 of 10`, (await txt(".ring-n")).replace(/\s/g,"")==="1/10" && !!(await p.$(".ring .fill")));
     const last=await txt(".lastw");
     check(`${lang}: last workout: day, today, sets, minutes, record`, last.includes(t("تمرين A","Workout A")) && last.includes(t("النهارده","today"))
-      && last.includes(t("٤٥","45")) && (await p.$(".lastw .chip.on")) !== null, last);
+      && last.includes(t("45","45")) && (await p.$(".lastw .chip.on")) !== null, last);
     check(`${lang}: records card lists it`, (await txt("#app")).includes(t("أتقل وزن: 120 كجم × 10","Heaviest: 120 kg × 10")));
     await p.click(".lastw");
     check(`${lang}: last workout opens it`, await ev(()=>draft&&draft.edit===D.sessions.length-1));

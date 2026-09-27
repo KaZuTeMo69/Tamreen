@@ -19,7 +19,7 @@ module.exports=async()=>{
   check('B5 num() helper', await ev(()=>[num("٧٫٥"),num("۱۲"),num("7,5"),num(""),num("x")].join())==='7.5,12,7.5,0,0');
 
   // B1 — reload mid-workout keeps everything, including a running rest
-  await p.click('#ex-a1 button:has-text("راحة ٩٠")');
+  await p.click('#ex-a1 button:has-text("راحة 90")');
   await p.clock.runFor(10000);
   await p.reload();
   check('B1 session screen restored after reload', !!(await p.$('#fin')));

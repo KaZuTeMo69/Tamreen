@@ -7,8 +7,9 @@ const LANG_KEY="tamreen-v2-lang";
 let LANG=(()=>{ try{ return localStorage.getItem(LANG_KEY)==="ar"?"ar":"en"; }catch(e){ return "en"; } })();
 const isAr=()=>LANG==="ar";
 const tx=(ar,en)=>isAr()?ar:en;
-const LOCALE=()=>isAr()?"ar-EG":"en-GB";
-/* a number in the current language's digits */
+/* Arabic keeps Arabic month and day names but writes numbers with 0–9 (-u-nu-latn), like the English side */
+const LOCALE=()=>isAr()?"ar-EG-u-nu-latn":"en-GB";
+/* a number, grouped the current language's way (always 0–9) */
 const nl=n=>Number(n).toLocaleString(LOCALE());
 /* the fixed text in index.html (tab bar, rest timer), marked with data-l */
 const STATIC={plan:["الخطة","Plan"],prog:["التقدم","Progress"],log:["السجل","Log"],set:["الإعدادات","Settings"],

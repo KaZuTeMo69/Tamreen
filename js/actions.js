@@ -1,5 +1,48 @@
 /* ══ actions ══════════════════════════════════════════ */
-function edit(id,s,f,v){ draft.entries[id][s][f]=normNum(v); refresh(); saveDraft(); }
+/* FEATURE: the rest timer starts by itself when a set's reps go from empty to typed (not for warm-ups,
+   not when editing an old session; Settings can turn it off) */
+const hasReps=r=>!!(r.r||r.r2);
+function autoRest(id,s,before){
+  const r=draft.entries[id][s];
+  if(!before&&hasReps(r)&&!r.warm&&draft.edit==null&&D.autoRest!==false) startTimer(D.rest[0]);
+}
+function edit(id,s,f,v){
+  const r=draft.entries[id][s],before=hasReps(r);
+  r[f]=normNum(v); refresh(); saveDraft();
+  if(f!=="w") autoRest(id,s,before);
+}
+/* FEATURE: faster logging — copy last time's set, repeat the set above, one more rep */
+function copyPrev(id,s){
+  const last=lastFor(id,draft.date),p=last?.all[s]; if(!p) return;
+  const e=exDef(id),u=draft.units[id],r=draft.entries[id][s],before=hasReps(r);
+  if(!(e.eq==="body"&&!e.addw)) r.w=p.w?(last.u===u?String(p.w):String(conv(p.w,last.u,u))):"";
+  r.r=p.r||""; r.r2=draft.sides[id]?(p.r2||""):"";
+  redrawSets(id); refresh(); saveDraft(); autoRest(id,s,before); buzz(10);
+}
+function sameAsAbove(id){
+  const L=draft.entries[id];
+  let k=L.findIndex((r,i)=>i>0&&!hasReps(r)&&L.slice(0,i).some(hasReps));
+  if(k<0){ if(!L.some(hasReps)){ toast(tx("سجّل ست الأول","Log a set first")); return; }
+    addSet(id); k=L.length-1; }
+  const src=L.slice(0,k).filter(hasReps).pop(),r=L[k];
+  Object.assign(r,{w:src.w,r:src.r,r2:src.r2,warm:false});
+  redrawSets(id); refresh(); saveDraft(); autoRest(id,k,false); buzz(10);
+}
+function plusRep(id){
+  const L=draft.entries[id],r=L.filter(hasReps).pop();
+  if(!r){ toast(tx("سجّل ست الأول","Log a set first")); return; }
+  if(r.r) r.r=String(num(r.r)+1);
+  if(r.r2) r.r2=String(num(r.r2)+1);
+  redrawSets(id); saveDraft(); buzz(10);
+}
+/* FEATURE: a setup note per exercise (seat height, pin, grip), shown on it every workout */
+function editSetup(id){
+  sheet({text:tx("ضبط الجهاز","Setup note"),body:tx("ارتفاع الكرسي، رقم المسمار، المسكة… بيظهر كل مرة تعمل التمرين ده. سيبه فاضي عشان يتمسح.",
+    "Seat height, pin, grip… shown every time you do this exercise. Leave it empty to delete it."),
+    value:D.exNotes[id]||"",yes:tx("حفظ","Save"),
+    onYes:v=>{ v=v.trim().slice(0,120); if(v) D.exNotes[id]=v; else delete D.exNotes[id];
+      D.changedAt=Date.now(); save(); render(false); }});
+}
 function toggleWarm(id,s){ const r=draft.entries[id][s]; r.warm=!r.warm; redrawSets(id); saveDraft(); }
 function setRir(id,v){ draft.rir[id]=draft.rir[id]===v?undefined:v; redrawRir(id); saveDraft(); }
 function addSet(id){ draft.counts[id]++; draft.entries[id].push({w:"",r:"",r2:"",warm:false}); redrawSets(id); saveDraft(); }
@@ -22,6 +65,8 @@ function toggleSide(id){
   render(false);
 }
 function setProg(id){ progEx=id; render(false); }
+/* open the progress tab on one exercise (from the home screen) */
+function showProgress(id){ progEx=id; go("prog"); }
 /* log calendar: move a month back / forward (not past this month) */
 function calShift(d){
   const [Y,M]=(calMonth||ym(today())).split("-").map(Number),t=new Date(Y,M-1+d,1);
@@ -185,8 +230,9 @@ function setting(v,lo,hi,msg){
 function setName(v){ D.name=v.trim().slice(0,30); saved(); }
 function setDefUnit(u){ D.unit=u; saved(); }
 function setTheme(t){ D.theme=t; applyTheme(); saved(); }
-function setGoal(v){ const n=setting(v,1,31,tx("الهدف من ١ لـ ٣١","The goal is 1 to 31")); if(n!==null){ D.goal=Math.round(n); saved(); } }
-function setRest(i,v){ const n=setting(v,5,900,tx("الراحة من ٥ لـ ٩٠٠ ثانية","Rest is 5 to 900 seconds")); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
+function setAutoRest(v){ D.autoRest=v==="on"; saved(); }
+function setGoal(v){ const n=setting(v,1,31,tx("الهدف من 1 لـ 31","The goal is 1 to 31")); if(n!==null){ D.goal=Math.round(n); saved(); } }
+function setRest(i,v){ const n=setting(v,5,900,tx("الراحة من 5 لـ 900 ثانية","Rest is 5 to 900 seconds")); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
 function setBar(u,v){ const n=setting(v,0,200,tx("اكتب وزن البار","Type the bar weight")); if(n!==null){ D[u==="lb"?"barLb":"bar"]=n; saved(); } }
 function setPlates(u,v){
   const list=[...new Set(v.split(/[\s,،;]+/).map(num).filter(x=>x>0))].sort((a,b)=>b-a);
@@ -222,8 +268,8 @@ function readExForm(){
   const e={n:val("f-n").trim().slice(0,80),eq:val("f-eq"),sets:int("f-sets"),lo:int("f-lo"),hi:int("f-hi")};
   FLAGS.forEach(f=>{ e[f]=document.getElementById("f-"+f).checked; });
   if(e.assist) e.addw=true;   // assistance is typed in the weight box, like added weight
-  const err=!e.n?tx("اكتب اسم التمرين","Type the exercise name"):!(e.sets>=1&&e.sets<=10)?tx("الستات من ١ لـ ١٠","Sets are 1 to 10")
-    :!(e.lo>=1&&e.hi<=100&&e.lo<=e.hi)?tx("العدّات: من ١ لـ ١٠٠، والأولى أصغر","Reps are 1 to 100, the first one smaller"):"";
+  const err=!e.n?tx("اكتب اسم التمرين","Type the exercise name"):!(e.sets>=1&&e.sets<=10)?tx("الستات من 1 لـ 10","Sets are 1 to 10")
+    :!(e.lo>=1&&e.hi<=100&&e.lo<=e.hi)?tx("العدّات: من 1 لـ 100، والأولى أصغر","Reps are 1 to 100, the first one smaller"):"";
   return {e,err};
 }
 /* the form sheet; on a mistake it says what's wrong and opens again with what was typed */

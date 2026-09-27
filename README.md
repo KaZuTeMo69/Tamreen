@@ -11,6 +11,15 @@ Use the backup buttons in the Log tab — there is no other copy.
 goal (ring), bodyweight with its trend (violet card), this week Saturday to Friday, the last workout
 (volume, sets, minutes, records) and the latest records. Each card opens the screen with the details.
 
+**Plateaus:** when an exercise's best set hasn't improved in 3 workouts, the home screen ("Needs attention"),
+the workout and the Progress tab say what to do: 3 → take a lighter week (about 90% of the last top weight),
+4 → go for your best again, 5+ → swap it for a variation. The Ask Claude message mentions it too.
+
+**Faster logging:** tap last time's numbers on a set to copy them; "Same again" repeats the set above;
+"+1 rep" adds a rep to the last set; the rest timer starts by itself when you type a set's reps (not for
+warm-ups; Settings → Rest buttons can turn it off); "📌 Setup" keeps a note per exercise (seat height, pin)
+that shows every workout.
+
 **Ask Claude:** the "🤖 Ask Claude about it" button on a workout (new or opened from the log)
 turns it into a ready-to-paste message — today's sets, the date and recent history per exercise — and
 opens the share sheet (phone) or copies it (computer). Paste it into the Claude chat; no API key or cost.
@@ -34,7 +43,7 @@ js/coach.js       builds the "Ask Claude" message for a session
 js/main.js        wires the tab bar and draws the first screen
 sw.js             service worker: keeps a copy of the app so it opens offline
 manifest.webmanifest, icons/   make it installable (home-screen icon, full screen)
-fonts/            Tafkir Arabic (trial) and Orbitron — see below
+fonts/            Readex Pro (Arabic) and Orbitron, both free (SIL Open Font License) — see below
 .nojekyll         tells GitHub Pages to serve files as-is (no Jekyll)
 tests/            browser tests (not used by the app itself)
 package.json      only for the tests
@@ -65,7 +74,8 @@ npm test                          # all suites
 npm test -- backup                # only suites whose file name contains "backup"
 ```
 
-Each `tests/*.test.js` file covers one batch of changes. `tests/fixtures/v1-data.json` is data saved by
+GitHub runs the same tests on every pull request and every push to `main` (`.github/workflows/tests.yml`);
+a red check on a pull request means something broke. Each `tests/*.test.js` file covers one batch of changes. `tests/fixtures/v1-data.json` is data saved by
 the original single-file app, used to check that old data still loads.
 
 ## Deploying changes
@@ -93,19 +103,17 @@ hard-coded colour. Every text pair is at least 4.5:1 and every chart mark 3:1 in
 Fonts:
 - English: DM Sans (Google Fonts) for text; Orbitron (`fonts/orbitron.woff2`, SIL Open Font License —
   `fonts/Orbitron-OFL.txt`) for titles, buttons and big numbers.
-- Arabic: Tafkir Arabic (`fonts/tafkir-arabic.woff2`, converted from the supplied OTF) for text, DM Sans for
-  numbers.
+- Arabic: Readex Pro (`fonts/readex-pro-arabic.woff2`, SIL Open Font License — `fonts/ReadexPro-OFL.txt`) for
+  Arabic letters; the file holds only the Arabic set, so Latin words and numbers use DM Sans.
 - The name at the top left (tap it for Settings) is Orbitron in both languages.
 
-Tafkir: The supplied file is the **trial** version (`fonts/Tafkir-LICENSE.txt`: "Demo / Trial"); it has
-one weight, and this repo is public, so the file can be downloaded by anyone — get a proper licence
-from the foundry (Kutype) before relying on it.
+All three fonts are free to use, share and host (OFL), so they can stay in this public repo.
 
 ## Languages
 
 Every piece of text is written twice, `tx("عربي","English")`, next to where it is used. The language is a
 setting of the phone (`localStorage` key `tamreen-v2-lang`), not of the data, so backups, restores and
-"delete all data" leave it alone. In English the layout runs left-to-right: the charts put the newest
+"delete all data" leave it alone. Numbers are always written 0–9, in Arabic too (Arabic digits typed on the keyboard are still read). In English the layout runs left-to-right: the charts put the newest
 workout on the right and the calendar starts Saturday on the left. Exercise names are the ones you type,
 so they are the same in both languages; a day description you edit is shown as you wrote it. The older
 test suites pin Arabic (`tests/lib.js`); `tests/i18n.test.js` covers English.

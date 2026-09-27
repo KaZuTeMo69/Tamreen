@@ -62,7 +62,7 @@ module.exports=async()=>{
   check('F2 reminder gone after backup', !(await p.textContent('#app')).includes('اضغط هنا واعملها'));
   await ev(()=>go('log')); check('F2 log shows last backup today', (await p.textContent('#app')).includes('آخر نسخة: النهارده.'), (await p.textContent('#app')).slice(0,400));
   await ev(()=>{ D.lastBackup=Date.now()-10*864e5; D.changedAt=Date.now(); go('plan'); });
-  check('F2 reminder after 10 days with changes', (await p.textContent('#app')).includes('بقالك ١٠ يوم'));
+  check('F2 reminder after 10 days with changes', (await p.textContent('#app')).includes('بقالك 10 يوم'));
   await ev(()=>{ D.changedAt=D.lastBackup-1; render(); });
   check('F2 no reminder when nothing changed', !(await p.textContent('#app')).includes('بقالك'));
 
@@ -91,7 +91,7 @@ module.exports=async()=>{
 
   // B14 — dates west of UTC
   p=await open({tz:'America/New_York',time:'2026-09-26T16:00:00Z'});
-  check('B14 fdate shows the stored day in New York', await p.evaluate(()=>fdate("2026-08-23")).then(s=>s.includes('٢٣')), await p.evaluate(()=>fdate("2026-08-23")));
+  check('B14 fdate shows the stored day in New York', await p.evaluate(()=>fdate("2026-08-23")).then(s=>s.includes('23')), await p.evaluate(()=>fdate("2026-08-23")));
   await p.done();
 
   // F2 — share sheet on a phone

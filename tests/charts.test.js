@@ -31,7 +31,7 @@ module.exports=async()=>{
   const t1=await ev(()=>document.querySelector("#ch-ex .ctip").innerText);
   await p.keyboard.press("ArrowRight");
   const t2=await ev(()=>document.querySelector("#ch-ex .ctip").innerText);
-  check("keyboard: ← reaches the newest session, → moves to the one before", t1.includes("٢٣ سبتمبر") && t2.includes("٢٠ سبتمبر"), [t1,t2]);
+  check("keyboard: ← reaches the newest session, → moves to the one before", t1.includes("23 سبتمبر") && t2.includes("20 سبتمبر"), [t1,t2]);
   check("table of all sessions", await ev(()=>document.querySelectorAll("#app details.tbl")[0].querySelectorAll("tr").length)===10);
 
   // weekly volume columns
@@ -69,7 +69,7 @@ module.exports=async()=>{
   await ev(()=>go("log"));
   const cal=await ev(()=>({head:document.querySelector(".cal-head b").textContent,on:document.querySelectorAll(".day.on").length,
     today:document.querySelector(".day.today")?.textContent,next:document.querySelectorAll(".cal-head button")[1].disabled}));
-  check("calendar: this month, trained days, today, no next month", cal.head.includes("سبتمبر")&&cal.on===8&&cal.today==="٢٦"&&cal.next, cal);   // 7 leg-press days + the dips day
+  check("calendar: this month, trained days, today, no next month", cal.head.includes("سبتمبر")&&cal.on===8&&cal.today==="26"&&cal.next, cal);   // 7 leg-press days + the dips day
   check("Saturday is the first (rightmost) column", await ev(()=>{ const d=[...document.querySelectorAll(".cal-grid .dow")];
     return d[0].textContent==="س"&&d[0].getBoundingClientRect().left>d[1].getBoundingClientRect().left; }));
   await p.click(".cal-head button >> nth=0");
