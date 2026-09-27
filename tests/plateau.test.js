@@ -26,8 +26,10 @@ module.exports=async()=>{
 
   // in the workout
   await ev(()=>go("plan")); await p.click("text=Start workout");
-  check("workout: advice on the stalled exercise only", (await p.$$(".stall")).length===1 && !!(await p.$("#ex-a1 .stall")));
-  check("workout: it replaces the usual next-weight tip there", !(await p.$("#ex-a1 .tip")) && !!(await p.$("#ex-a2 .tip")));
+  check("workout: advice on the stalled exercise, instead of the next-weight tip", !!(await p.$("#ex-a1 .stall")) && !(await p.$("#ex-a1 .tip")));
+  await ev(()=>{ draft.at=1; render(); });
+  check("workout: the next exercise gets its usual tip, no plateau", !!(await p.$("#ex-a2 .tip")) && !(await p.$("#ex-a2 .stall")));
+  await ev(()=>{ draft.at=0; render(); });
   const lb=await ev(()=>{ setUnit("a1","lb"); render(false); return document.querySelector("#ex-a1 .stall").textContent; });
   check("workout: in lb when the exercise is logged in lb", lb.includes("220 lb"), lb);   // 90% of 253.5 lb = 228, down to the 10 lb step
   await ev(()=>{ setUnit("a1","kg"); render(false); edit("a1",0,"w","110"); edit("a1",0,"r","8"); });

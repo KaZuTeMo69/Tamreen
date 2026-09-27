@@ -75,6 +75,7 @@ module.exports=async()=>{
   // right/left wasn't switched on, so the left-side reps were dropped on save: 100×8 + 10×12
   check("remove: its session volume still counts it", await ev(i=>Math.round(volume(D.sessions[i])),flyIdx)===100*8+10*12);
   await ev(i=>openSession(i),flyIdx);
+  await ev(id=>{ draft.at=draft.ids.indexOf(id); render(); },fly);
   check("old session still shows the removed exercise", !!(await p.$(`#ex-${fly}`)));
   await p.click("#fin");
   check("saving that old session keeps the removed exercise's sets", await ev(([i,id])=>D.sessions[i].entries[id]?.[0]?.r==="12",[flyIdx,fly]));

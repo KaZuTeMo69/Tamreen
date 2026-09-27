@@ -109,84 +109,6 @@ function vPlan(){
   <div style="margin-top:22px"><button class="btn light" onclick="startPast()">${tx("سجّل حصة بتاريخ قديم","Log a past workout")}</button></div>`;
 }
 
-function setsHTML(e){
-  const u=draft.units[e.id],side=draft.sides[e.id],last=draft.edit==null?lastFor(e.id,draft.date):null;
-  const hideW=(e.eq==="body"&&!e.addw), n=draft.counts[e.id];
-  return `<div class="hints"><span class="i"></span><span class="chip w" style="visibility:hidden">W</span>
-      ${hideW?"":`<span class="hint" style="flex:1">${e.assist?tx("مساعدة −","Assist −"):(e.addw?tx("إضافي","Added"):tx("وزن","Weight"))} (${esc(u)})</span>`}
-      <span class="hint" style="flex:1">${e.sec?tx("ثواني","Sec"):(side?tx("يمين","Right"):tx("عدّات","Reps"))}</span>
-      ${side?`<span class="hint" style="flex:1">${tx("شمال","Left")}</span>`:""}
-      <span class="prev"></span></div>
-    ${Array.from({length:n},(_,s)=>{
-      const p=last?.all[s],cur=draft.entries[e.id][s]||{w:"",r:"",r2:"",warm:false};
-      const pw=p?.w?(last.u===u?p.w:conv(p.w,last.u,u)):"";   // FIX: last time in today's unit
-      return `<div class="set ${cur.warm?"warm":""}"><span class="i">S${s+1}</span>
-        <button class="chip w ${cur.warm?"on":""}" onclick="toggleWarm('${e.id}',${s})" title="${tx("تسخين","Warm-up")}">W</button>
-        ${hideW?"":`<input inputmode="decimal" placeholder="—" value="${esc(cur.w)}" oninput="edit('${e.id}',${s},'w',this.value)">`}
-        <input inputmode="numeric" placeholder="—" value="${esc(cur.r)}" oninput="edit('${e.id}',${s},'r',this.value)">
-        ${side?`<input inputmode="numeric" placeholder="—" value="${esc(cur.r2)}" oninput="edit('${e.id}',${s},'r2',this.value)">`:""}
-        ${p?.r?`<button class="prev copy"${p.warm?' style="opacity:.55"':""} onclick="copyPrev('${e.id}',${s})" title="${tx("انسخ اللي فات","Copy last time")}">${
-          pw?esc(pw)+"×":""}${esc(p.r)}</button>`:`<span class="prev">${draft.edit==null?"—":""}</span>`}</div>`;
-    }).join("")}`;
-}
-
-function vSession(){
-  const editing=draft.edit!=null,exs=draft.ids.map(exDef);
-  const card=(e,i)=>{
-    /* a stalled exercise gets the plateau advice instead of the usual next-weight tip */
-    const pl=editing?null:plateau(e.id,draft.date);
-    const sg=editing||pl?null:suggest(e,draft.date,draft.units[e.id]), hl=histLine(e.id,draft.date,draft.units[e.id]);
-    return `<div class="ex" id="ex-${e.id}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
-        <div><h3>${esc(draft.names[e.id])}</h3>
-          <div class="meta num">${e.lo}–${e.hi} ${e.sec?"SEC":"REPS"} · ${EQ[e.eq]}</div></div>
-        <div class="num stat" style="font-size:22px;color:var(--line);font-weight:700">${String(i+1).padStart(2,"0")}</div>
-      </div>
-      ${sg?`<div class="tip">${esc(sg)}</div>`:""}
-      ${pl?`<div class="stall">${esc(plateauText(pl,draft.units[e.id]))}</div>`:""}
-      ${hl?`<div class="hist">${esc(hl)}</div>`:""}
-      ${D.exNotes[e.id]?`<div class="setup tap" onclick="editSetup('${e.id}')">📌 ${esc(D.exNotes[e.id])}</div>`:""}
-      <div class="ctrls">
-        ${(e.eq==="body"&&!e.addw)?"":`<select onchange="setUnit('${e.id}',this.value)">
-          <option value="kg" ${draft.units[e.id]==="kg"?"selected":""}>kg</option>
-          <option value="lb" ${draft.units[e.id]==="lb"?"selected":""}>lb</option></select>`}
-        <button class="chip ${draft.sides[e.id]?"on":""}" onclick="toggleSide('${e.id}')">${tx("يمين / شمال","Right / Left")}</button>
-        ${e.eq==="barbell"?`<button class="chip" onclick="plateCalc('${e.id}')">${tx("حاسبة الأوزان","Plates")}</button>`:""}
-        <a class="chip ${D.videos[e.id]?"ink":""}" href="${esc(safeUrl(D.videos[e.id])||("https://www.youtube.com/results?search_query="+encodeURIComponent(e.n+" proper form technique")))}" target="_blank" rel="noopener">▶ ${tx("شرح","How-to")}</a>
-        <button class="chip" onclick="pinVideo('${e.id}')">${D.videos[e.id]?tx("غيّر اللينك","Change link"):tx("ثبّت لينك","Pin link")}</button>
-        <button class="chip" onclick="swap('${e.id}')">${tx("بدّل","Rename")}</button>
-        ${D.exNotes[e.id]?"":`<button class="chip" onclick="editSetup('${e.id}')">📌 ${tx("ضبط الجهاز","Setup")}</button>`}
-      </div>
-      <div class="sets" id="sets-${e.id}">${setsHTML(e)}</div>
-      <div class="ctrls">
-        <button class="chip" onclick="addSet('${e.id}')">+ ${tx("ست","Set")}</button>
-        <button class="chip" onclick="delSet('${e.id}')">− ${tx("ست","Set")}</button>
-        <button class="chip" onclick="sameAsAbove('${e.id}')">${tx("زي اللي فوق","Same again")}</button>
-        <button class="chip" onclick="plusRep('${e.id}')">+1 ${tx("عدّة","rep")}</button>
-        <button class="chip" onclick="startTimer(${D.rest[0]})">${tx("راحة","Rest")} ${nl(D.rest[0])}</button>
-        <button class="chip" onclick="startTimer(${D.rest[1]})">${nl(D.rest[1])}</button>
-      </div>
-      <div class="rir" id="rir-${e.id}">${rirHTML(e.id)}</div>
-    </div>`;};
-  const began=draft.startedAt?` · ${tx("بدأت","started")} ${new Date(draft.startedAt).toLocaleTimeString(LOCALE(),{hour:"numeric",minute:"2-digit"})}`:"";
-  return `<div class="top">
-    <div><h1>${dayLabel(draft.workout)}</h1>
-      <div class="sub tap" onclick="pickDate()">${fdate(draft.date)}${began} · ${tx("تغيير التاريخ","change date")}</div></div>
-    <button class="btn light" style="width:auto;padding:12px 20px;font-size:15px" onclick="cancel()">${editing?tx("رجوع","Back"):tx("إلغاء","Cancel")}</button></div>
-  <div style="margin-top:22px">${exs.slice(0,3).map(card).join("")}</div>
-  ${editing||exs.length<=3?"":`<div class="divider"><hr><b>${tx("تقدر تنهي هنا — تتحسب حصة كاملة","You can stop here — it counts as a full workout")}</b><hr></div>`}
-  ${exs.slice(3).map((e,i)=>card(e,i+3)).join("")}
-  <div class="label">${tx("ملاحظات","Notes")}</div>
-  <textarea class="note-in" placeholder="${tx("إحساسك، نوم، ألم، أي حاجة تفتكرها المرة الجاية…","How it felt, sleep, pain, anything to remember next time…")}" oninput="setNote(this.value)">${esc(draft.note||"")}</textarea>
-  ${editing?`<div class="card" style="margin-top:12px;padding:6px 18px"><div class="row"><span>${tx("مدة الحصة (دقايق)","Duration (minutes)")}</span>
-    <input class="field" inputmode="numeric" placeholder="—" value="${draft.mins||""}" oninput="setMins(this.value)"></div></div>`:""}
-  <div style="margin-top:20px">
-    <button class="btn" id="fin" onclick="finish()">${editing?tx("حفظ التعديلات","Save changes"):tx("إنهاء الحصة","Finish workout")}</button>
-    <div class="small muted num" id="cnt" style="text-align:center;margin-top:10px"></div>
-    <div style="margin-top:12px"><button class="btn light" onclick="askClaude()">🤖 ${tx("اسأل Claude عن الحصة","Ask Claude about it")}</button></div>
-    ${editing?`<div style="margin-top:12px"><button class="btn danger" onclick="delSession()">${tx("حذف الحصة","Delete workout")}</button></div>`:""}</div>`;
-}
-
 /* measurement logs shown on the progress tab; bodyweight is stored in kg and shown in the main unit */
 const LOGS={
   bw:{f:"kg",get title(){ return tx("وزن الجسم","Bodyweight"); },unit:()=>D.unit,
@@ -300,10 +222,10 @@ function vSet(){
       <div class="small muted">${D.program?tx("متعدّل","Edited"):tx("البرنامج الأصلي","Built-in program")}</div></div>
     <span class="muted">›</span></div></div>
 
-  <div class="label">${tx("أزرار الراحة (ثواني)","Rest buttons (seconds)")}</div>
+  <div class="label">${tx("الراحة بين الستات (ثواني)","Rest between sets (seconds)")}</div>
   <div class="card">
-    ${row(tx("الزرار الأول","First button"),field(D.rest[0],"setRest(0,this.value)","numeric"))}
-    ${row(tx("الزرار التاني","Second button"),field(D.rest[1],"setRest(1,this.value)","numeric"))}
+    ${row(tx("أول 3 تمارين","First 3 exercises"),field(D.rest[1],"setRest(1,this.value)","numeric"))}
+    ${row(tx("باقي التمارين","Other exercises"),field(D.rest[0],"setRest(0,this.value)","numeric"))}
     ${row(tx("يبدأ لوحده بعد كل ست","Start after each set"),chips([["on",tx("أيوه","On")],["off",tx("لأ","Off")]],D.autoRest===false?"off":"on","setAutoRest"))}
   </div>
 
@@ -327,9 +249,12 @@ function vSet(){
         <div class="muted">Android: Chrome menu → <span style="white-space:nowrap">Install app</span></div>`}
     <div class="muted" style="margin-top:10px">${navigator.serviceWorker?.controller
       ?tx("بيشتغل من غير نت ✓","Works offline ✓"):tx("هيشتغل من غير نت بعد ما تفتحه مرة وإنت متصل.","Works offline after you open it once with a connection.")}</div>
+    <div class="muted num" id="version" style="margin-top:10px">${tx("الإصدار","Version")} ${APP_VERSION}</div>
   </div>`;
 }
 const isInstalled=()=>matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+/* the release number = the ?v= on the script tags (bumped with every release), shown in Settings */
+const APP_VERSION=(document.currentScript?.getAttribute("src")?.match(/[?&]v=(\w+)/)||[])[1]||"—";
 
 /* FEATURE: program editor (opened from Settings); the actions are in actions.js */
 const flagText=e=>[e.uni&&tx("كل جنب لوحده","one side at a time"),e.assist?tx("بالمساعدة","assisted"):e.addw&&tx("+ وزن إضافي","+ added weight")]
@@ -415,6 +340,7 @@ function render(toTop=true){
   document.getElementById("app").innerHTML =
     draft?vSession():tab==="prog"?vProg():tab==="log"?vLog():tab==="set"?vSet():tab==="program"?vProgram():vPlan();
   document.getElementById("nav").classList.toggle("hide",!!draft);
+  document.body.classList.toggle("in-session",!!draft);
   const navTab=tab==="program"?"set":tab;   // the editor lives under Settings
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===navTab));
   if(draft) refresh();
@@ -422,13 +348,3 @@ function render(toTop=true){
   drawCharts();
   window.scrollTo(0,toTop?0:y);
 }
-function refresh(){
-  const n=Object.values(draft.entries).filter(r=>r.some(x=>x.r)).length;
-  const cnt=document.getElementById("cnt"),fin=document.getElementById("fin");
-  if(cnt) cnt.textContent=tx(`${n} / ${draft.ids.length} تمارين مسجّلة`,`${n} / ${draft.ids.length} exercises logged`);
-  if(fin&&draft.edit==null) fin.textContent=n?tx(`إنهاء الحصة (${n})`,`Finish workout (${n})`):tx("إنهاء الحصة","Finish workout");
-}
-function redrawSets(id){ const el=document.getElementById("sets-"+id); if(el) el.innerHTML=setsHTML(exDef(id)); }
-const rirHTML=id=>`<span class="small muted">${tx("كام عدّة فضلت؟","Reps left in the tank?")}</span>
-  ${[0,1,2,3].map(v=>`<button class="chip ${draft.rir[id]===v?"on":""}" onclick="setRir('${id}',${v})">${v===3?"3+":v}</button>`).join("")}`;
-function redrawRir(id){ const el=document.getElementById("rir-"+id); if(el) el.innerHTML=rirHTML(id); }

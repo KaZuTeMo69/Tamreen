@@ -19,7 +19,7 @@ try{
       return {date:s.date,workout:s.workout,entries:s.entries,units,names,counts,rir:{}};
     });
     D.cursor="A";
-    D.swaps={a3:"Chest Cable Row",c6:"Seated Calf Raise"};
+    D.swaps={a3:"Chest Cable Row"};
     D.sides={a5:true,b2:true,b3:true,b5:true,c3:true};
     D.migrated=2;
   }
@@ -77,10 +77,13 @@ const step=(ex,u)=>u==="lb"?(ex.eq==="dumbbell"||ex.eq==="cable"?5:10)
 const monthCount=()=>new Set(D.sessions.filter(s=>ym(s.date)===ym(today())).map(s=>s.date)).size;
 const setCount=(s,e)=>s.counts?.[e.id]||(s.entries?.[e.id]?.length)||e.sets;
 
-/* one-time migration: split the old merged leg card + freeze historical names (also run after a restore) */
+/* one-time migrations (also run after a restore):
+   2 — split the old merged leg card + freeze historical names;
+   3 — c6 is done on the leg press: "Seated Calf Raise" / "Standing Calf Raises" → "Calf Raise (Leg Press)",
+       in the program, the saved rename and past workouts (only the label; the sets are untouched) */
 function migrate(){
-  if(D.migrated>=2) return;
-  D.sessions.forEach(s=>{
+  if(D.migrated>=3) return;
+  if((D.migrated||0)<2) D.sessions.forEach(s=>{
     if(s.workout==="C"&&s.entries?.c4&&!s.entries.c4b){
       s.entries.c4b=s.entries.c4; delete s.entries.c4;
       if(s.units?.c4){ s.units.c4b=s.units.c4; delete s.units.c4; }
@@ -91,6 +94,10 @@ function migrate(){
       if(s.entries?.c4b&&s.workout==="C") s.names.c4b="Seated Leg Curl";
     }
   });
-  D.migrated=2; save();
+  const OLD=["Seated Calf Raise","Standing Calf Raises"],NEW="Calf Raise (Leg Press)";
+  if(OLD.includes(D.swaps?.c6)) delete D.swaps.c6;
+  [...Object.values(D.program||{}).flatMap(p=>p.ex||[]),D.retired?.c6].forEach(e=>{ if(e?.id==="c6"&&OLD.includes(e.n)) e.n=NEW; });
+  D.sessions.forEach(s=>{ if(OLD.includes(s.names?.c6)) s.names.c6=NEW; });
+  D.migrated=3; save();
 }
 migrate();

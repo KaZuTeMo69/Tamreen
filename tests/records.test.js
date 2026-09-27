@@ -55,7 +55,8 @@ module.exports=async()=>{
   // notes + duration on a new workout
   await ev(()=>{ D.cursor="C"; go("plan"); });
   await p.click("text=ابدأ الحصة");
-  check("header shows the start time", (await p.textContent(".sub")).includes("بدأت"));
+  check("header shows the start time", /\d{1,2}:\d{2}/.test(await p.textContent(".stitle span")) && await ev(()=>draft.startedAt>0));
+  await ev(()=>{ draft.at=draft.ids.length; render(); });   // notes are on the wrap-up page
   await p.fill(".note-in","كتف شمال واجعني شوية");
   await p.clock.fastForward("55:00");
   await p.reload();   // the note and the start time survive a reload
@@ -73,17 +74,17 @@ module.exports=async()=>{
   check("log row: duration and a note mark", logText.includes("55 دقيقة")&&logText.includes("📝"));
 
   // editing it: note + minutes editable, leaving with changes asks first
-  await ev(()=>openSession(D.sessions.length-1));
+  await ev(()=>{ openSession(D.sessions.length-1); draft.at=draft.ids.length; render(); });
   check("old session shows note and minutes", await p.inputValue(".note-in")==="كتف شمال واجعني شوية" && await p.inputValue("input[oninput^='setMins']")==="55");
   await p.fill("input[oninput^='setMins']","60");
-  await p.click("text=رجوع");
+  await p.click("#back");
   check("changed minutes → asks before leaving", await modalOn());
   await p.click("#mno"); await p.click("#fin");
   check("edited minutes saved", await ev(()=>D.sessions.at(-1).mins)===60);
 
   // back-dated workouts aren't timed; absurd durations aren't kept
   await ev(()=>{ draft=blankDraft("A","2026-09-20",null); render(); });
-  check("back-dated: no start time", await ev(()=>draft.startedAt)===0 && !(await p.textContent(".sub")).includes("بدأت"));
+  check("back-dated: no start time", await ev(()=>draft.startedAt)===0 && !/\d{1,2}:\d{2}/.test(await p.textContent(".stitle span")));
   await ev(()=>{ draft=null; D.cursor="A"; go("plan"); });
   await p.click("text=ابدأ الحصة");
   await ev(()=>{ draft.entries.a1[0]={w:"50",r:"8",r2:"",warm:false}; });

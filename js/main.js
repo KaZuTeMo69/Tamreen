@@ -18,6 +18,7 @@ document.getElementById("nav").addEventListener("click",e=>{
     if(!d.names[e.id]) d.names[e.id]=nameOf(e);
     if(d.sides[e.id]===undefined) d.sides[e.id]=perSide(e.id);
   });
+  d.at=Math.min(Math.max(0,d.at|0),d.ids.length); d.asked=d.asked||{};
   const restEnd=d.restEnd; delete d.restEnd;
   draft=d;
   if(restEnd>Date.now()) startTimer(0,restEnd);

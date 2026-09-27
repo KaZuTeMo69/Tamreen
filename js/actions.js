@@ -1,40 +1,4 @@
 /* ══ actions ══════════════════════════════════════════ */
-/* FEATURE: the rest timer starts by itself when a set's reps go from empty to typed (not for warm-ups,
-   not when editing an old session; Settings can turn it off) */
-const hasReps=r=>!!(r.r||r.r2);
-function autoRest(id,s,before){
-  const r=draft.entries[id][s];
-  if(!before&&hasReps(r)&&!r.warm&&draft.edit==null&&D.autoRest!==false) startTimer(D.rest[0]);
-}
-function edit(id,s,f,v){
-  const r=draft.entries[id][s],before=hasReps(r);
-  r[f]=normNum(v); refresh(); saveDraft();
-  if(f!=="w") autoRest(id,s,before);
-}
-/* FEATURE: faster logging — copy last time's set, repeat the set above, one more rep */
-function copyPrev(id,s){
-  const last=lastFor(id,draft.date),p=last?.all[s]; if(!p) return;
-  const e=exDef(id),u=draft.units[id],r=draft.entries[id][s],before=hasReps(r);
-  if(!(e.eq==="body"&&!e.addw)) r.w=p.w?(last.u===u?String(p.w):String(conv(p.w,last.u,u))):"";
-  r.r=p.r||""; r.r2=draft.sides[id]?(p.r2||""):"";
-  redrawSets(id); refresh(); saveDraft(); autoRest(id,s,before); buzz(10);
-}
-function sameAsAbove(id){
-  const L=draft.entries[id];
-  let k=L.findIndex((r,i)=>i>0&&!hasReps(r)&&L.slice(0,i).some(hasReps));
-  if(k<0){ if(!L.some(hasReps)){ toast(tx("سجّل ست الأول","Log a set first")); return; }
-    addSet(id); k=L.length-1; }
-  const src=L.slice(0,k).filter(hasReps).pop(),r=L[k];
-  Object.assign(r,{w:src.w,r:src.r,r2:src.r2,warm:false});
-  redrawSets(id); refresh(); saveDraft(); autoRest(id,k,false); buzz(10);
-}
-function plusRep(id){
-  const L=draft.entries[id],r=L.filter(hasReps).pop();
-  if(!r){ toast(tx("سجّل ست الأول","Log a set first")); return; }
-  if(r.r) r.r=String(num(r.r)+1);
-  if(r.r2) r.r2=String(num(r.r2)+1);
-  redrawSets(id); saveDraft(); buzz(10);
-}
 /* FEATURE: a setup note per exercise (seat height, pin, grip), shown on it every workout */
 function editSetup(id){
   sheet({text:tx("ضبط الجهاز","Setup note"),body:tx("ارتفاع الكرسي، رقم المسمار، المسكة… بيظهر كل مرة تعمل التمرين ده. سيبه فاضي عشان يتمسح.",
@@ -42,27 +6,6 @@ function editSetup(id){
     value:D.exNotes[id]||"",yes:tx("حفظ","Save"),
     onYes:v=>{ v=v.trim().slice(0,120); if(v) D.exNotes[id]=v; else delete D.exNotes[id];
       D.changedAt=Date.now(); save(); render(false); }});
-}
-function toggleWarm(id,s){ const r=draft.entries[id][s]; r.warm=!r.warm; redrawSets(id); saveDraft(); }
-function setRir(id,v){ draft.rir[id]=draft.rir[id]===v?undefined:v; redrawRir(id); saveDraft(); }
-function addSet(id){ draft.counts[id]++; draft.entries[id].push({w:"",r:"",r2:"",warm:false}); redrawSets(id); saveDraft(); }
-function delSet(id){
-  if(draft.counts[id]<=1) return;
-  const drop=()=>{ draft.counts[id]--; draft.entries[id].pop(); redrawSets(id); refresh(); saveDraft(); };
-  const r=draft.entries[id][draft.counts[id]-1];   // FIX: ask before dropping a set that has reps
-  if(r.r||r.r2) return sheet({text:tx(`تمسح ست ${draft.counts[id]}؟`,`Delete set ${draft.counts[id]}?`),body:tx("فيه عدّات متسجّلة فيه.","It has reps logged."),
-    yes:tx("امسح","Delete"),danger:true,onYes:drop});
-  drop();
-}
-/* FIX: unit / right-left / name changes on an old session stay on that session;
-   on a new session they also become the default for next time */
-function setUnit(id,u){
-  draft.units[id]=u; if(draft.edit==null){ D.units[id]=u; save(); }
-  redrawSets(id); saveDraft(); toast(tx("الوحدة: ","Unit: ")+u);
-}
-function toggleSide(id){
-  draft.sides[id]=!draft.sides[id]; if(draft.edit==null){ D.sides[id]=draft.sides[id]; save(); }
-  render(false);
 }
 function setProg(id){ progEx=id; render(false); }
 /* open the progress tab on one exercise (from the home screen) */
@@ -125,7 +68,7 @@ function blankDraft(workout,date,edit){
     units[e.id]=u; names[e.id]=nameOf(e); sides[e.id]=perSide(e.id);
   });
   /* FEATURE: duration — a workout started today is timed from now; a back-dated one isn't */
-  return {workout,ids,entries,counts,rir,units,names,sides,date,edit,note:"",startedAt:date===today()?Date.now():0};
+  return {workout,ids,entries,counts,rir,units,names,sides,date,edit,note:"",startedAt:date===today()?Date.now():0,at:0,asked:{}};
 }
 /* FEATURE: a note per session, and (old sessions) the duration in minutes — typed, so no redraw */
 function setNote(v){ draft.note=v.slice(0,1000); saveDraft(); }
@@ -149,7 +92,7 @@ function openSession(i){
     sides[e.id]=(s.sides||rows.length)?sidesIn(s,e.id):perSide(e.id);
   });
   draft={workout:s.workout,ids,entries,counts,rir:clone(s.rir||{}),units,names,sides,date:s.date,edit:i,
-    note:s.note||"",mins:s.mins||0};
+    note:s.note||"",mins:s.mins||0,at:0,asked:{}};
   draft.snap=snapOf(draft); render();
 }
 /* what an edit changes — used to ask before leaving an old session with unsaved changes */

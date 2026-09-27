@@ -15,4 +15,4 @@ const SEED_SESSIONS=[
    c1:[S(null,10),S(null,9),S(null,7),S(null,6)], c2:[S(20,8),S(30,7),S(40,5)],
    c3:[S(12,12,12),S(14,10,10),S(18,10,10)], c4b:[S(40,12),S(45,11),S(50,10)],
    c5:[S(12.5,12),S(15,15),S(20,12)], c6:[S(10,15),S(20,13),S(20,10),S(30,10)]},
-  names:{c4b:"Seated Leg Curl",c6:"Seated Calf Raise"}}];
+  names:{c4b:"Seated Leg Curl",c6:"Calf Raise (Leg Press)"}}];
