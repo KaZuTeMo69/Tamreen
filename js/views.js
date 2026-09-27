@@ -1,7 +1,7 @@
 /* ══ views ════════════════════════════════════════════ */
-/* the name in bold at the top left of the main screens; tapping it opens Settings */
-const me=()=>`<div class="me-bar"><button class="me${D.name.trim()?"":" empty"}" dir="auto" onclick="go('set')" aria-label="${tx("الإعدادات","Settings")}">${
-  esc(D.name.trim())||tx("اكتب اسمك","Add your name")}</button></div>`;
+/* the name in bold on the title's line of the main screens; tapping it opens Settings */
+const me=()=>`<button class="me${D.name.trim()?"":" empty"}" dir="auto" onclick="go('set')" aria-label="${tx("الإعدادات","Settings")}">${
+  esc(D.name.trim())||tx("اكتب اسمك","Add your name")}</button>`;
 /* FEATURE: nudge for a backup when something changed and the last one is over a week old */
 const needBackup=()=>D.sessions.length&&D.changedAt>D.lastBackup&&daysSince(D.lastBackup)>=7;
 /* FEATURE: home screen — next workout (lime), this week and the month goal, bodyweight (violet),
@@ -39,7 +39,7 @@ function vPlan(){
   /* stalled exercises in the program, longest first */
   const stalled=[...new Set(ORDER.flatMap(k=>PROGRAM[k].ex.map(e=>e.id)))].map(id=>plateau(id)).filter(Boolean)
     .sort((a,b)=>b.since-a.since).slice(0,3);
-  return `${me()}<div class="top"><div><h1>${tx("اللي جاي","Next up")}</h1>
+  return `<div class="top"><div class="ttl"><div class="hrow"><h1>${tx("اللي جاي","Next up")}</h1>${me()}</div>
     <div class="sub">${new Date(now+"T00:00:00").toLocaleDateString(LOCALE(),{weekday:"long",day:"numeric",month:"long"})}</div></div></div>
 
   <div class="hero">
@@ -157,7 +157,7 @@ function vProg(){
     :`${t.reps} ${ex.sec?tx("ثانية","sec"):tx("عدّة","reps")}`;
   const rm=t=>(t.kg||ex.addw)&&!noBw&&!ex.sec?` · ≈${Math.round(fromKg(t.sc,u))} 1RM`:"";
   const pl=plateau(progEx);
-  return `${me()}<div class="top"><div><h1>${tx("التقدم","Progress")}</h1><div class="sub">${tx("الأرقام مش المرايا","Numbers, not the mirror")}</div></div></div>
+  return `<div class="top"><div class="ttl"><div class="hrow"><h1>${tx("التقدم","Progress")}</h1>${me()}</div><div class="sub">${tx("الأرقام مش المرايا","Numbers, not the mirror")}</div></div></div>
 
   <div class="label">${tx("تمرين واحد عبر الوقت","One exercise over time")}</div>
   <select class="big" onchange="setProg(this.value)">
@@ -206,7 +206,7 @@ function vSet(){
     `<button class="chip ${cur===v?"on":""}" onclick="${fn}('${v}')">${label}</button>`).join(" ")}</span>`;
   const plates=u=>`<div class="row stack"><span>${tx(`الأوزان المتاحة (${UL[u]}) — افصل بفاصلة`,`Plates you have (${u}) — separate with commas`)}</span>
     <input class="field" dir="ltr" value="${esc(D[u==="lb"?"platesLb":"plates"].join(", "))}" onchange="setPlates('${u}',this.value)"></div>`;
-  return `${me()}<div class="top"><div><h1>${tx("الإعدادات","Settings")}</h1><div class="sub">${tx("محفوظة على الموبايل ده","Saved on this phone")}</div></div></div>
+  return `<div class="top"><div class="ttl"><div class="hrow"><h1>${tx("الإعدادات","Settings")}</h1>${me()}</div><div class="sub">${tx("محفوظة على الموبايل ده","Saved on this phone")}</div></div></div>
 
   <div class="label">${tx("عنك","You")}</div>
   <div class="card">
@@ -327,7 +327,7 @@ function calendarCard(){
 
 function vLog(){
   const prs=recordMap(),n=D.sessions.length;
-  return `${me()}<div class="top"><div><h1>${tx("السجل","Log")}</h1><div class="sub">${tx(`${n} حصة`,`${n} workout${n===1?"":"s"}`)}</div></div></div>
+  return `<div class="top"><div class="ttl"><div class="hrow"><h1>${tx("السجل","Log")}</h1>${me()}</div><div class="sub">${tx(`${n} حصة`,`${n} workout${n===1?"":"s"}`)}</div></div></div>
   <div class="label">${tx("أيام التمرين","Training days")}</div>
   ${calendarCard()}
   <div class="label">${tx("اضغط على أي حصة للتعديل أو الحذف","Tap a workout to edit it")}</div>

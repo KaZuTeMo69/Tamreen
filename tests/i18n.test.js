@@ -1,4 +1,4 @@
-/* Batch 12: English (left-to-right) by default, Arabic from Settings; Orbitron; the name at the top left. */
+/* Batch 12: English (left-to-right) by default, Arabic from Settings; Orbitron; the name on the title line. */
 const {open,check}=require("./lib.js");
 const AR=/[؀-ۿ]/;
 
@@ -22,8 +22,11 @@ module.exports=async()=>{
   check("tapping the name opens Settings", await ev(()=>tab)==="set" && (await app()).includes("Language"));
   await p.fill("input.field.txt","Abdo"); await p.press("input.field.txt","Tab");
   check("the name is shown in bold", (await p.textContent("button.me"))==="Abdo" && await ev(()=>+getComputedStyle(document.querySelector(".me")).fontWeight)>=800);
-  const left=async()=>(await (await p.$("button.me")).boundingBox()).x;
-  check("the name sits at the top left", await left()<30, await left());
+  /* the name is on the title's line, at its end: right in English, left in Arabic */
+  const namePos=()=>ev(()=>{ const n=document.querySelector("button.me").getBoundingClientRect(),h=document.querySelector(".hrow h1").getBoundingClientRect();
+    return {sameLine:n.top<h.bottom&&n.bottom>h.top,left:Math.round(n.left),right:Math.round(innerWidth-n.right)}; });
+  const en=await namePos();
+  check("the name is on the title's line, at the right", en.sameLine&&en.right<30, en);
 
   // Orbitron for titles, buttons and the name; DM Sans for text
   await ev(()=>document.fonts.ready);
@@ -76,7 +79,8 @@ module.exports=async()=>{
   await ev(()=>go("set")); await p.click("button.chip:has-text('عربي')");
   check("Arabic: right-to-left", await ev(()=>[document.documentElement.lang,document.documentElement.dir].join())==="ar,rtl");
   check("Arabic: screen and tab bar in Arabic", (await app()).includes("الإعدادات")&&await ev(()=>document.querySelector("nav span").textContent)==="الخطة");
-  check("Arabic: the name stays at the top left", await left()<30, await left());
+  const ar=await namePos();
+  check("Arabic: the name is on the title's line, at the left", ar.sameLine&&ar.left<30, ar);
   await p.reload();
   check("the choice survives a reload", await ev(()=>document.documentElement.dir)==="rtl"&&(await app()).includes("اللي جاي"));
   check("switching language leaves the data alone", await ev(()=>JSON.stringify(D))===before);
