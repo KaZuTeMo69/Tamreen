@@ -81,9 +81,10 @@ module.exports=async()=>{
   check('B16 set with reps asks first', await ev(()=>document.getElementById('modal').classList.contains('on')&&draft.counts.a1===2));
   await p.click('#myes'); check('B16 confirmed → removed', await ev(()=>draft.counts.a1)===1);
   await ev(()=>{ startTimer(90); toast("x"); });
-  const [tb,tt]=await ev(()=>[document.getElementById('timer').getBoundingClientRect().top,document.getElementById('toast').getBoundingClientRect().bottom]);
+  const [tb,tt]=await ev(()=>[document.querySelector(document.body.classList.contains('in-session')?'.ptimer':'#timer').getBoundingClientRect().top,document.getElementById('toast').getBoundingClientRect().bottom]);
   check('B16 toast sits above the rest timer', tt<=tb, {tt,tb});
-  check('B16 pinch zoom not blocked', !(await p.getAttribute('meta[name=viewport]','content')).includes('maximum-scale'));
+  // batch 18 reversed B16's "pinch zoom allowed" on request: zoom is locked (tests/gym.test.js checks it)
+  check('zoom locked in the viewport', /maximum-scale=1/.test(await p.getAttribute('meta[name=viewport]','content')));
   const small=await ev(()=>[...document.querySelectorAll('input,select')].filter(e=>e.offsetParent&&parseFloat(getComputedStyle(e).fontSize)<16).length);
   check('B16 no text field under 16px (no iPhone zoom-on-tap)', small===0, small);
   check('no page errors', p.errs.length===0, p.errs);

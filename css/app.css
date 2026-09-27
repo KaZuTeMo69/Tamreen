@@ -20,6 +20,9 @@
 :root[data-theme="dark"]{--bg:#000000;--card:#141414;--edge:#262626;--ink:#FFFFFF;--muted:#A1A1A1;--line:#2A2A2A;--hi:#C6FF33;
   --on-ink:#000000;--field:#0A0A0A;--wash:rgba(0,0,0,.1);--scrim:rgba(0,0,0,.72);--shadow:rgba(0,0,0,.6);color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* no pinch or double-tap zoom (see main.js); scrolling still works */
+html{touch-action:pan-x pan-y}
+button,a,input,select,label{touch-action:manipulation}
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:'Readex Pro','DM Sans',system-ui,sans-serif;
   font-size:16px;line-height:1.5;padding:max(14px,env(safe-area-inset-top)) 18px calc(130px + env(safe-area-inset-bottom));
@@ -193,7 +196,7 @@ body.sheet-on #toast{top:calc(16px + env(safe-area-inset-top));bottom:auto}
 .chips{display:flex;gap:4px;flex:none}
 .row.stack .field{width:100%}
 /* workout screen (js/session.js): one exercise, steppers, RIR once, ⋯ for the rest */
-body.in-session{padding-bottom:calc(160px + env(safe-area-inset-bottom))}   /* pager + rest timer */
+body.in-session{padding-bottom:calc(86px + env(safe-area-inset-bottom))}   /* the bottom bar (the rest timer is in it) */
 .stop{position:sticky;top:0;z-index:5;background:var(--bg);margin:0 -18px;padding:4px 18px 8px}
 .stop-row{display:flex;align-items:center;gap:10px}
 .iconbtn,.more{width:44px;height:44px;flex:none;border:0;border-radius:50%;background:var(--card);color:var(--ink);
@@ -253,6 +256,34 @@ body.in-session{padding-bottom:calc(160px + env(safe-area-inset-bottom))}   /* p
 .pager .btn{box-shadow:0 6px 28px var(--shadow)}
 .pager .pv{width:64px;flex:none;padding:16px 0;font-size:20px}
 .pager .nx{flex:1;width:auto}
+/* the rest timer, in the bottom bar during a workout; Next shrinks to its arrow meanwhile */
+.ptimer{display:none;flex:1;min-width:0;align-items:center;justify-content:space-between;gap:6px;border-radius:999px;
+  padding:8px 8px 8px 18px;background:var(--ink);color:var(--on-ink);box-shadow:0 6px 28px var(--shadow);direction:ltr}
+.ptimer b{font-family:'DM Sans',sans-serif;font-size:22px;font-weight:700;white-space:nowrap}
+.ptimer button{border:0;border-radius:999px;background:var(--wash);color:var(--on-ink);font-family:inherit;font-weight:700;font-size:13px;padding:10px 14px;cursor:pointer}
+body.timing .ptimer{display:flex}
+body.timing .pager .nx{flex:none;padding:16px 20px}
+body.timing .pager .nxl{display:none}
+body.in-session #timer.on{display:none}
+/* rest over: lime and "Go!" for a few seconds */
+body.rest-done #timer,body.rest-done .ptimer{background:var(--lime);color:var(--on-lime)}
+body.rest-done #timer button,body.rest-done .ptimer button{background:var(--on-lime);color:var(--lime)}
+html[lang="en"] .ptimer b,html[lang="en"] #timer b{font-family:'Orbitron','DM Sans',sans-serif}
+/* once the sets are in and RIR is asked, the tip has done its job — room for the question */
+.ex1:has(.rirask) .tip,.ex1:has(.rirask) .stall{display:none}
+/* short screens (iPhone SE / 8, a browser tab with its bars): tighter, so an exercise fits without scrolling */
+@media (max-height:760px){
+  .stop{padding-bottom:4px}
+  .iconbtn,.more{width:40px;height:40px}
+  .ex1 h2{font-size:19px}
+  .ex1 .sets{margin-top:10px;gap:8px}
+  .stp{height:50px}
+  .srow.side .stp{height:44px}
+  .chk{margin-top:5px}
+  .rirbox{margin-top:10px}
+  .rirask{padding:8px 10px}
+  .rb{height:40px}
+}
 @media (max-width:360px){
   .srow{grid-template-columns:34px 1fr 1fr;gap:6px}
   .srow:not(.wt):not(.side){grid-template-columns:34px 1fr}

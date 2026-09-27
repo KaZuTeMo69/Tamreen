@@ -26,7 +26,12 @@ has notes and Ask Claude.
   +/− to log one rep more / less (weights move 2.5 kg for dumbbells, cables and added weight, 5 kg for machines
   and barbells; 5 / 10 lb). Tap a number to type it. A logged set gets a ✓.
 - The rest timer starts itself when a set is logged: 120 s for the first three exercises, 90 s after the others
-  (Settings → Rest between sets; it can be turned off). Warm-up sets don't start it.
+  (Settings → During a workout; it can be turned off). Warm-up sets don't start it. It sits in the bottom bar.
+  When the rest is over: a beep, a vibration (Android — iPhones don't let web apps vibrate) and the timer turns
+  lime with "Go!". The beep plays over music; the iPhone's silent switch mutes it (the flash still shows).
+- The screen stays on while a workout is open (Settings can turn it off).
+- No zooming: pinch and double-tap zoom are off, so a sweaty tap never zooms the page.
+- An exercise fits the screen without scrolling from iPhone SE 2/3 size up, also in a browser tab.
 - "Reps left in the tank" is asked once, when the last set is in (or when you move on without it).
 - ⋯ holds what's set once: unit, right / left, warm-up sets, number of sets, swap / rename, the how-to video and
   YouTube link, the plate calculator (barbell), a setup note (seat height, pin) and a manual rest.

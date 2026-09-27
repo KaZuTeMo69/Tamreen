@@ -1,7 +1,7 @@
 /* ══ state ════════════════════════════════════════════ */
 /* everything the app stores; settings live here too (name, units, goal, rest, bar & plates).
    The program has its own key (PROGRAM_KEY, see program.js). */
-const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},retired:{},theme:"auto",exNotes:{},autoRest:true,
+const defaults=()=>({cursor:"A",sessions:[],waist:[],bw:[],units:{},sides:{},swaps:{},videos:{},retired:{},theme:"auto",exNotes:{},autoRest:true,restSound:true,awake:true,
   name:"",unit:"kg",goal:GOAL,rest:[90,120],bar:20,plates:[...PLATES],barLb:45,platesLb:[45,35,25,10,5,2.5],
   lastBackup:0,changedAt:0,migrated:0});
 let D=defaults();

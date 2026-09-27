@@ -1,4 +1,8 @@
 /* ══ start ════════════════════════════════════════════ */
+/* FEATURE: no zooming — the app is used one-handed at the gym. The viewport forbids it and CSS stops the
+   double-tap zoom; iPhone's pinch gesture is cancelled here, since Safari ignores the viewport rule. */
+["gesturestart","gesturechange"].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener("touchmove",e=>{ if(e.touches.length>1) e.preventDefault(); },{passive:false});
 applyLang();   // fill in the tab bar and timer text (the <head> call ran before they existed)
 document.getElementById("nav").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(b) go(b.dataset.tab);

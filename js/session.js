@@ -48,7 +48,8 @@ function vSession(){
   <div class="exview" id="exview">${at<n?exHTML(exDef(draft.ids[at]),at):wrapHTML()}</div>
   <div class="pager">
     <button class="btn light pv" onclick="goEx(draft.at-1)" ${at===0?"disabled":""} aria-label="${tx("اللي فات","Previous")}">${prevG}</button>
-    ${at<n?`<button class="btn nx" onclick="goEx(draft.at+1)">${at===n-1?tx("الختام","Wrap-up"):tx("الجاي","Next")} ${nextG}</button>`
+    ${at<n?`<div class="ptimer" role="timer"><b id="ptval" dir="auto">${timerText()}</b><button onclick="stopTimer()">${tx("تخطّي","Skip")}</button></div>
+      <button class="btn nx" onclick="goEx(draft.at+1)" aria-label="${at===n-1?tx("الختام","Wrap-up"):tx("الجاي","Next")}"><span class="nxl">${at===n-1?tx("الختام","Wrap-up"):tx("الجاي","Next")}</span> ${nextG}</button>`
       :`<button class="btn lime nx" onclick="finish()">${editing?tx("حفظ التعديلات","Save changes"):tx("إنهاء الحصة","Finish workout")}</button>`}
   </div>`;
 }
@@ -204,6 +205,20 @@ function askRir(id,then){
     yes:tx("تخطّي","Skip"),onYes:()=>{ const f=rirNext; rirNext=null; f&&f(); }});
 }
 function pickRir(id,v){ draft.rir[id]=v; saveDraft(); closeSheet(); buzz(10); const f=rirNext; rirNext=null; f&&f(); }
+/* FEATURE: the screen stays on while a workout is open (Screen Wake Lock; Settings can turn it off). The
+   phone drops the lock whenever the app is in the background, so it's taken again on return. */
+let wakeLock=null,waking=false;
+async function keepAwake(on){
+  on=on&&D.awake!==false&&document.visibilityState==="visible"&&"wakeLock" in navigator;
+  try{
+    if(on&&!wakeLock&&!waking){
+      waking=true; const w=await navigator.wakeLock.request("screen"); waking=false;
+      if(!draft||D.awake===false){ w.release(); return; }   // the workout ended while it was being taken
+      wakeLock=w; w.addEventListener?.("release",()=>{ if(wakeLock===w) wakeLock=null; });
+    }else if(!on&&wakeLock){ const w=wakeLock; wakeLock=null; await w.release(); }
+  }catch(e){ waking=false; wakeLock=null; }
+}
+document.addEventListener("visibilitychange",()=>keepAwake(!!draft));
 /* swipe sideways to change exercise (toward the reading direction = next) */
 let swipeAt=null;
 document.addEventListener("touchstart",e=>{

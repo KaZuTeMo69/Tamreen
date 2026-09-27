@@ -236,11 +236,13 @@ function vSet(){
     </div>
   </div>
 
-  <div class="label">${tx("الراحة بين الستات (ثواني)","Rest between sets (seconds)")}</div>
+  <div class="label">${tx("أثناء التمرين","During a workout")}</div>
   <div class="card">
-    ${row(tx("أول 3 تمارين","First 3 exercises"),field(D.rest[1],"setRest(1,this.value)","numeric"))}
-    ${row(tx("باقي التمارين","Other exercises"),field(D.rest[0],"setRest(0,this.value)","numeric"))}
+    ${row(tx("الراحة: أول 3 تمارين (ثواني)","Rest: first 3 exercises (sec)"),field(D.rest[1],"setRest(1,this.value)","numeric"))}
+    ${row(tx("الراحة: باقي التمارين (ثواني)","Rest: other exercises (sec)"),field(D.rest[0],"setRest(0,this.value)","numeric"))}
     ${row(tx("يبدأ لوحده بعد كل ست","Start after each set"),chips([["on",tx("أيوه","On")],["off",tx("لأ","Off")]],D.autoRest===false?"off":"on","setAutoRest"))}
+    ${row(tx("صوت لما الراحة تخلص","Sound when rest ends"),chips([["on",tx("أيوه","On")],["off",tx("لأ","Off")]],D.restSound===false?"off":"on","setRestSound"))}
+    ${row(tx("الشاشة تفضل منورة أثناء التمرين","Keep the screen on during a workout"),chips([["on",tx("أيوه","On")],["off",tx("لأ","Off")]],D.awake===false?"off":"on","setAwake"))}
   </div>
 
   <div class="label">${tx("حاسبة أوزان البار","Plate calculator")}</div>
@@ -358,6 +360,7 @@ function render(toTop=true){
   const navTab=tab==="program"?"set":tab;   // the editor lives under Settings
   document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("on",b.dataset.tab===navTab));
   if(draft) refresh();
+  keepAwake(!!draft);
   saveDraft();
   drawCharts();
   window.scrollTo(0,toTop?0:y);
