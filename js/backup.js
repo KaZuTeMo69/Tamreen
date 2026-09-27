@@ -21,12 +21,12 @@ async function giveText(text){
     try{ await navigator.share({text}); return; }
     catch(e){ if(e.name==="AbortError") return; }
   }
-  try{ await navigator.clipboard.writeText(text); toast("اتنسخ — افتح Claude والصقه"); return; }catch(e){}
-  sheet({text:"انسخ الرسالة دي والصقها في Claude",area:text,yes:"تمام"});
+  try{ await navigator.clipboard.writeText(text); toast(tx("اتنسخ — افتح Claude والصقه","Copied — open Claude and paste it")); return; }catch(e){}
+  sheet({text:tx("انسخ الرسالة دي والصقها في Claude","Copy this message and paste it into Claude"),area:text,yes:tx("تمام","OK")});
 }
 async function backup(){
   if(!await giveFile(`tamreen-backup-${today()}.json`,JSON.stringify(D),"application/json")) return;
-  D.lastBackup=Date.now(); save(); render(false); toast("النسخة اتحفظت");
+  D.lastBackup=Date.now(); save(); render(false); toast(tx("النسخة اتحفظت","Backup saved"));
 }
 
 /* FIX: proper CSV — fields with commas, quotes or line breaks are quoted, and read back the same way */
@@ -154,7 +154,7 @@ function cleanBackup(obj){
   return d;
 }
 function restore(){ document.getElementById("restoreFile").click(); }
-function restored(){ loadProgram(); applyTheme(); migrate(); D.lastBackup=D.changedAt=Date.now(); save(); draft=null; tab="log"; render(); toast("اترجّعت ✓"); }
+function restored(){ loadProgram(); applyTheme(); migrate(); D.lastBackup=D.changedAt=Date.now(); save(); draft=null; tab="log"; render(); toast(tx("اترجّعت ✓","Restored ✓")); }
 document.getElementById("restoreFile").addEventListener("change",e=>{
   const f=e.target.files?.[0]; if(!f) return;
   const rd=new FileReader();
@@ -165,22 +165,24 @@ document.getElementById("restoreFile").addEventListener("change",e=>{
       if(isCSV){
         const {sessions,skipped}=parseCSV(txt);
         if(!sessions.length) throw 0;
-        sheet({text:"استرجاع من CSV؟",
-          body:`الملف فيه ${sessions.length} حصة.`+(skipped.length?`\nتمارين مش متعرّف عليها (هتتجاهل): ${[...new Set(skipped)].join(", ")}`:"")+
-               `\nده هيستبدل كل الحصص الحالية.`,
-          yes:"استرجاع",danger:true,
+        sheet({text:tx("استرجاع من CSV؟","Restore from CSV?"),
+          body:tx(`الملف فيه ${sessions.length} حصة.`,`The file has ${sessions.length} workouts.`)+
+               (skipped.length?tx(`\nتمارين مش متعرّف عليها (هتتجاهل): `,`\nExercises it doesn’t know (skipped): `)+[...new Set(skipped)].join(", "):"")+
+               tx(`\nده هيستبدل كل الحصص الحالية.`,`\nThis replaces all your current workouts.`),
+          yes:tx("استرجاع","Restore"),danger:true,
           onYes:()=>{ D.sessions=sessions; D.migrated=2; restored(); }});
       }else{
         const obj=JSON.parse(txt);
         if(!obj||!Array.isArray(obj.sessions)) throw 0;
         const clean=cleanBackup(obj),bad=obj.sessions.length-clean.sessions.length;
-        sheet({text:"استرجاع النسخة؟",
-          body:`الملف فيه ${clean.sessions.length} حصة.`+(bad?`\n${bad} حصة فيها بيانات بايظة وهتتجاهل.`:"")+
-               `\nده هيستبدل كل الداتا الحالية.`,
-          yes:"استرجاع",danger:true,
+        sheet({text:tx("استرجاع النسخة؟","Restore the backup?"),
+          body:tx(`الملف فيه ${clean.sessions.length} حصة.`,`The file has ${clean.sessions.length} workouts.`)+
+               (bad?tx(`\n${bad} حصة فيها بيانات بايظة وهتتجاهل.`,`\n${bad} broken workouts will be skipped.`):"")+
+               tx(`\nده هيستبدل كل الداتا الحالية.`,`\nThis replaces all your current data.`),
+          yes:tx("استرجاع","Restore"),danger:true,
           onYes:()=>{ D=clean; restored(); }});
       }
-    }catch(err){ toast("الملف مش صالح"); }
+    }catch(err){ toast(tx("الملف مش صالح","That file can’t be read")); }
     e.target.value="";
   };
   rd.readAsText(f);
@@ -193,10 +195,11 @@ async function exportCSV(){
       if(r.r||r.w) rows.push([s.date,s.workout,nameIn(s,id),id,i+1,r.warm?"warmup":"",r.w||"",
         s.units?.[id]||"kg",r.r||"",r.r2||"",s.rir?.[id]??"",s.mins||"",s.note||""]);
     })));
-  if(await giveFile("tamreen.csv","\uFEFF"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv")) toast("اتصدّر");
+  if(await giveFile("tamreen.csv","\uFEFF"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv")) toast(tx("اتصدّر","Exported"));
 }
 function wipe(){
-  sheet({text:"هيتمسح كل السجل نهائيًا",body:"اعمل نسخة احتياطية الأول لو مش متأكد.",yes:"امسح الكل",danger:true,
+  sheet({text:tx("هيتمسح كل السجل نهائيًا","This deletes your whole log for good"),body:tx("اعمل نسخة احتياطية الأول لو مش متأكد.","Make a backup first if you’re not sure."),
+    yes:tx("امسح الكل","Delete everything"),danger:true,
     onYes:()=>{ D={...defaults(),migrated:2}; loadProgram(); applyTheme();
-      save(); render(); toast("اتمسح"); buzz(40); }});
+      save(); render(); toast(tx("اتمسح","Deleted")); buzz(40); }});
 }

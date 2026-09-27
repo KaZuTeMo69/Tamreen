@@ -1,6 +1,7 @@
 /* ══ charts (FEATURE) ═════════════════════════════════ */
 /* Small SVG charts, drawn after render() at the card's real width so text stays 11–12px on any phone.
-   Time runs right → left like the rest of the app (oldest on the right). Colors come from CSS classes
+   Time runs the way the page reads: right → left in Arabic (oldest on the right), left → right in English;
+   the value axis stays on the right either way. Colors come from CSS classes
    (tokens), so dark mode follows. Every value is also in the table under each chart; the tooltip only
    adds convenience. Text goes in with textContent. */
 const SVGNS="http://www.w3.org/2000/svg";
@@ -41,7 +42,7 @@ function lineChart(host,pts,{fmt,numbers=true,label}){
   let lo=Math.floor(min/step)*step,hi=Math.ceil(max/step)*step;
   if(hi-lo<step*2){ lo=Math.max(0,lo-step); hi=hi+step; }
   const y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B);
-  const x=i=>n===1?(L+W-R)/2:W-R-i*(W-R-L)/(n-1);
+  const rtl=isAr(),x=i=>n===1?(L+W-R)/2:rtl?W-R-i*(W-R-L)/(n-1):L+i*(W-R-L)/(n-1);
   for(let v=lo;v<=hi+1e-9;v+=step){
     svgEl("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),class:"grid"},svg);
     if(numbers) svgText(svg,W-2,y(v)+4,fmt(v),"tick","end");
@@ -54,8 +55,8 @@ function lineChart(host,pts,{fmt,numbers=true,label}){
     const px=x(i),a=px<L+24?"start":px>W-R-24?"end":"middle";
     svgText(svg,a==="start"?px-4:a==="end"?px+4:px,y(pts[i].v)-9,fmt(pts[i].v),"lbl",a);
   });
-  svgText(svg,x(0),H-6,fdate(pts[0].date),"tick",n===1?"middle":"end");
-  if(n>1) svgText(svg,x(n-1),H-6,fdate(pts[n-1].date),"tick","start");
+  svgText(svg,x(0),H-6,fdate(pts[0].date),"tick",n===1?"middle":rtl?"end":"start");
+  if(n>1) svgText(svg,x(n-1),H-6,fdate(pts[n-1].date),"tick",rtl?"start":"end");
   /* the crosshair snaps to the nearest session; arrows move it when focused */
   const hit=svgEl("rect",{x:0,y:0,width:W,height:H,class:"hit",tabindex:0},svg);
   let cur=n-1;
@@ -67,9 +68,10 @@ function lineChart(host,pts,{fmt,numbers=true,label}){
   hit.addEventListener("pointerdown",e=>hit.dispatchEvent(new PointerEvent("pointermove",e)));
   hit.addEventListener("pointerleave",off);
   hit.addEventListener("focus",()=>at(cur)); hit.addEventListener("blur",off);
-  hit.addEventListener("keydown",e=>{   // right = older, left = newer (right-to-left time)
-    if(e.key==="ArrowLeft"){ e.preventDefault(); at(Math.min(n-1,cur+1)); }
-    if(e.key==="ArrowRight"){ e.preventDefault(); at(Math.max(0,cur-1)); }
+  hit.addEventListener("keydown",e=>{   // the arrow toward the newer end moves to newer sessions
+    const newer=rtl?"ArrowLeft":"ArrowRight",older=rtl?"ArrowRight":"ArrowLeft";
+    if(e.key===newer){ e.preventDefault(); at(Math.min(n-1,cur+1)); }
+    if(e.key===older){ e.preventDefault(); at(Math.max(0,cur-1)); }
   });
 }
 
@@ -79,7 +81,7 @@ function columnChart(host,bars,{fmt,label,partial}){
   const {svg,W,tip}=chartFrame(host,H,label);
   const max=Math.max(0,...bars.map(b=>b.v)),step=niceStep(max||1),hi=Math.ceil((max||1)/step)*step;
   const y=v=>T+(1-v/hi)*(H-T-B),base=y(0),slot=(W-R-L)/n,bw=Math.min(24,slot-2);
-  const cx=i=>W-R-(i+0.5)*slot;
+  const rtl=isAr(),cx=i=>rtl?W-R-(i+0.5)*slot:L+(i+0.5)*slot;
   for(let v=0;v<=hi+1e-9;v+=step){
     svgEl("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),class:"grid"},svg);
     svgText(svg,W-2,y(v)+4,fmt(v),"tick","end");
@@ -98,8 +100,9 @@ function columnChart(host,bars,{fmt,label,partial}){
   });
   /* labels only on the best week and this week */
   [...new Set([best,partial])].filter(i=>i>=0&&bars[i].v>0).forEach(i=>svgText(svg,cx(i),y(bars[i].v)-6,fmt(bars[i].v),"lbl"));
-  svgText(svg,cx(0)+slot/2,H-6,bars[0].label,"tick","end");
-  svgText(svg,cx(n-1)-slot/2,H-6,bars[n-1].label,"tick","start");
+  const edge=rtl?slot/2:-slot/2;   // the outer edge of the first / last slot
+  svgText(svg,cx(0)+edge,H-6,bars[0].label,"tick",rtl?"end":"start");
+  svgText(svg,cx(n-1)-edge,H-6,bars[n-1].label,"tick",rtl?"start":"end");
 }
 
 /* ── data for the progress tab ── */
@@ -116,8 +119,8 @@ function weekSeries(count=12){
    Unicode isolates (LRI … PDI) so the Latin unit can't reorder it inside right-to-left text. */
 const LRI=String.fromCharCode(0x2066),PDI=String.fromCharCode(0x2069);
 function setPlain(ex,t,u){
-  if(!t.kg) return `${t.reps} ${ex.sec?"ثانية":"عدّة"}`;
-  return `${ex.assist?"مساعدة ":""}${LRI}${ex.addw&&!ex.assist?"+":""}${wIn(t,u)} ${u} × ${t.reps}${PDI}`;
+  if(!t.kg) return `${t.reps} ${ex.sec?tx("ثانية","sec"):tx("عدّة","reps")}`;
+  return `${ex.assist?tx("مساعدة ","assist "):""}${LRI}${ex.addw&&!ex.assist?"+":""}${wIn(t,u)} ${u} × ${t.reps}${PDI}`;
 }
 /* what the exercise chart plots: estimated 1RM for anything with a weight, reps / seconds otherwise */
 function exerciseSeries(id){
@@ -131,17 +134,18 @@ function drawCharts(){
   const ex=exDef(progEx),u=unitOf(progEx),host=document.getElementById("ch-ex");
   if(host){
     const weighted=!(ex.eq==="body"&&!ex.addw),numbers=!(ex.addw&&!D.bw.length);
-    const unit=weighted?UL[u]:ex.sec?"ثانية":"عدّة",fmt=v=>`${Math.round(v)}`;
+    const unit=weighted?UL[u]:ex.sec?tx("ثانية","sec"):tx("عدّة","reps"),fmt=v=>`${Math.round(v)}`;
     lineChart(host,exerciseSeries(progEx).slice(-10).map(p=>({date:p.date,v:p.v,
       tip:[numbers?`${Math.round(p.v)} ${unit}`:setPlain(ex,p.t,u),numbers?setPlain(ex,p.t,u):"",fdate(p.date)].filter(Boolean)})),
-      {fmt,numbers,label:`${nameOf(ex)} — آخر ${ar(Math.min(10,historyOf(progEx).length))} حصص`});
+      {fmt,numbers,label:`${nameOf(ex)} — ${tx(`آخر ${nl(Math.min(10,historyOf(progEx).length))} حصص`,`last ${Math.min(10,historyOf(progEx).length)} workouts`)}`});
   }
   const wk=document.getElementById("ch-week");
   if(wk){
     const U=D.unit,weeks=weekSeries();
-    columnChart(wk,weeks.map((w,i)=>({v:fromKg(w.kg,U),label:i===weeks.length-1?"الأسبوع ده":fdate(w.start),
-      tip:[`${Math.round(fromKg(w.kg,U)).toLocaleString("en")} ${UL[U]}`,`${w.n?ar(w.n):"مفيش"} حصص`,`أسبوع ${fdate(w.start)}`]})),
-      {fmt:compact,partial:weeks.length-1,label:"الحجم الأسبوعي لآخر ١٢ أسبوع"});
+    columnChart(wk,weeks.map((w,i)=>({v:fromKg(w.kg,U),label:i===weeks.length-1?tx("الأسبوع ده","This week"):fdate(w.start),
+      tip:[`${Math.round(fromKg(w.kg,U)).toLocaleString("en")} ${UL[U]}`,tx(`${w.n?nl(w.n):"مفيش"} حصص`,`${w.n||"No"} workout${w.n===1?"":"s"}`),
+        tx(`أسبوع ${fdate(w.start)}`,`Week of ${fdate(w.start)}`)]})),
+      {fmt:compact,partial:weeks.length-1,label:tx("الحجم الأسبوعي لآخر ١٢ أسبوع","Weekly volume, last 12 weeks")});
   }
 }
 let resizeT=null;

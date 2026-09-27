@@ -13,7 +13,7 @@ module.exports=async()=>{
   const html=await ev(()=>fetch("index.html").then(r=>r.text()));
   const files=linked(html).map(f=>base+f);
   const scripts=await ev(()=>document.scripts.length);
-  check("index links css, every script, manifest, 2 icons, the font", files.length===scripts+5 && files.some(f=>f.endsWith("manifest.webmanifest")) && files.some(f=>f.endsWith(".woff2")), files);
+  check("index links css, every script, manifest, 2 icons, 2 fonts", files.length===scripts+6 && files.some(f=>f.endsWith("manifest.webmanifest")) && files.filter(f=>f.endsWith(".woff2")).length===2, files);
 
   await ev(()=>navigator.serviceWorker.ready);
   const all=await until(async()=>{ const c=await cached(p); return files.every(f=>c.includes(f))&&c.includes(base+"index.html")&&c; });
@@ -53,7 +53,7 @@ module.exports=async()=>{
   // manifest + icons
   const q=await open();
   const m=await q.evaluate(()=>fetch("manifest.webmanifest").then(r=>r.json()));
-  check("manifest: name, standalone, start_url, rtl", m.name==="تمرين"&&m.display==="standalone"&&m.start_url==="./"&&m.dir==="rtl");
+  check("manifest: name, standalone, start_url, English", m.name==="Tamreen"&&m.display==="standalone"&&m.start_url==="./"&&m.lang==="en"&&m.dir==="ltr");
   const sizes=await q.evaluate(async icons=>Promise.all(icons.map(i=>new Promise(ok=>{
     const img=new Image(); img.onload=()=>ok(`${img.naturalWidth}x${img.naturalHeight}`===i.sizes); img.onerror=()=>ok(false); img.src=i.src; }))),m.icons);
   check("manifest icons load at their declared sizes", sizes.every(Boolean)&&sizes.length===3, sizes);

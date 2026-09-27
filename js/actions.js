@@ -7,14 +7,15 @@ function delSet(id){
   if(draft.counts[id]<=1) return;
   const drop=()=>{ draft.counts[id]--; draft.entries[id].pop(); redrawSets(id); refresh(); saveDraft(); };
   const r=draft.entries[id][draft.counts[id]-1];   // FIX: ask before dropping a set that has reps
-  if(r.r||r.r2) return sheet({text:`تمسح ست ${draft.counts[id]}؟`,body:"فيه عدّات متسجّلة فيه.",yes:"امسح",danger:true,onYes:drop});
+  if(r.r||r.r2) return sheet({text:tx(`تمسح ست ${draft.counts[id]}؟`,`Delete set ${draft.counts[id]}?`),body:tx("فيه عدّات متسجّلة فيه.","It has reps logged."),
+    yes:tx("امسح","Delete"),danger:true,onYes:drop});
   drop();
 }
 /* FIX: unit / right-left / name changes on an old session stay on that session;
    on a new session they also become the default for next time */
 function setUnit(id,u){
   draft.units[id]=u; if(draft.edit==null){ D.units[id]=u; save(); }
-  redrawSets(id); saveDraft(); toast("الوحدة: "+u);
+  redrawSets(id); saveDraft(); toast(tx("الوحدة: ","Unit: ")+u);
 }
 function toggleSide(id){
   draft.sides[id]=!draft.sides[id]; if(draft.edit==null){ D.sides[id]=draft.sides[id]; save(); }
@@ -30,38 +31,41 @@ function calShift(d){
 }
 function swap(id){
   const old=draft.edit!=null;
-  sheet({text:"بدّل التمرين",
-    body:old?"الاسم الجديد يتسجّل في الحصة دي بس.":"الاسم الجديد يتسجّل في الحصص الجاية بس — الحصص القديمة بتفضل بأسمائها.",
-    value:draft.names[id],yes:"حفظ",
+  sheet({text:tx("بدّل التمرين","Rename the exercise"),
+    body:old?tx("الاسم الجديد يتسجّل في الحصة دي بس.","The new name is saved on this workout only.")
+      :tx("الاسم الجديد يتسجّل في الحصص الجاية بس — الحصص القديمة بتفضل بأسمائها.","The new name is used from now on — past workouts keep their names."),
+    value:draft.names[id],yes:tx("حفظ","Save"),
     onYes:v=>{ v=v.trim();
       if(!old){ v?D.swaps[id]=v:delete D.swaps[id]; save(); }
-      draft.names[id]=v||byId(id).n; render(false); toast("اتغيّر"); }});
+      draft.names[id]=v||byId(id).n; render(false); toast(tx("اتغيّر","Changed")); }});
 }
 function pinVideo(id){
-  sheet({text:"لينك يوتيوب للتمرين",body:"سيبه فاضي للرجوع للبحث التلقائي.",value:D.videos[id]||"",yes:"ثبّت",
+  sheet({text:tx("لينك يوتيوب للتمرين","YouTube link for this exercise"),body:tx("سيبه فاضي للرجوع للبحث التلقائي.","Leave it empty to go back to a search."),
+    value:D.videos[id]||"",yes:tx("ثبّت","Pin"),
     onYes:v=>{ v=v.trim();
       if(v){ const u=safeUrl(/^[a-z][a-z0-9+.-]*:/i.test(v)?v:"https://"+v);   // FIX: http(s) links only
-        if(!u){ toast("اللينك مش صالح"); return; } D.videos[id]=u; }
+        if(!u){ toast(tx("اللينك مش صالح","Not a valid link")); return; } D.videos[id]=u; }
       else delete D.videos[id];
-      save(); render(false); toast("اتثبّت"); }});
+      save(); render(false); toast(tx("اتثبّت","Pinned")); }});
 }
 /* FIX: works in the exercise's unit, with the bar and plates from settings */
 function plateCalc(id){
   const u=draft?.units[id]||unitOf(id),lb=u==="lb",bar=lb?D.barLb:D.bar,plates=lb?D.platesLb:D.plates,U=UL[u];
-  sheet({text:"حاسبة أوزان البار",body:`وزن البار ${bar} ${U}. اكتب الوزن الكلي المطلوب.`,value:"",type:"number",yes:"احسب",
+  sheet({text:tx("حاسبة أوزان البار","Plate calculator"),body:tx(`وزن البار ${bar} ${U}. اكتب الوزن الكلي المطلوب.`,`The bar is ${bar} ${U}. Type the total weight you want.`),
+    value:"",type:"number",yes:tx("احسب","Work it out"),
     onYes:v=>{
       const total=num(v); if(!total) return;
       let side=(total-bar)/2;
-      if(side<0) return sheet({text:"الوزن أقل من البار نفسه",body:`البار لوحده ${bar} ${U}.`,yes:"تمام"});
+      if(side<0) return sheet({text:tx("الوزن أقل من البار نفسه","Less than the bar itself"),body:tx(`البار لوحده ${bar} ${U}.`,`The bar alone is ${bar} ${U}.`),yes:tx("تمام","OK")});
       const out=[];
       plates.forEach(p=>{ const n=Math.floor(side/p+1e-9); if(n){ out.push(`${n} × ${p}`); side=+(side-n*p).toFixed(2); } });
-      sheet({text:`${total} ${U} = بار ${bar} + على كل جنب:`,
-        body:(out.join("\n")||"لا شيء")+(side>0.01?`\n(باقي ${side} ${U} مش مظبوط بالأوزان المتاحة)`:""),yes:"تمام"});
+      sheet({text:tx(`${total} ${U} = بار ${bar} + على كل جنب:`,`${total} ${U} = ${bar} bar + on each side:`),
+        body:(out.join("\n")||tx("لا شيء","Nothing"))+(side>0.01?tx(`\n(باقي ${side} ${U} مش مظبوط بالأوزان المتاحة)`,`\n(${side} ${U} left over — no plates for it)`):""),yes:tx("تمام","OK")});
     }});
 }
 function pickDate(){
-  sheet({text:"تاريخ الحصة",value:draft.date,type:"date",yes:"حفظ",
-    onYes:v=>{ if(v){ draft.date=v; render(false); toast("التاريخ اتغيّر"); } }});
+  sheet({text:tx("تاريخ الحصة","Workout date"),value:draft.date,type:"date",yes:tx("حفظ","Save"),
+    onYes:v=>{ if(v){ draft.date=v; render(false); toast(tx("التاريخ اتغيّر","Date changed")); } }});
 }
 /* FIX: a new workout copies the last one's layout — weights and warm-up flags by set number —
    so warm-ups don't shift the pre-filled weights */
@@ -83,7 +87,7 @@ function setNote(v){ draft.note=v.slice(0,1000); saveDraft(); }
 function setMins(v){ draft.mins=Math.round(num(v))||0; saveDraft(); }
 function start(){ draft=blankDraft(D.cursor,today(),null); render(); }
 function startPast(){
-  sheet({text:"تاريخ الحصة اللي فاتت",value:today(),type:"date",yes:"ابدأ",
+  sheet({text:tx("تاريخ الحصة اللي فاتت","Date of the past workout"),value:today(),type:"date",yes:tx("ابدأ","Start"),
     onYes:v=>{ draft=blankDraft(D.cursor,v||today(),null); render(); }});
 }
 /* FIX: an old session shows the exercises it actually has (even ones since taken out of the program,
@@ -105,19 +109,19 @@ function openSession(i){
 }
 /* what an edit changes — used to ask before leaving an old session with unsaved changes */
 const snapOf=d=>JSON.stringify([d.entries,d.rir,d.units,d.names,d.sides,d.date,d.note,d.mins]);
-function skip(){ D.cursor=ORDER[(ORDER.indexOf(D.cursor)+1)%3]; save(); render(); toast("اتبدّل"); }
+function skip(){ D.cursor=ORDER[(ORDER.indexOf(D.cursor)+1)%3]; save(); render(); toast(tx("اتبدّل","Switched")); }
 function cancel(){
   if(draft.edit!=null){
     const leave=()=>{ draft=null; tab="log"; render(); };
     if(snapOf(draft)===draft.snap) return leave();
-    return sheet({text:"تخرج من غير ما تحفظ التعديلات؟",yes:"خروج",danger:true,onYes:leave});   // FIX
+    return sheet({text:tx("تخرج من غير ما تحفظ التعديلات؟","Leave without saving your changes?"),yes:tx("خروج","Leave"),danger:true,onYes:leave});   // FIX
   }
-  sheet({text:"تلغي الحصة من غير حفظ؟",yes:"إلغاء الحصة",danger:true,
+  sheet({text:tx("تلغي الحصة من غير حفظ؟","Cancel the workout without saving?"),yes:tx("إلغاء الحصة","Cancel workout"),danger:true,
     onYes:()=>{ draft=null; stopTimer(); render(); }});
 }
 function finish(){
   const n=Object.values(draft.entries).filter(r=>r.some(x=>x.r)).length;
-  if(!n){ toast("سجّل تمرين واحد على الأقل"); return; }
+  if(!n){ toast(tx("سجّل تمرين واحد على الأقل","Log at least one exercise")); return; }
   const units={},names={},counts={},sides={},entries=clone(draft.entries);
   draft.ids.forEach(id=>{
     units[id]=draft.units[id]; names[id]=draft.names[id]; counts[id]=draft.counts[id];
@@ -133,45 +137,45 @@ function finish(){
   D.changedAt=Date.now();
   /* ask the browser to keep this site's data (Safari can clear it after weeks without a visit) */
   try{ navigator.storage?.persisted?.().then(p=>p||navigator.storage.persist()).catch(()=>{}); }catch(e){}
-  if(draft.edit!=null){ D.sessions[draft.edit]=rec; draft=null; save(); tab="log"; render(); toast("اتحفظ ✓"); buzz(30); return; }
+  if(draft.edit!=null){ D.sessions[draft.edit]=rec; draft=null; save(); tab="log"; render(); toast(tx("اتحفظ ✓","Saved ✓")); buzz(30); return; }
   D.sessions.push(rec);
   D.cursor=ORDER[(ORDER.indexOf(rec.workout)+1)%3];
   draft=null; stopTimer(); save(); tab="plan"; render();
-  toast(rec.mins?`حصة اتسجّلت ✓ · ${ar(rec.mins)} دقيقة`:"حصة اتسجّلت ✓");
+  toast(rec.mins?tx(`حصة اتسجّلت ✓ · ${nl(rec.mins)} دقيقة`,`Workout logged ✓ · ${rec.mins} min`):tx("حصة اتسجّلت ✓","Workout logged ✓"));
   /* FEATURE: records set today */
   const prs=recordMap().get(D.sessions.length-1)||[];
   if(prs.length){
     buzz([60,40,60]);
-    sheet({text:`🏆 ${prs.length>1?`${ar(prs.length)} أرقام قياسية جديدة`:"رقم قياسي جديد"}`,
-      body:prs.map(pr=>`${nameIn(rec,pr.id)}\n${recordText(pr)}`).join("\n\n"),yes:"تمام"});
+    sheet({text:`🏆 ${prs.length>1?tx(`${nl(prs.length)} أرقام قياسية جديدة`,`${prs.length} new records`):tx("رقم قياسي جديد","New record")}`,
+      body:prs.map(pr=>`${nameIn(rec,pr.id)}\n${recordText(pr)}`).join("\n\n"),yes:tx("تمام","Nice")});
   }else buzz(30);
 }
 function delSession(){
   const i=draft.edit;
-  sheet({text:"تحذف الحصة دي نهائيًا؟",yes:"حذف",danger:true,
-    onYes:()=>{ D.sessions.splice(i,1); D.changedAt=Date.now(); draft=null; save(); tab="log"; render(); toast("اتحذفت"); buzz(30); }});
+  sheet({text:tx("تحذف الحصة دي نهائيًا؟","Delete this workout for good?"),yes:tx("حذف","Delete"),danger:true,
+    onYes:()=>{ D.sessions.splice(i,1); D.changedAt=Date.now(); draft=null; save(); tab="log"; render(); toast(tx("اتحذفت","Deleted")); buzz(30); }});
 }
 /* waist and bodyweight logs (see LOGS in views.js) */
 function addLog(key){
-  const L=LOGS[key],v=num(document.getElementById("log-"+key).value);
-  if(!v){ toast("اكتب رقم"); return; }
-  D[key].push({date:today(),[L.f]:+L.store(v).toFixed(3)}); D.changedAt=Date.now(); save(); render(false); toast("اتسجّل ✓");
+  const G=LOGS[key],v=num(document.getElementById("log-"+key).value);
+  if(!v){ toast(tx("اكتب رقم","Type a number")); return; }
+  D[key].push({date:today(),[G.f]:+G.store(v).toFixed(3)}); D.changedAt=Date.now(); save(); render(false); toast(tx("اتسجّل ✓","Logged ✓"));
 }
 function editLog(key,i){
-  const L=LOGS[key],x=D[key][i];
-  sheet({text:`${L.title} — ${fdate(x.date)}`,body:"سيبه فاضي عشان يتمسح.",value:String(L.show(x[L.f])),yes:"حفظ",
+  const G=LOGS[key],x=D[key][i];
+  sheet({text:`${G.title} — ${fdate(x.date)}`,body:tx("سيبه فاضي عشان يتمسح.","Leave it empty to delete it."),value:String(G.show(x[G.f])),yes:tx("حفظ","Save"),
     onYes:v=>{ const n=num(v);
-      if(!v.trim()||!n) D[key].splice(i,1); else x[L.f]=+L.store(n).toFixed(3);
-      D.changedAt=Date.now(); save(); render(false); toast(n?"اتعدّل":"اتحذف"); }});
+      if(!v.trim()||!n) D[key].splice(i,1); else x[G.f]=+G.store(n).toFixed(3);
+      D.changedAt=Date.now(); save(); render(false); toast(n?tx("اتعدّل","Updated"):tx("اتحذف","Deleted")); }});
 }
 /* ══ settings ═════════════════════════════════════════ */
 function go(t){ tab=t; buzz(10); render(); }
 async function installApp(){
   const p=installPrompt; if(!p) return;
   p.prompt(); const {outcome}=await p.userChoice;
-  installPrompt=null; render(false); if(outcome==="accepted") toast("اتثبّت ✓");
+  installPrompt=null; render(false); if(outcome==="accepted") toast(tx("اتثبّت ✓","Installed ✓"));
 }
-function saved(){ save(); render(false); toast("اتحفظ"); }
+function saved(){ save(); render(false); toast(tx("اتحفظ","Saved")); }
 /* a number from a settings field, or null (and the field is reset) when it's out of range */
 function setting(v,lo,hi,msg){
   const t=normNum(v),n=+t;
@@ -181,13 +185,13 @@ function setting(v,lo,hi,msg){
 function setName(v){ D.name=v.trim().slice(0,30); saved(); }
 function setDefUnit(u){ D.unit=u; saved(); }
 function setTheme(t){ D.theme=t; applyTheme(); saved(); }
-function setGoal(v){ const n=setting(v,1,31,"الهدف من ١ لـ ٣١"); if(n!==null){ D.goal=Math.round(n); saved(); } }
-function setRest(i,v){ const n=setting(v,5,900,"الراحة من ٥ لـ ٩٠٠ ثانية"); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
-function setBar(u,v){ const n=setting(v,0,200,"اكتب وزن البار"); if(n!==null){ D[u==="lb"?"barLb":"bar"]=n; saved(); } }
+function setGoal(v){ const n=setting(v,1,31,tx("الهدف من ١ لـ ٣١","The goal is 1 to 31")); if(n!==null){ D.goal=Math.round(n); saved(); } }
+function setRest(i,v){ const n=setting(v,5,900,tx("الراحة من ٥ لـ ٩٠٠ ثانية","Rest is 5 to 900 seconds")); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
+function setBar(u,v){ const n=setting(v,0,200,tx("اكتب وزن البار","Type the bar weight")); if(n!==null){ D[u==="lb"?"barLb":"bar"]=n; saved(); } }
 function setPlates(u,v){
-  const L=[...new Set(v.split(/[\s,،;]+/).map(num).filter(x=>x>0))].sort((a,b)=>b-a);
-  if(!L.length){ toast("اكتب الأوزان مفصولة بفاصلة"); render(false); return; }
-  D[u==="lb"?"platesLb":"plates"]=L; saved();
+  const list=[...new Set(v.split(/[\s,،;]+/).map(num).filter(x=>x>0))].sort((a,b)=>b-a);
+  if(!list.length){ toast(tx("اكتب الأوزان مفصولة بفاصلة","Type the plates, separated with commas")); render(false); return; }
+  D[u==="lb"?"platesLb":"plates"]=list; saved();
 }
 
 /* ══ program editor (FEATURE) ═════════════════════════ */
@@ -201,74 +205,78 @@ function programChanged(msg){ loadProgram(); save(); render(false); if(msg) toas
 const retire=e=>{ D.retired={...D.retired,[e.id]:clone(e)}; };
 function exFormHTML(e){
   const box=(f,label)=>`<label class="check"><input type="checkbox" id="f-${f}" ${e[f]?"checked":""}> ${label}</label>`;
-  return `<label class="flabel">الاسم<input id="f-n" class="ftext" value="${esc(e.n)}" placeholder="مثلًا Cable Fly"></label>
-    <label class="flabel">الأداة<select id="f-eq" class="big">${Object.entries(EQ).map(([k,v])=>
+  return `<label class="flabel">${tx("الاسم","Name")}<input id="f-n" class="ftext" value="${esc(e.n)}" placeholder="${tx("مثلًا Cable Fly","e.g. Cable Fly")}"></label>
+    <label class="flabel">${tx("الأداة","Equipment")}<select id="f-eq" class="big">${Object.entries(EQ).map(([k,v])=>
       `<option value="${k}" ${e.eq===k?"selected":""}>${v}</option>`).join("")}</select></label>
     <div class="frow">
-      <label class="flabel">عدد الستات<input id="f-sets" inputmode="numeric" value="${e.sets}"></label>
-      <label class="flabel">عدّات من<input id="f-lo" inputmode="numeric" value="${e.lo}"></label>
-      <label class="flabel">إلى<input id="f-hi" inputmode="numeric" value="${e.hi}"></label></div>
-    ${box("uni","كل جنب لوحده (زي البلغاري)")}
-    ${box("addw","وزن الجسم + وزن إضافي (زي المتوازي)")}
-    ${box("assist","بالمساعدة (زي العقلة على الجهاز)")}
-    ${box("sec","بالثواني مش بالعدّات")}`;
+      <label class="flabel">${tx("عدد الستات","Sets")}<input id="f-sets" inputmode="numeric" value="${e.sets}"></label>
+      <label class="flabel">${tx("عدّات من","Reps from")}<input id="f-lo" inputmode="numeric" value="${e.lo}"></label>
+      <label class="flabel">${tx("إلى","to")}<input id="f-hi" inputmode="numeric" value="${e.hi}"></label></div>
+    ${box("uni",tx("كل جنب لوحده (زي البلغاري)","One side at a time (like a Bulgarian split squat)"))}
+    ${box("addw",tx("وزن الجسم + وزن إضافي (زي المتوازي)","Bodyweight + added weight (like dips)"))}
+    ${box("assist",tx("بالمساعدة (زي العقلة على الجهاز)","Assisted (like a machine pull-up)"))}
+    ${box("sec",tx("بالثواني مش بالعدّات","Timed in seconds, not reps"))}`;
 }
 function readExForm(){
   const val=id=>document.getElementById(id).value, int=id=>Math.round(num(val(id)));
   const e={n:val("f-n").trim().slice(0,80),eq:val("f-eq"),sets:int("f-sets"),lo:int("f-lo"),hi:int("f-hi")};
   FLAGS.forEach(f=>{ e[f]=document.getElementById("f-"+f).checked; });
   if(e.assist) e.addw=true;   // assistance is typed in the weight box, like added weight
-  const err=!e.n?"اكتب اسم التمرين":!(e.sets>=1&&e.sets<=10)?"الستات من ١ لـ ١٠"
-    :!(e.lo>=1&&e.hi<=100&&e.lo<=e.hi)?"العدّات: من ١ لـ ١٠٠، والأولى أصغر":"";
+  const err=!e.n?tx("اكتب اسم التمرين","Type the exercise name"):!(e.sets>=1&&e.sets<=10)?tx("الستات من ١ لـ ١٠","Sets are 1 to 10")
+    :!(e.lo>=1&&e.hi<=100&&e.lo<=e.hi)?tx("العدّات: من ١ لـ ١٠٠، والأولى أصغر","Reps are 1 to 100, the first one smaller"):"";
   return {e,err};
 }
 /* the form sheet; on a mistake it says what's wrong and opens again with what was typed */
 function exForm(title,body,e,done){
-  sheet({text:title,body,html:exFormHTML(e),yes:"حفظ",onYes:()=>{
+  sheet({text:title,body,html:exFormHTML(e),yes:tx("حفظ","Save"),onYes:()=>{
     const r=readExForm(); if(r.err){ toast(r.err); return exForm(title,body,r.e,done); } done(r.e); }});
 }
 const withFlags=(target,e)=>{ FLAGS.forEach(f=>{ if(e[f]) target[f]=true; else delete target[f]; }); return target; };
 const makeEx=e=>withFlags({id:newExId(),n:e.n,eq:e.eq,sets:e.sets,lo:e.lo,hi:e.hi},e);
 function editEx(k,i){
   const e=PROGRAM[k].ex[i];
-  exForm("تعديل التمرين","نفس التمرين ونفس السجل — لو هتغيّره لتمرين تاني استخدم «استبدال».",{...e,n:nameOf(e)},v=>{
+  exForm(tx("تعديل التمرين","Edit exercise"),tx("نفس التمرين ونفس السجل — لو هتغيّره لتمرين تاني استخدم «استبدال».",
+    "Same exercise, same history — to change it for a different one, use Replace."),{...e,n:nameOf(e)},v=>{
     const cur=myProgram()[k].ex[i];
     Object.assign(cur,{eq:v.eq,sets:v.sets,lo:v.lo,hi:v.hi}); withFlags(cur,v);
     if(v.n!==cur.n) D.swaps[cur.id]=v.n; else delete D.swaps[cur.id];
-    programChanged("اتحفظ");
+    programChanged(tx("اتحفظ","Saved"));
   });
 }
 function replaceEx(k,i){
   const old=PROGRAM[k].ex[i];
-  exForm(`بدل ${nameOf(old)}`,"التمرين الجديد ليه سجل لوحده، والقديم بيفضل في السجل.",
+  exForm(tx(`بدل ${nameOf(old)}`,`Replace ${nameOf(old)}`),tx("التمرين الجديد ليه سجل لوحده، والقديم بيفضل في السجل.",
+    "The new exercise gets its own history; the old one stays in the log."),
     {n:"",eq:old.eq,sets:old.sets,lo:old.lo,hi:old.hi},v=>{
-    const P=myProgram(); retire(P[k].ex[i]); P[k].ex[i]=makeEx(v); programChanged("اتبدّل");
+    const P=myProgram(); retire(P[k].ex[i]); P[k].ex[i]=makeEx(v); programChanged(tx("اتبدّل","Replaced"));
   });
 }
 function addEx(k){
-  exForm(`تمرين جديد في ${PROGRAM[k].label}`,"",{n:"",eq:"machine",sets:3,lo:8,hi:12},v=>{
-    myProgram()[k].ex.push(makeEx(v)); programChanged("اتضاف");
+  exForm(tx(`تمرين جديد في ${dayLabel(k)}`,`New exercise in ${dayLabel(k)}`),"",{n:"",eq:"machine",sets:3,lo:8,hi:12},v=>{
+    myProgram()[k].ex.push(makeEx(v)); programChanged(tx("اتضاف","Added"));
   });
 }
 function removeEx(k,i){
-  if(PROGRAM[k].ex.length<=1){ toast("لازم يفضل تمرين واحد على الأقل"); return; }
+  if(PROGRAM[k].ex.length<=1){ toast(tx("لازم يفضل تمرين واحد على الأقل","A day needs at least one exercise")); return; }
   const e=PROGRAM[k].ex[i];
-  sheet({text:`تشيل ${nameOf(e)} من ${PROGRAM[k].label}؟`,body:"السجل القديم بتاعه بيفضل زي ما هو.",yes:"شيل",danger:true,
-    onYes:()=>{ const P=myProgram(); retire(P[k].ex[i]); P[k].ex.splice(i,1); programChanged("اتشال"); }});
+  sheet({text:tx(`تشيل ${nameOf(e)} من ${dayLabel(k)}؟`,`Remove ${nameOf(e)} from ${dayLabel(k)}?`),body:tx("السجل القديم بتاعه بيفضل زي ما هو.","Its history stays as it is."),
+    yes:tx("شيل","Remove"),danger:true,
+    onYes:()=>{ const P=myProgram(); retire(P[k].ex[i]); P[k].ex.splice(i,1); programChanged(tx("اتشال","Removed")); }});
 }
 function moveEx(k,i,d){
   const L=myProgram()[k].ex,j=i+d; if(j<0||j>=L.length) return;
   [L[i],L[j]]=[L[j],L[i]]; programChanged();
 }
 function editTag(k){
-  sheet({text:`وصف ${PROGRAM[k].label}`,value:PROGRAM[k].tag,yes:"حفظ",
-    onYes:v=>{ v=v.trim().slice(0,80); if(!v) return; myProgram()[k].tag=v; programChanged("اتحفظ"); }});
+  sheet({text:tx(`وصف ${dayLabel(k)}`,`${dayLabel(k)} description`),value:dayTag(k),yes:tx("حفظ","Save"),
+    onYes:v=>{ v=v.trim().slice(0,80); if(!v||v===dayTag(k)) return; myProgram()[k].tag=v; programChanged(tx("اتحفظ","Saved")); }});
 }
 function resetProgram(){
-  sheet({text:"ترجّع البرنامج الأصلي؟",body:"التمارين اللي ضفتها هتتشال من البرنامج، بس سجلها بيفضل.",yes:"رجّع",danger:true,
+  sheet({text:tx("ترجّع البرنامج الأصلي؟","Go back to the built-in program?"),body:tx("التمارين اللي ضفتها هتتشال من البرنامج، بس سجلها بيفضل.",
+    "Exercises you added leave the program, but their history stays."),yes:tx("رجّع","Reset"),danger:true,
     onYes:()=>{
       const builtIn=new Set(Object.values(DEFAULT_PROGRAM).flatMap(p=>p.ex.map(e=>e.id)));
       Object.values(PROGRAM).flatMap(p=>p.ex).forEach(e=>{ if(!builtIn.has(e.id)) retire(e); });
-      D.program=null; programChanged("رجع الأصلي");
+      D.program=null; programChanged(tx("رجع الأصلي","Back to the built-in program"));
     }});
 }

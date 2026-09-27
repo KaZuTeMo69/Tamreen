@@ -1,4 +1,5 @@
 /* ══ start ════════════════════════════════════════════ */
+applyLang();   // fill in the tab bar and timer text (the <head> call ran before they existed)
 document.getElementById("nav").addEventListener("click",e=>{
   const b=e.target.closest("button"); if(b) go(b.dataset.tab);
 });
@@ -20,7 +21,7 @@ document.getElementById("nav").addEventListener("click",e=>{
   const restEnd=d.restEnd; delete d.restEnd;
   draft=d;
   if(restEnd>Date.now()) startTimer(0,restEnd);
-  setTimeout(()=>toast("رجّعنا الحصة اللي كانت مفتوحة"),300);
+  setTimeout(()=>toast(tx("رجّعنا الحصة اللي كانت مفتوحة","Your open workout is back")),300);
 })();
 /* belt and braces: store the open workout when the app goes to the background */
 document.addEventListener("visibilitychange",()=>{ if(document.hidden) saveDraft(); });
