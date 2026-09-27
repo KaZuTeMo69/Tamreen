@@ -177,6 +177,8 @@ function setName(v){ D.name=v.trim().slice(0,30); saved(); }
 function setDefUnit(u){ D.unit=u; saved(); }
 function setTheme(t){ D.theme=t; applyTheme(); saved(); }
 function setAutoRest(v){ D.autoRest=v==="on"; saved(); }
+function setRestSound(v){ D.restSound=v==="on"; saved(); if(D.restSound){ unlockAudio(); beep(); } }   // a sample
+function setAwake(v){ D.awake=v==="on"; saved(); }
 function setGoal(v){ const n=setting(v,1,31,tx("الهدف من 1 لـ 31","The goal is 1 to 31")); if(n!==null){ D.goal=Math.round(n); saved(); } }
 function setRest(i,v){ const n=setting(v,5,900,tx("الراحة من 5 لـ 900 ثانية","Rest is 5 to 900 seconds")); if(n!==null){ D.rest[i]=Math.round(n); saved(); } }
 function setBar(u,v){ const n=setting(v,0,200,tx("اكتب وزن البار","Type the bar weight")); if(n!==null){ D[u==="lb"?"barLb":"bar"]=n; saved(); } }

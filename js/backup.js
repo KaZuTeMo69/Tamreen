@@ -148,7 +148,7 @@ function cleanBackup(obj){
   if(has("swaps")) d.swaps=map(obj.swaps,v=>String(v).trim().slice(0,80));
   if(has("videos")) d.videos=map(obj.videos,safeUrl);
   if(has("exNotes")) d.exNotes=map(obj.exNotes,v=>String(v).trim().slice(0,120));
-  if(typeof obj.autoRest==="boolean") d.autoRest=obj.autoRest;
+  for(const k of ["autoRest","restSound","awake"]) if(typeof obj[k]==="boolean") d[k]=obj[k];
   if(typeof obj.cursor==="string"&&ID_RE.test(obj.cursor)) d.cursor=obj.cursor;   // checked against the program on load
   if(obj.unit==="kg"||obj.unit==="lb") d.unit=obj.unit;
   if(["auto","light","dark"].includes(obj.theme)) d.theme=obj.theme;

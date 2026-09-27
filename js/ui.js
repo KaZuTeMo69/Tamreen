@@ -34,20 +34,55 @@ function toast(msg){
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("on"),1600);
 }
 
-/* FIX: timestamp-based timer — survives screen lock / backgrounding */
-let endAt=0;
+/* FIX: timestamp-based timer — survives screen lock / backgrounding.
+   FEATURE: when the rest is over: a beep (Settings can turn it off), a vibration where the phone allows it
+   (Android — iPhones don't let web apps vibrate), and the timer turns lime and says "Go!" for a few seconds,
+   so it's noticed with the sound off too. In a workout the timer sits in the bottom bar (js/session.js). */
+let endAt=0,doneT=null;
+const restLeft=()=>Math.max(0,Math.round((endAt-Date.now())/1000));
+const fmtLeft=s=>String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+const timerText=()=>document.body.classList.contains("rest-done")?tx("يلا!","Go!"):fmtLeft(restLeft());
+function showTime(){ const t=timerText(); ["tval","ptval"].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=t; }); }
 function paintTimer(){
-  const left=Math.max(0,Math.round((endAt-Date.now())/1000));
-  document.getElementById("tval").textContent=
-    String(Math.floor(left/60)).padStart(2,"0")+":"+String(left%60).padStart(2,"0");
-  if(left<=0&&tick){ stopTimer(); buzz(400); toast(tx("الراحة خلصت","Rest over")); }
+  showTime();
+  if(restLeft()<=0&&tick) restOver();
+}
+function restOver(){
+  clearInterval(tick); tick=null; endAt=0; saveDraft();
+  document.body.classList.add("rest-done"); showTime();
+  beep(); buzz([250,120,250,120,400]); toast(tx("الراحة خلصت","Rest over"));
+  clearTimeout(doneT); doneT=setTimeout(stopTimer,4000);
+}
+/* the beep: a short Web Audio tone. Phones only allow sound after a tap, so taps unlock it. It plays along
+   with music instead of pausing it; the iPhone's silent switch mutes it. */
+let audioCtx=null;
+function unlockAudio(){
+  try{
+    const A=window.AudioContext||window.webkitAudioContext; if(!A) return;
+    if(navigator.audioSession) navigator.audioSession.type="ambient";   // Safari: mix with music
+    audioCtx=audioCtx||new A(); if(audioCtx.state!=="running") audioCtx.resume();
+  }catch(e){}
+}
+document.addEventListener("pointerdown",unlockAudio,{passive:true});
+function beep(){
+  if(D.restSound===false||!audioCtx) return;
+  try{
+    const t0=audioCtx.currentTime+0.02;
+    [[0,880],[0.28,880],[0.56,1320]].forEach(([d,f])=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.type="sine"; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,t0+d); g.gain.exponentialRampToValueAtTime(0.5,t0+d+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t0+d+0.22);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t0+d); o.stop(t0+d+0.25);
+    });
+  }catch(e){}
 }
 function startTimer(sec,until){          // until: resume a rest that was running before a reload
-  stopTimer(); endAt=until||Date.now()+sec*1000;
+  stopTimer(); unlockAudio(); endAt=until||Date.now()+sec*1000;
   document.getElementById("timer").classList.add("on"); document.body.classList.add("timing");
   paintTimer(); tick=setInterval(paintTimer,250); saveDraft();
 }
 function stopTimer(){
+  clearTimeout(doneT); document.body.classList.remove("rest-done");
   if(tick)clearInterval(tick); tick=null; endAt=0;
   document.getElementById("timer").classList.remove("on"); document.body.classList.remove("timing"); saveDraft();
 }
