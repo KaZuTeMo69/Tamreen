@@ -28,6 +28,12 @@ matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",applyThem
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){}};
 /* FIX: the open workout is stored on every change, so a reload or a killed tab doesn't lose it */
 const DRAFT_KEY=KEY+"-draft";
+/* FEATURE: a paused workout waits under its own key (draft = the workout on screen, null while paused) */
+const PAUSED_KEY=KEY+"-paused";
+let paused=null;
+try{ const p=JSON.parse(localStorage.getItem(PAUSED_KEY)||"null");
+  if(p&&p.entries&&p.date&&Array.isArray(p.ids)&&p.ids.length) paused=p; }catch(e){}
+const savePaused=()=>{try{ if(paused) localStorage.setItem(PAUSED_KEY,JSON.stringify(paused)); else localStorage.removeItem(PAUSED_KEY); }catch(e){}};
 const saveDraft=()=>{try{
   if(draft) localStorage.setItem(DRAFT_KEY,JSON.stringify({...draft,restEnd:endAt>Date.now()?endAt:0}));
   else localStorage.removeItem(DRAFT_KEY);

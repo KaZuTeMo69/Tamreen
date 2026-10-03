@@ -157,10 +157,11 @@ module.exports=async()=>{
   await swipe(-20); check("a short drag doesn't move", await ev(()=>draft.at)===1);
 
   /* ── ⋯ menu ── */
-  await p.click(".more");
+  await p.click("button.more");
   const m=await p.textContent("#modal");
-  check("⋯ has unit, right/left, swap, video, pin link, warm-ups, sets, setup note, rest",
-    ["Unit","Right / left","Swap / rename","How-to video","Pin a YouTube link","Warm-up sets","Sets","Setup note","Start rest"].every(t=>m.includes(t)), m);
+  check("⋯ has unit, right/left, swap, pin link, warm-ups, sets, setup note, rest",
+    ["Unit","Right / left","Swap / rename","Pin a YouTube link","Warm-up sets","Sets","Setup note","Start rest"].every(t=>m.includes(t)), m);
+  check("the how-to video is on the header, not in ⋯", !m.includes("How-to video") && !!(await p.$("#ex-a2 a.vid")));
   await p.click("#mform .chip:has-text('lb')");
   check("unit from the menu", await ev(()=>draft.units.a2)==="lb" && await ev(()=>document.getElementById("modal").classList.contains("on")));
   await p.click("#mform .chip:has-text('kg')");

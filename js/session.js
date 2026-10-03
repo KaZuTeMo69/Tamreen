@@ -1,6 +1,7 @@
 /* ══ workout screen (one exercise at a time) ═════════ */
 /* Built for one hand between sets. One exercise fills the screen: its name, its sets and "reps left in the
-   tank". Everything configured once (unit, right / left, rename, video, plates, warm-ups, sets) is behind ⋯.
+   tank". Everything configured once (unit, right / left, rename, video link, plates, warm-ups, sets) is behind ⋯;
+   the how-to video itself is a ▶ next to it.
    A set is logged with +/− steppers or one tap on its circle; the faint numbers are last session's; tapping a
    number opens the keyboard. The rest timer starts itself and RIR is asked once per exercise.
    draft.at = the exercise on screen; draft.ids.length = the wrap-up page (notes, Ask Claude, finish).
@@ -15,6 +16,11 @@ const bodyOnly=noLoad;   // no weight box (plain bodyweight, holds)
 const incOf=(e,u)=>{ const small=e.eq==="dumbbell"||e.eq==="cable"||(e.addw&&!e.assist); return u==="lb"?(small?5:10):(small?2.5:5); };
 const repInc=e=>e.sec?5:1;
 const fmtW=v=>String(+(+v).toFixed(2));
+/* the how-to video: the pinned YouTube link, else a YouTube search for the exercise */
+const videoUrl=e=>safeUrl(D.videos[e.id])||("https://www.youtube.com/results?search_query="+encodeURIComponent(e.n+" proper form technique"));
+/* drawn icons (emoji glyphs would turn into colour emoji on iPhones) */
+const ICON_PAUSE=`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="3.6" height="14" rx="1.2"/><rect x="13.9" y="5" width="3.6" height="14" rx="1.2"/></svg>`;
+const ICON_PLAY=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.4-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>`;
 /* "3+" stays "3+" inside Arabic text */
 const rirTxt=v=>`<bdi dir="ltr">${v===3?"3+":v}</bdi>`;
 /* rest after a set: the first three exercises (the main lifts) get the longer rest */
@@ -39,6 +45,7 @@ function vSession(){
   return `<div class="stop">
     <div class="stop-row">
       <button class="iconbtn" id="back" onclick="cancel()" aria-label="${editing?tx("رجوع","Back"):tx("إلغاء","Cancel")}">${editing?prevG:"✕"}</button>
+      ${editing?"":`<button class="iconbtn" id="pause" onclick="pauseWorkout()" aria-label="${tx("إيقاف مؤقت","Pause")}">${ICON_PAUSE}</button>`}
       <div class="stitle tap" onclick="pickDate()"><b>${esc(labelText(draft.label,draft.workout))}</b>
         <span class="small muted"><b class="num" id="pos">${at<n?`<bdi dir="ltr">${at+1} / ${n}</bdi>`:tx("الختام","Wrap-up")}</b> · <span class="when">${fdate(draft.date)}${began}</span></span></div>
       <button class="btn lime fin" id="fin" onclick="finish()">${editing?tx("حفظ","Save"):tx("إنهاء","Finish")}</button>
@@ -74,6 +81,8 @@ function exHTML(e,i){
       <div class="exnum num">${String(i+1).padStart(2,"0")}</div>
       <div class="exname"><h2>${esc(draft.names[id])}</h2>
         <div class="meta num">${e.lo}–${e.hi} ${e.sec?tx("ث","sec"):tx("عدّة","reps")} · ${EQ[e.eq]}${draft.sides[id]?` · ${tx("يمين / شمال","R / L")}`:""}${D.exNotes[id]?" · 📌":""}</div></div>
+      <a class="more vid${D.videos[id]?" pinned":""}" href="${esc(videoUrl(e))}" target="_blank" rel="noopener"
+        aria-label="${tx("فيديو الشرح","How-to video")}">${ICON_PLAY}</a>
       <button class="more" onclick="exMenu('${id}')" aria-label="${tx("إعدادات التمرين","Exercise options")}">⋯</button>
     </div>
     ${pl?`<div class="stall">${esc(plateauText(pl,draft.units[id]))}</div>`:sg?`<div class="tip">${esc(sg)}</div>`:""}
@@ -236,7 +245,6 @@ function exMenu(id){
   const e=exDef(id),u=draft.units[id],L=draft.entries[id],hl=histLine(id,draft.date,u);
   const chip=(on,label,fn,again=true)=>`<button class="chip ${on?"on":""}" onclick="${fn};${again?`exMenu('${id}')`:""}">${label}</button>`;
   const item=(fn,label)=>`<button class="mi" onclick="closeSheet();${fn}">${label}</button>`;
-  const video=safeUrl(D.videos[id])||("https://www.youtube.com/results?search_query="+encodeURIComponent(e.n+" proper form technique"));
   sheet({text:draft.names[id],yes:tx("تمام","Done"),html:`
     ${hl?`<div class="small muted num">${esc(hl)}</div>`:""}
     ${D.exNotes[id]?`<div class="setup">📌 ${esc(D.exNotes[id])}</div>`:""}
@@ -247,7 +255,6 @@ function exMenu(id){
       <button class="chip" onclick="closeSheet();delSet('${id}')" aria-label="${tx("ست أقل","One set fewer")}">−</button><b class="num">${L.length}</b>${chip(false,"+",`addSet('${id}')`)}</span></div>
     <div class="mlist">
       ${item(`swap('${id}')`,`✎ ${tx("بدّل التمرين / غيّر الاسم","Swap / rename")}`)}
-      <a class="mi" href="${esc(video)}" target="_blank" rel="noopener">▶ ${tx("فيديو الشرح","How-to video")}</a>
       ${item(`pinVideo('${id}')`,`🔗 ${D.videos[id]?tx("غيّر لينك يوتيوب","Change YouTube link"):tx("ثبّت لينك يوتيوب","Pin a YouTube link")}`)}
       ${e.eq==="barbell"?item(`plateCalc('${id}')`,`🧮 ${tx("حاسبة أوزان البار","Plate calculator")}`):""}
       ${item(`editSetup('${id}')`,`📌 ${D.exNotes[id]?tx("عدّل ضبط الجهاز","Edit setup note"):tx("ضبط الجهاز (الكرسي، المسمار…)","Setup note (seat, pin…)")}`)}

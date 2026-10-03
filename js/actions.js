@@ -73,8 +73,11 @@ function blankDraft(workout,date,edit){
 /* FEATURE: a note per session, and (old sessions) the duration in minutes — typed, so no redraw */
 function setNote(v){ draft.note=v.slice(0,1000); saveDraft(); }
 function setMins(v){ draft.mins=Math.round(num(v))||0; saveDraft(); }
-function start(){ draft=blankDraft(D.cursor,today(),null); render(); }
+/* a paused workout has to be continued or discarded before another one starts */
+const pausedFirst=()=>{ if(!paused) return false; toast(tx("كمّل الحصة المتوقفة أو امسحها الأول","Continue or discard the paused workout first")); return true; };
+function start(){ if(pausedFirst()) return; draft=blankDraft(D.cursor,today(),null); render(); }
 function startPast(){
+  if(pausedFirst()) return;
   sheet({text:tx("تاريخ الحصة اللي فاتت","Date of the past workout"),value:today(),type:"date",yes:tx("ابدأ","Start"),
     onYes:v=>{ draft=blankDraft(D.cursor,v||today(),null); render(); }});
 }
@@ -100,6 +103,27 @@ const snapOf=d=>JSON.stringify([d.entries,d.rir,d.units,d.names,d.sides,d.date,d
 /* the rotation: next workout in the program, back to the first after the last (any number of workouts) */
 const nextWorkout=k=>ORDER[(ORDER.indexOf(k)+1)%ORDER.length];
 function skip(){ D.cursor=nextWorkout(D.cursor); save(); render(); toast(tx("اتبدّل","Switched")); }
+/* minutes trained so far: from the start, minus any time the workout was paused */
+const activeMins=d=>d.startedAt?Math.round(((d.pausedAt||Date.now())-d.startedAt-(d.pausedMs||0))/6e4):0;
+/* FEATURE: pause — the workout screen closes (rest timer stopped, the screen may sleep again) and the workout
+   waits, exactly as it was, until Continue on the home screen; the paused minutes don't count. New workouts only. */
+function pauseWorkout(){
+  if(!draft||draft.edit!=null) return;
+  stopTimer(); rirOpen=null;
+  paused={...draft,pausedAt:Date.now()}; savePaused();
+  draft=null; tab="plan"; render(); buzz(20);
+  toast(tx("الحصة متوقفة — كمّلها من الصفحة الرئيسية","Workout paused — continue it from the home screen"));
+}
+function resumeWorkout(){
+  if(!paused) return;
+  if(draft) return toast(tx("اقفل الحصة المفتوحة الأول","Close the open workout first"));
+  const p=paused; p.pausedMs=(p.pausedMs||0)+Math.max(0,Date.now()-(p.pausedAt||Date.now())); delete p.pausedAt;
+  draft=p; paused=null; savePaused(); render(); buzz(20);
+}
+function discardPaused(){
+  sheet({text:tx("تمسح الحصة المتوقفة؟","Discard the paused workout?"),body:tx("الستات اللي سجلتها فيها هتتمسح.","The sets logged in it are deleted."),
+    yes:tx("امسحها","Discard"),danger:true,onYes:()=>{ paused=null; savePaused(); render(false); toast(tx("اتمسحت","Discarded")); }});
+}
 function cancel(){
   if(draft.edit!=null){
     const leave=()=>{ draft=null; tab="log"; render(); };
@@ -121,9 +145,11 @@ function finish(){
   const rir={}; Object.entries(draft.rir).forEach(([k,v])=>{ if(v!==undefined) rir[k]=v; });
   const rec={date:draft.date,workout:draft.workout,entries,units,names,counts,sides,rir};
   if(draft.edit!=null&&D.sessions[draft.edit].label) rec.label=D.sessions[draft.edit].label;   // the workout name it was logged under
+  /* a workout started under another program (paused while the program changed) keeps the name it started with */
+  else if(draft.edit==null&&draft.label&&PROGRAM[draft.workout]?.label!==draft.label) rec.label=draft.label;
   const note=(draft.note||"").trim(); if(note) rec.note=note;
-  /* duration: timed for a new workout (kept only if 1–300 minutes), typed when editing an old one */
-  const mins=draft.edit!=null?draft.mins:draft.startedAt?Math.round((Date.now()-draft.startedAt)/6e4):0;
+  /* duration: timed for a new workout, paused time left out (kept only if 1–300 minutes); typed when editing an old one */
+  const mins=draft.edit!=null?draft.mins:activeMins(draft);
   if(mins>=1&&mins<=300) rec.mins=mins;
   D.changedAt=Date.now();
   /* ask the browser to keep this site's data (Safari can clear it after weeks without a visit) */
