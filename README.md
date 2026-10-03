@@ -33,8 +33,15 @@ has notes and Ask Claude.
 - No zooming: pinch and double-tap zoom are off, so a sweaty tap never zooms the page.
 - An exercise fits the screen without scrolling from iPhone SE 2/3 size up, also in a browser tab.
 - "Reps left in the tank" is asked once, when the last set is in (or when you move on without it).
-- ⋯ holds what's set once: unit, right / left, warm-up sets, number of sets, swap / rename, the how-to video and
-  YouTube link, the plate calculator (barbell), a setup note (seat height, pin) and a manual rest.
+- ▶ next to the exercise name opens its how-to video: the YouTube link you pinned (the button turns violet),
+  or a YouTube search for the exercise when none is pinned.
+- ⋯ holds what's set once: unit, right / left, warm-up sets, number of sets, swap / rename, pinning a YouTube
+  link, the plate calculator (barbell), a setup note (seat height, pin) and a manual rest.
+- ⏸ next to ✕ pauses a new workout: the screen closes, the rest timer stops, the screen may sleep and the tabs
+  come back. Home shows it as "Paused workout" (how many exercises are logged, how long ago, minutes so far)
+  with Continue — back on the same exercise, every set as it was — and Discard. Another workout can't start
+  while one is paused. The pause doesn't count toward the workout's minutes. A paused workout survives closing
+  the app; it's kept under its own key (`tamreen-v2-paused`) and saved like any workout once finished.
 
 **Programs:** Settings → Program. "Get your program" copies a message for the Claude chat: Claude asks for
 height, weight, age, experience, goal, equipment, sessions per week and injuries, then replies with the

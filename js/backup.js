@@ -212,6 +212,6 @@ async function exportCSV(){
 function wipe(){
   sheet({text:tx("هيتمسح كل السجل نهائيًا","This deletes your whole log for good"),body:tx("اعمل نسخة احتياطية الأول لو مش متأكد.","Make a backup first if you’re not sure."),
     yes:tx("امسح الكل","Delete everything"),danger:true,
-    onYes:()=>{ D={...defaults(),migrated:4}; loadProgram(); applyTheme();
+    onYes:()=>{ D={...defaults(),migrated:4}; paused=null; savePaused(); loadProgram(); applyTheme();
       save(); render(); toast(tx("اتمسح","Deleted")); buzz(40); }});
 }

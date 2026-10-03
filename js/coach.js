@@ -32,7 +32,7 @@ function sessionText(d){
     "",
     `Session: ${d.label||PROGRAM[d.workout]?.label||`Workout ${d.workout}`} — ${WEEKDAY[new Date(d.date+"T00:00:00").getDay()]} ${d.date}.`+
       (bw&&exs.some(e=>e.addw)?` Bodyweight: ${+fromKg(bw,D.unit).toFixed(1)} ${D.unit}.`:"")];
-  const mins=d.edit!=null?d.mins:d.startedAt?Math.round((Date.now()-d.startedAt)/6e4):0;
+  const mins=d.edit!=null?d.mins:activeMins(d);   // paused time left out
   if(mins>=1&&mins<=300) lines.push(`Duration: ${mins} min${d.edit!=null?"":" so far"}.`);
   if(d.note?.trim()) lines.push(`My notes: ${d.note.trim()}`);
   const skipped=[]; let n=0;

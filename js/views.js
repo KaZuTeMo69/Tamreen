@@ -22,6 +22,20 @@ function sparkSVG(vals){
   return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
     <polyline points="${vals.map(pt).join(" ")}"/><circle cx="${last[0]}" cy="${last[1]}" r="3"/></svg>`;
 }
+/* a paused workout takes the next-workout card's place until it's continued or discarded */
+function pausedCard(){
+  const p=paused,n=p.ids.filter(id=>p.entries[id]?.some(r=>r.r||r.r2)).length,mins=activeMins(p);
+  const ago=Math.max(0,Math.round((Date.now()-(p.pausedAt||Date.now()))/6e4));
+  const agoText=ago<1?tx("دلوقتي","just now"):ago<60?tx(`من ${nl(ago)} دقيقة`,`${ago} min ago`):tx(`من ${nl(Math.round(ago/60))} ساعة`,`${Math.round(ago/60)} h ago`);
+  return `<div class="hero paused">
+    <div class="hero-head"><span class="eyebrow">${tx("حصة متوقفة","Paused workout")}</span>
+      <span class="small num">${tx(`${nl(n)} / ${nl(p.ids.length)} تمارين مسجّلة`,`${n} / ${p.ids.length} exercises logged`)}</span></div>
+    <div class="hero-title">${esc(labelText(p.label,p.workout))}</div>
+    <div class="hero-tag">${tx(`وقفت ${agoText} · ${nl(mins)} دقيقة لحد دلوقتي`,`Paused ${agoText} · ${mins} min so far`)}</div>
+    <button class="btn" id="resume" onclick="resumeWorkout()">${tx("كمّل الحصة","Continue workout")}</button>
+    <button class="hero-link" onclick="discardPaused()">${tx("امسحها","Discard it")}</button>
+  </div>`;
+}
 function vPlan(){
   const w=PROGRAM[D.cursor],c=monthCount(),now=today();
   /* this week, Saturday first */
@@ -42,7 +56,7 @@ function vPlan(){
   return `<div class="top"><div class="ttl"><div class="hrow"><h1>${tx("اللي جاي","Next up")}</h1>${me()}</div>
     <div class="sub">${new Date(now+"T00:00:00").toLocaleDateString(LOCALE(),{weekday:"long",day:"numeric",month:"long"})}</div></div></div>
 
-  <div class="hero">
+  ${paused?pausedCard():`<div class="hero">
     <div class="hero-head"><span class="eyebrow">${tx("الحصة الجاية","Next workout")}</span>
       <span class="small">${tx(`${nl(w.ex.length)} تمارين`,`${w.ex.length} exercises`)}</span></div>
     <div class="hero-title">${esc(dayLabel(D.cursor))}</div>
@@ -50,7 +64,7 @@ function vPlan(){
     <div class="hero-ex small">${w.ex.slice(0,3).map(e=>`<bdi>${esc(nameOf(e))}</bdi>`).join(" · ")}${w.ex.length>3?` <span class="nowrap">${tx(`+ ${nl(w.ex.length-3)} تانيين`,`+ ${w.ex.length-3} more`)}</span>`:""}</div>
     <button class="btn" onclick="start()">${tx("ابدأ الحصة","Start workout")}</button>
     <button class="hero-link" onclick="skip()">${tx("بدّل لتمرين تاني","Switch to the next day")}</button>
-  </div>
+  </div>`}
 
   ${needBackup()?`<div class="note tap" onclick="backup()">${D.lastBackup?tx(`بقالك ${nl(daysSince(D.lastBackup))} يوم من غير نسخة احتياطية`,`No backup for ${nl(daysSince(D.lastBackup))} days`)
     :tx("لسه ماعملتش نسخة احتياطية","No backup yet")}${tx(" — اضغط هنا واعملها"," — tap here to make one")}</div>`:""}
